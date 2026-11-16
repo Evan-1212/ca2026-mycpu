@@ -1,0 +1,28 @@
+// SPDX-License-Identifier: MIT
+// Lint waivers for verilator --lint-only -Wall (INF-05). Only the
+// SystemVerilog that firtool generates from Chisel (SimTop.sv, from
+// mycpu.common.TopGen) is waived, rule by rule; hand-written SystemVerilog and
+// C++ get no waiver. (A comment must not begin with the word "verilator".)
+
+`verilator_config
+
+// TopGen emits the whole design, every module of it, into one file named
+// after the top module, so the other modules' names differ from the file name.
+lint_off -rule DECLFILENAME -file "*SimTop.sv"
+
+// UNUSEDSIGNAL is waived for two kinds of signal only, by the text of the
+// warning. A signal of which no bit is read ("Signal is not used"), and one
+// that is neither driven nor read, are still reported: firtool removes dead
+// ports and wires inside the design, so what is left of those is a port of
+// SimTop that the design ignores, or a real mistake.
+//
+// 1. Some bits of a signal are read, others are not. Chisel connects whole
+// bundles and computes at full width, and firtool keeps the full signal:
+// address bits above a device's window and below word alignment, data bits
+// above a byte register, the high bits of a shift result.
+lint_off -rule UNUSEDSIGNAL -file "*SimTop.sv" -match "Bits of signal are not used:*"
+
+// 2. The read clocks (R<n>_clk) of firtool's memory modules: every memory
+// module has one per read port, and a Chisel Mem, whose reads are
+// combinational, does not use it.
+lint_off -rule UNUSEDSIGNAL -file "*SimTop.sv" -match "Signal is not used: 'R*_clk'*"
