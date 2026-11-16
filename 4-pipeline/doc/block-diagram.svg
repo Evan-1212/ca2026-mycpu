@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="560" viewBox="0 0 1100 560" role="img" aria-label="T4: the five-stage pipeline">
+<title>T4: the five-stage pipeline</title>
+<style>text{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;fill:#1f2328}.title{font-weight:bold;text-anchor:middle}.line{text-anchor:middle}.glabel{font-weight:bold;fill:#57606a}.wlabel{font-size:11px;fill:#57606a}.box{fill:#f6f8fa;stroke:#1f2328;stroke-width:1.2}.group{fill:none;stroke:#8c959f;stroke-width:1;stroke-dasharray:6 4}.wire{fill:none;stroke:#1f2328;stroke-width:1.2}.dashed{stroke-dasharray:4 3}.head{fill:#1f2328}.bg{fill:#ffffff}@media (prefers-color-scheme:dark){text{fill:#e6edf3}.glabel,.wlabel{fill:#9198a1}.box{fill:#161b22;stroke:#e6edf3}.group{stroke:#6e7681}.wire{stroke:#e6edf3}.head{fill:#e6edf3}.bg{fill:#0d1117}}</style>
+<defs><marker id="head" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="head" d="M0,0 L10,5 L0,10 z"/></marker><marker id="tail" viewBox="0 0 10 10" refX="0" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="head" d="M10,0 L0,5 L10,10 z"/></marker></defs>
+<rect class="bg" x="0" y="0" width="1100" height="560"/>
+<text class="free" x="70" y="30" text-anchor="start">imem: Decoupled request, Valid response, any latency</text>
+<text class="free" x="830" y="30" text-anchor="middle">dmem: one request in flight</text>
+<polyline class="wire" points="100,40 100,120" marker-end="url(#head)" marker-start="url(#tail)"/>
+<polyline class="wire" points="830,40 830,120" marker-end="url(#head)" marker-start="url(#tail)"/>
+<rect class="box" x="20" y="120" width="170" height="178" rx="3"/><text class="title" x="105" y="189">IF: Fetch</text><text class="line" x="105" y="205">pc, in flight,</text><text class="line" x="105" y="221">dropping (4.10)</text><text class="line" x="105" y="237">instruction queue</text>
+<rect class="box" x="240" y="120" width="200" height="178" rx="3"/><text class="title" x="340" y="165">ID</text><text class="line" x="340" y="181">InstructionDecode (T3)</text><text class="line" x="340" y="197">RegFile, HazardUnit</text><text class="line" x="340" y="213">serialization (4.5)</text><text class="line" x="340" y="229">forward into ID (4.3)</text><text class="line" x="340" y="245">EarlyBranch: T1's</text><text class="line" x="340" y="261">Execute in ID</text>
+<rect class="box" x="490" y="120" width="180" height="178" rx="3"/><text class="title" x="580" y="181">EX</text><text class="line" x="580" y="197">Execute (T2):</text><text class="line" x="580" y="213">ALU, branch, mul,</text><text class="line" x="580" y="229">divider (4.8)</text><text class="line" x="580" y="245">Forward (bootcamp)</text>
+<rect class="box" x="720" y="120" width="220" height="178" rx="3"/><text class="title" x="830" y="165">MEM: the commit stage</text><text class="line" x="830" y="181">MemoryAccess, WriteBack</text><text class="line" x="830" y="197">(T1), CsrFile (T3),</text><text class="line" x="830" y="213">exceptions,</text><text class="line" x="830" y="229">commit / trap (4.6),</text><text class="line" x="830" y="245">interrupt on the oldest</text><text class="line" x="830" y="261">(4.7), classifier</text>
+<rect class="box" x="990" y="120" width="90" height="178" rx="3"/><text class="title" x="1035" y="205">WB</text><text class="line" x="1035" y="221">regs</text>
+<polyline class="wire" points="190,160 240,160" marker-end="url(#head)"/><text class="wlabel" x="215" y="156" text-anchor="middle">queue</text>
+<polyline class="wire" points="440,160 490,160" marker-end="url(#head)"/><text class="wlabel" x="465" y="156" text-anchor="middle">ID/EX</text>
+<polyline class="wire" points="670,160 720,160" marker-end="url(#head)"/><text class="wlabel" x="695" y="156" text-anchor="middle">EX/MEM</text>
+<polyline class="wire" points="940,160 990,160" marker-end="url(#head)"/><text class="wlabel" x="965" y="156" text-anchor="middle">MEM/WB</text>
+<polyline class="wire" points="753,298 753,320 580,320 580,298" marker-end="url(#head)"/><text class="wlabel" x="666.5" y="316" text-anchor="middle">EX/MEM forward</text>
+<polyline class="wire" points="738,298 738,340 400,340 400,298" marker-end="url(#head)"/><text class="wlabel" x="569" y="336" text-anchor="middle">EX/MEM into ID</text>
+<polyline class="wire" points="1035,298 1035,380 616,380 616,298" marker-end="url(#head)"/><text class="wlabel" x="825.5" y="376" text-anchor="middle">MEM/WB forward</text>
+<rect class="box" x="240" y="420" width="680" height="70" rx="3"/><text class="title" x="580" y="451">PipelineFlush (bootcamp 5.6) + flush logic (4.4, 4.9)</text><text class="line" x="580" y="467">trap or mret in MEM, branch in EX, branch or fence.i in ID</text>
+<polyline class="wire" points="900,298 900,420" marker-end="url(#head)"/><text class="wlabel" x="904" y="363">trap</text>
+<polyline class="wire" points="508,298 508,420" marker-end="url(#head)"/><text class="wlabel" x="512" y="363">taken</text>
+<polyline class="wire" points="300,298 300,420" marker-end="url(#head)"/><text class="wlabel" x="304" y="363">id_redirect</text>
+<polyline class="wire" points="240,455 105,455 105,298" marker-end="url(#head)"/><text class="wlabel" x="109" y="380.5">redirect, drop</text>
+<text class="free" x="105" y="520" text-anchor="start">redirect: the handler, mepc, a branch target, or pc + 4 after fence.i</text>
+<polyline class="wire" points="935,298 935,500" marker-end="url(#head)"/><text class="wlabel" x="939" y="403">retire (TrapRetire, mip)</text>
+<text class="free" x="20" y="550" text-anchor="start">Top (module SimTop): riscv.Ram with WaitStates on either port, DataBus (RAM, UART, SimCtrl, CLINT)</text>
+</svg>

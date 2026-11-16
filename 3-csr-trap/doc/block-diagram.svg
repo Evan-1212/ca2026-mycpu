@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="640" viewBox="0 0 1000 640" role="img" aria-label="T3: CSRs, machine-mode traps, interrupts, counters and the CLINT">
+<title>T3: CSRs, machine-mode traps, interrupts, counters and the CLINT</title>
+<style>text{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;fill:#1f2328}.title{font-weight:bold;text-anchor:middle}.line{text-anchor:middle}.glabel{font-weight:bold;fill:#57606a}.wlabel{font-size:11px;fill:#57606a}.box{fill:#f6f8fa;stroke:#1f2328;stroke-width:1.2}.group{fill:none;stroke:#8c959f;stroke-width:1;stroke-dasharray:6 4}.wire{fill:none;stroke:#1f2328;stroke-width:1.2}.dashed{stroke-dasharray:4 3}.head{fill:#1f2328}.bg{fill:#ffffff}@media (prefers-color-scheme:dark){text{fill:#e6edf3}.glabel,.wlabel{fill:#9198a1}.box{fill:#161b22;stroke:#e6edf3}.group{stroke:#6e7681}.wire{stroke:#e6edf3}.head{fill:#e6edf3}.bg{fill:#0d1117}}</style>
+<defs><marker id="head" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="head" d="M0,0 L10,5 L0,10 z"/></marker><marker id="tail" viewBox="0 0 10 10" refX="0" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="head" d="M10,0 L0,5 L10,10 z"/></marker></defs>
+<rect class="bg" x="0" y="0" width="1000" height="640"/>
+<rect class="group" x="140" y="20" width="840" height="520" rx="6"/><text class="glabel" x="146" y="36">CPU (mycpu.csrtrap)</text>
+<rect class="box" x="170" y="60" width="180" height="50" rx="3"/><text class="title" x="260" y="81">InstructionFetch</text><text class="line" x="260" y="97">pc (T1)</text>
+<rect class="box" x="420" y="44" width="250" height="82" rx="3"/><text class="title" x="545" y="65">InstructionDecode</text><text class="line" x="545" y="81">T2's table + Zicsr,</text><text class="line" x="545" y="97">mret, wfi (tags)</text><text class="line" x="545" y="113">riscv.ImmGen</text>
+<rect class="box" x="740" y="150" width="180" height="98" rx="3"/><text class="title" x="830" y="179">CsrFile</text><text class="line" x="830" y="195">CSRs, trap entry,</text><text class="line" x="830" y="211">mret, irq, hpm</text><text class="line" x="830" y="227">counters</text>
+<rect class="box" x="330" y="170" width="300" height="66" rx="3"/><text class="title" x="480" y="191">Execute (T2)</text><text class="line" x="480" y="207">ALU, branch, target,</text><text class="line" x="480" y="223">multiplier, divider</text>
+<rect class="box" x="740" y="300" width="180" height="50" rx="3"/><text class="title" x="830" y="329">riscv.RegFile</text>
+<rect class="box" x="280" y="300" width="180" height="66" rx="3"/><text class="title" x="370" y="329">MemoryAccess</text><text class="line" x="370" y="345">(T1), enable</text>
+<rect class="box" x="520" y="300" width="150" height="66" rx="3"/><text class="title" x="595" y="329">WriteBack</text><text class="line" x="595" y="345">(T1)</text>
+<rect class="box" x="170" y="420" width="750" height="98" rx="3"/><text class="title" x="545" y="449">CPU</text><text class="line" x="545" y="465">take_interrupt (3.11), exception priority (3.10)</text><text class="line" x="545" y="481">wfi wait (3.12), trap / commit (3.9)</text><text class="line" x="545" y="497">HpmClassifier: events</text>
+<polyline class="wire" points="350,85 420,85" marker-end="url(#head)"/><text class="wlabel" x="385" y="81" text-anchor="middle">inst</text>
+<polyline class="wire" points="532,126 532,170" marker-end="url(#head)"/><text class="wlabel" x="536" y="152">decoded, m</text>
+<polyline class="wire" points="670,85 830,85 830,150" marker-end="url(#head)"/><text class="wlabel" x="750" y="81" text-anchor="middle">csr, mret, wfi</text>
+<polyline class="wire" points="740,189 630,189" marker-end="url(#head)"/><text class="wlabel" x="685" y="185" text-anchor="middle">kill</text>
+<polyline class="wire" points="390,236 390,300" marker-end="url(#head)"/><text class="wlabel" x="394" y="272">alu_result</text>
+<polyline class="wire" points="570,236 570,300" marker-end="url(#head)"/><text class="wlabel" x="574" y="272">result</text>
+<polyline class="wire" points="460,333 520,333" marker-end="url(#head)"/><text class="wlabel" x="490" y="329" text-anchor="middle">load</text>
+<polyline class="wire" points="670,333 740,333 740,325" marker-end="url(#head)"/><text class="wlabel" x="705" y="329" text-anchor="middle">regs</text>
+<polyline class="wire" points="776,248 776,280 640,280 640,300" marker-end="url(#head)"/><text class="wlabel" x="708" y="276" text-anchor="middle">rdata</text>
+<polyline class="wire" points="330,203 260,203 260,110" marker-end="url(#head)"/><text class="wlabel" x="264" y="160.5">redirect</text>
+<polyline class="wire" points="196,420 196,110" marker-end="url(#head)"/><text class="wlabel" x="200" y="269">commit / trap</text>
+<polyline class="wire" points="920,469 950,469 950,199 920,199" marker-end="url(#head)"/><text class="wlabel" x="954" y="338">events</text>
+<polyline class="wire" points="20,85 170,85" marker-end="url(#head)" marker-start="url(#tail)"/><text class="wlabel" x="95" y="81" text-anchor="middle">imem</text>
+<polyline class="wire" points="20,333 280,333" marker-end="url(#head)" marker-start="url(#tail)"/><text class="wlabel" x="150" y="329" text-anchor="middle">dmem</text>
+<polyline class="wire" points="300,580 300,518" marker-end="url(#head)"/><text class="wlabel" x="304" y="553">msip, mtip, time</text>
+<polyline class="wire" points="520,580 520,518" marker-end="url(#head)"/><text class="wlabel" x="524" y="553">meip</text>
+<polyline class="wire" points="760,518 760,580" marker-end="url(#head)"/><text class="wlabel" x="764" y="553">retire (TrapRetire, with mip)</text>
+<text class="free" x="20" y="610" text-anchor="start">Top (module SimTop): riscv.Ram, DataBus (RAM, UART, SimCtrl, CLINT), Uart, SimCtrl, Clint</text>
+<text class="free" x="20" y="630" text-anchor="start">The redirect also carries the handler (mtvec) on a trap and mepc on an mret.</text>
+</svg>

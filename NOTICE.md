@@ -47,11 +47,11 @@ interface or the configuration format of another project, not because they copy 
 
 These are the project's own work, under the MIT License of [LICENSE](LICENSE): data that a tool
 reads or writes (expected outputs, golden frames and bundles of the web interface), configuration
-files, and the generated block diagrams. The one exception is the golden nyancat frame, which
+files, and the generated block diagrams and pipeline diagrams. The one exception is the golden nyancat frame, which
 follows the row for the nyancat frames above.
 
 - `.gitignore`, `web/.gitignore`, `.clang-format`, `.scalafmt.conf`, `project/build.properties`
-- `**/doc/block-diagram.svg`
+- `**/doc/block-diagram.svg`, `4-pipeline/doc/hazard-*.png`
 - `**/expected.txt`, `**/expected.exit`
 - `sim/tests/golden/*.ppm.gz`
 - `web/**/*.json`, `web/examples/**/uart.bin`
