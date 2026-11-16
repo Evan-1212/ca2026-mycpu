@@ -1,0 +1,12 @@
+help
+hold @HOLD@
+csr
+perf reset
+vga 12
+qr
+qr color MyCPU T5 on the VGA
+bench dhrystone
+bench duremark
+bench qrcode
+perf
+exit 0

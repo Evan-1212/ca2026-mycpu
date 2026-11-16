@@ -1,0 +1,37 @@
+# SPDX-License-Identifier: MIT
+# T5 block diagram: `make diagrams` renders it to block-diagram.svg (scripts/mkdiagram.py).
+diagram 1110 600 "T5: the AXI4-Lite system-on-chip"
+
+box CPU 120 20 860 50 "CPU: the T4 pipeline" "imem: Decoupled request, Valid response; dmem: one request in flight"
+box MI 150 120 230 50 "Axi4LiteMaster (I)" "[checker]"
+box MD 720 120 230 50 "Axi4LiteMaster (D)" "[checker]"
+arrow 265,70 MI.n "imem"
+arrow 835,70 MD.n "dmem"
+
+box XBAR 60 230 980 90 "Axi4LiteXbar" "Axi4LiteDecoder per master: an unmapped address gets DECERR" "Axi4LiteArbiter per shared slave (the D master first)" "a [checker] on every slave port"
+arrow MI.s 265,230 "AW W B AR R"
+arrow MD.s 835,230 "AW W B AR R"
+
+box ROM 60 400 140 66 "Axi4LiteRom" "0x0000_1000" "boot.S"
+box CLINT 220 400 150 66 "MemPortSlave" "CLINT" "0x0200_0000"
+box UART 390 400 150 66 "MemPortSlave" "UART" "0x1000_0000"
+box SIM 560 400 150 66 "MemPortSlave" "SimCtrl" "0x1000_1000"
+box VGA 730 400 150 66 "MemPortSlave" "VGA" "0x2000_0000"
+box RAM 900 400 140 66 "Axi4LiteRam" "(I and D)" "0x8000_0000"
+arrow 130,320 ROM.n
+arrow 295,320 CLINT.n
+arrow 465,320 UART.n
+arrow 635,320 SIM.n
+arrow 805,320 VGA.n
+arrow 950,320 950,400
+arrow 990,320 990,400
+
+box IRQ 220 520 490 40 "CPU interrupts: msip, mtip, meip"
+arrow CLINT.s 295,520 "msip, mtip"
+arrow UART.s 465,520 "irq: meip"
+arrow SIM.s 635,520 "meip"
+arrow VGA.s 805,520 "video: VGA pins (harness, SDL)"
+arrow 1100,560 1100,433 RAM.e
+text 1090 550 "harness (sim/main.cpp): load port" end
+text 1090 567 "writes the program during reset" end
+text 20 590 "Soc (module SimTop). Every [checker] is an Axi4LiteChecker on that channel set." start
