@@ -1,0 +1,40 @@
+# SPDX-License-Identifier: MIT
+# One line per program: <name> <class> <first-task>
+#   class: user        runs on rv32emu (console output and exit code only)
+#          mmio-in     needs device input (UART RX), so it is only built
+#          vga         needs the VGA framebuffer (T5)
+#          privileged  needs traps, CSRs other than the counters, or CLINT
+# The benchmarks under benchmarks/ are listed here too, as VER-07 runs them.
+# scripts/check-rv32emu.sh rejects a malformed or duplicate line and a program
+# directory without one.
+#
+# jit runs from T1 on purpose: it is the directed fence.i program of T1-06.
+# In T1 to T3 a store is visible to fetch at once, so fence.i only has to
+# decode as a no-op for the stored instructions to run. From T4 on (T4-07),
+# the same program checks that fence.i makes them visible to fetch.
+#
+# add, lw and beq are the directed programs of the observation bundles
+# (OBS-03): main is in assembly, so a bundle shows the instruction it names.
+# hazards holds the sequences of T4-02 (HazardSpec), for the pipeline view
+# (OBS-09); it is a T4 program, though every core runs it.
+add        user     T1
+lw         user     T1
+beq        user     T1
+fibonacci  user     T1
+quicksort  user     T1
+sb         user     T1
+strings    user     T1
+muldiv     user     T1
+jit        user     T1
+qrcode     user     T1
+uart       mmio-in  T1
+dhrystone  user     T1
+duremark   user     T1
+ecall      privileged T3
+irqtrap    privileged T3
+hazards    user     T4
+perf       privileged T3
+vgatest    vga      T5
+nyancat    vga      T5
+qrcode-vga vga      T5
+shell      mmio-in  T5

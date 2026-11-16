@@ -1,0 +1,20 @@
+A
+42
+Hello
+RISC-V!
+ca2026Q1
+HELLO WORLD
+mycpu-T1-T5 ok
+0123456789ABCDE
+https://risc.org/
+The quick brown fox.
+Chisel 7.16, Scala 2.13!
+abcdefghijklmnopqrstuvwxyz
+mailto:student@example.edu?s=hi
+lowercase and UPPERCASE and 12345
+WIFI:S:ca2026-lab;T:WPA;P:pipeline5stage;;
+https://github.com/sysprog21/rv32emu/v1.3/
+https://github.com/sysprog21/ca2026-mycpu/x0
+{"pc":"0x80000000","inst":"0x00000013","rd":0}
+Dhrystone 1.1-mc, DureMark 1.0, QR: rv32i vs rv32im ~ 2026!!
+café ünïcödé bytes: <tab>	and "quotes" \ backslash!

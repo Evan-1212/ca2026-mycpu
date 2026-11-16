@@ -1,0 +1,8 @@
+hello from a system call
+write returned 25
+call 0 through write
+call 1 through write
+call 2 through write
+bad fd: -9
+unknown call: -38
+calls served: 7 (mcause 11)

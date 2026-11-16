@@ -1,0 +1,11 @@
+sb lanes -> lw: 0xb4a39281
+sh halves -> lw: 0x87651234
+lane 0: lb=1 lbu=1
+lane 1: lb=127 lbu=127
+lane 2: lb=-1 lbu=255
+lane 3: lb=-128 lbu=128
+half 0: lh=32513 lhu=32513
+half 1: lh=-32513 lhu=33023
+a0a1a25aa4a5a6a7
+c000 7fff c202 c303 
+sb: PASS

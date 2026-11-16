@@ -1,0 +1,53 @@
+// SPDX-License-Identifier: MIT
+// The palette and the six styles of the QR showcase (T5-10), as a list that
+// qr_vga.h and qr_vga.c include, each time with a definition of the one
+// macro they want (the others then expand to nothing), that the Makefiles
+// take the style names from, and that scripts/qr-contrast.py reads at build
+// time: it fails the build unless every dark color of a style is darker than
+// the style's light color and has a contrast of at least 4.5:1 against it
+// (WCAG 2 relative luminance), and unless each style has the error
+// correction level and the pixels per module that T5-10 fixes.
+//
+// One palette serves all styles, because the palette must not change while
+// a picture is on the screen (see mycpu.soc.Vga).
+
+#ifndef QR_DEF_COLOR
+#define QR_DEF_COLOR(name, index, rgb)
+#endif
+#ifndef QR_DEF_STYLE
+#define QR_DEF_STYLE(name, ecc, scale, light, d0, d1, d2, d3)
+#endif
+#ifndef QR_DEF_BADGE
+#define QR_DEF_BADGE(background, text)
+#endif
+
+// QR_DEF_COLOR(name, palette index, 0xRRGGBB)
+QR_DEF_COLOR(WHITE, 0, 0xffffff)
+QR_DEF_COLOR(BLACK, 1, 0x000000)
+QR_DEF_COLOR(CREAM, 2, 0xfff4d6)
+QR_DEF_COLOR(NAVY, 3, 0x12306b)
+QR_DEF_COLOR(FOREST, 4, 0x0b5d3b)
+QR_DEF_COLOR(PLUM, 5, 0x4a1d7a)
+QR_DEF_COLOR(BLUE, 6, 0x0d3b8c)
+QR_DEF_COLOR(INDIGO, 7, 0x4a2a9a)
+QR_DEF_COLOR(MAGENTA, 8, 0x8a1c7c)
+QR_DEF_COLOR(CRIMSON, 9, 0xa01a2e)
+QR_DEF_COLOR(AMBER, 10, 0xffd54a)
+QR_DEF_COLOR(MAROON, 11, 0x5a1010)
+
+// QR_DEF_STYLE(name, ECC level, pixels per module, light color,
+//              four dark colors: the steps of `gradient`, else four times
+//              the same)
+QR_DEF_STYLE(classic, M, 3, WHITE, BLACK, BLACK, BLACK, BLACK)
+QR_DEF_STYLE(color, M, 3, CREAM, NAVY, NAVY, NAVY, NAVY)
+QR_DEF_STYLE(dots, M, 3, WHITE, FOREST, FOREST, FOREST, FOREST)
+QR_DEF_STYLE(rounded, M, 3, WHITE, PLUM, PLUM, PLUM, PLUM)
+QR_DEF_STYLE(gradient, M, 3, WHITE, BLUE, INDIGO, MAGENTA, CRIMSON)
+QR_DEF_STYLE(logo, H, 2, WHITE, BLACK, BLACK, BLACK, BLACK)
+
+// QR_DEF_BADGE(background, text): the "CA26" badge of `logo`
+QR_DEF_BADGE(AMBER, MAROON)
+
+#undef QR_DEF_COLOR
+#undef QR_DEF_STYLE
+#undef QR_DEF_BADGE

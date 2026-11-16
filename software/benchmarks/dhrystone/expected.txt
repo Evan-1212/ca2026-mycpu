@@ -1,0 +1,17 @@
+Dhrystone(1.1-mc), 500 passes
+IntGlob                    5
+BoolGlob                   1
+Char1Glob                  65
+Char2Glob                  66
+Array1Glob[8]              7
+Array2Glob[8][7]           510
+PtrGlb->Discr              0
+PtrGlb->EnumComp           2
+PtrGlb->IntComp            17
+PtrGlb->StringComp         DHRYSTONE PROGRAM, SOME STRING
+PtrGlbNext->Discr          0
+PtrGlbNext->EnumComp       1
+PtrGlbNext->IntComp        18
+PtrGlbNext->StringComp     DHRYSTONE PROGRAM, SOME STRING
+PtrComp same in both       1
+check: PASS

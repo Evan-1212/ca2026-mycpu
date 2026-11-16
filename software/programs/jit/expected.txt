@@ -1,0 +1,1 @@
+jit: generated code returned 42

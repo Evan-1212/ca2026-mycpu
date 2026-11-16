@@ -1,0 +1,4 @@
+checksum: 88080046
+ticks: 6
+wfi: 2 more ticks, woken at least twice
+mie: 00000000, mip.MTIP: 1, bad causes: 0

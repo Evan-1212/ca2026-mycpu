@@ -1,0 +1,9 @@
+strings: .rodata is loaded
+0: alpha (5 bytes)
+1: bravo (5 bytes)
+2: charlie (7 bytes)
+3: delta (5 bytes)
+4: echo (4 bytes)
+snprintf: alpha-echo
+checksum=0x8d1ff097
+   42|42   |00042|beef|BEEF|z|%|-1234567890123|18446744073709551615
