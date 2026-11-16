@@ -1,0 +1,31 @@
+# SPDX-License-Identifier: MIT
+# CI of the PUBLIC repository (sysprog21/ca2026-mycpu). In the reference
+# repository it is docs/ci/public-ci.yml, which GitHub does not run; the
+# generator publishes it as .github/workflows/ci.yml (a `copy:` line of its
+# allowlist).
+#
+# The public tree does not compile: its blanks are the exercises. The one thing
+# to check there is that the blanks are the ones EXERCISES.md lists
+# (`make check-blanks`). It needs python3 and make only.
+#
+# The job runs in the upstream repository only. In a student's fork the count
+# goes down as blanks are filled in, which is the point of the exercise and not
+# a failure.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  blanks:
+    name: check-blanks
+    if: github.repository == 'sysprog21/ca2026-mycpu'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - run: make check-blanks

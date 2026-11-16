@@ -1,0 +1,30 @@
+# SPDX-License-Identifier: MIT
+# External repositories fetched by the Makefile (no submodules)
+/externals
+
+# Build output
+# build/ in every project too: ChiselSim writes <project>/build/chiselsim (Test user.dir)
+build/
+target/
+project/target/
+project/project/
+work/
+*.vcd
+*.fst
+
+# Python bytecode
+__pycache__/
+
+# Local assistant files
+claudedocs/
+
+# macOS metadata
+.DS_Store
+._*
+
+# Editor swap files
+.*.swp
+/*/build/
+
+# Agent worktrees
+/.claude/
