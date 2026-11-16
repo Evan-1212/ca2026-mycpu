@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: MIT
+# T2 block diagram: `make diagrams` renders it to block-diagram.svg (scripts/mkdiagram.py).
+diagram 900 560 "T2: the single-cycle core with a multiplier and a stalling divider"
+
+group cpu 140 20 740 480 "CPU (mycpu.rv32im)"
+box IF 170 60 180 50 "InstructionFetch" "pc register (T1)"
+box ID 430 44 260 82 "InstructionDecode" "Decode: the table" "RV32I, fence.i, M rows" "riscv.ImmGen"
+box EX 310 170 340 98 "Execute" "T1's Execute: ALU, branch, target" "Multiplier (combinational)" "Divider (34 or 66 cycles)" "req / resp handshake, busy"
+box RF 750 194 120 50 "riscv.RegFile"
+box MEM 310 320 180 66 "MemoryAccess" "(T1)"
+box WB 560 320 140 66 "WriteBack" "(T1)"
+box CTL 170 430 690 54 "CPU: completes (no stage waits any more) -> commit" "halt cause and retire record: T1's functions"
+
+arrow IF.e ID.w "inst"
+arrow ID.s@0.4 534,170 "decoded, m"
+arrow RF.w EX.e "rs1, rs2"
+arrow 400,268 400,320 "alu_result"
+arrow 565,268 565,300 630,300 630,320 "result"
+arrow MEM.e WB.w "load value"
+arrow WB.e@0.8 810,373 810,244 "wdata"
+arrow EX.w 260,219 260,110 "redirect"
+arrow 196,430 196,110 "commit"
+arrow EX.e@0.9 725,258 725,430 "done"
+arrow 20,85 IF.w both "imem"
+arrow 20,353 MEM.w both "dmem"
+arrow 380,484 380,530 "retire (TrapRetire)"
+arrow 660,484 660,530 "halted"
+text 20 550 "Top (module SimTop): T1's system around this core: riscv.Ram, DataBus, Uart, SimCtrl"
