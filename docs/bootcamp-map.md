@@ -93,7 +93,7 @@ The exercises of T3 rest on the Privileged spec more than on the bootcamp, which
 | 4.1 | A stage register with enable and flush | `Stage.scala` | 5.6: `Stage` | handout §T4.1 |
 | 4.2 | When an instruction must wait in ID | `Hazard.scala` | 5.7: `Forward` | handout §T4.2 |
 | 4.3 | Forwarding into ID | `CPU.scala` | none | handout §T4.3 |
-| 4.4 | Flushes and redirects | `CPU.scala` | none | handout §T4.4 |
+| 4.4 | Flushes and redirects | `CPU.scala` | 5.6: `PipelineFlush` | handout §T4.4 |
 | 4.5 | Serializing CSR instructions, mret, wfi and fence.i | `CPU.scala` | none | Privileged spec §2.1; handout §T4.5 |
 | 4.6 | The commit stage: trap or commit | `CPU.scala` | none | handout §T4.4 |
 | 4.7 | Where an interrupt is taken | `CPU.scala` | none | Privileged spec §3.3.3; handout §T4.4 |

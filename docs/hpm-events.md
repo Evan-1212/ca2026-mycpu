@@ -59,7 +59,7 @@ the request, so events 4 to 7 read 0. A cycle without a retired instruction is t
   division by zero or the signed overflow;
 - a cycle in which a trap is taken (event 8; event 3 counts it as well);
 - a cycle in which a WFI waits for an interrupt (event 8);
-- a cycle in which a store waits for a full UART transmit FIFO (event 8; T5 counts it as event 7).
+- a cycle in which a store waits for a full UART transmit FIFO (event 8; T4 and T5 count it as event 7).
 
 A trap taken while a division waits for the divider abandons the division, and that cycle is the
 trap's ("other"), not the divider's.

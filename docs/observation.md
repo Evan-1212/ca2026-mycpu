@@ -174,7 +174,7 @@ instruction at the PC executes, in T4 and T5 in the commit stage (MEM).
 | `irq` | 1 | comb | an interrupt is pending, enabled in `mie`, and `mstatus.MIE` is set (`io.irq.valid`): the core takes it at the next instruction boundary it may |
 | `mip` | 32 | state | the `mip` CSR, from the interrupt lines (`io.mip`; the CLINT's `mtip` and `msip` are registers) |
 | `mie`, `mstatus`, `mtvec`, `mepc`, `mcause` | 32 | state | the CSRs as they are after the edge that starts the cycle (`CsrFile.mie`, ...); a trap taken in cycle N shows its `mepc` and `mcause` in cycle N + 1 |
-| `wfi` | 1 | state | a WFI waits (T3: `CPU.wfi_waiting`; T4, T5: MEM holds a WFI that waits, `mem_waiting`) |
+| `wfi` | 1 | state | a WFI waits (T3: `CPU.wfi_waiting`; T4, T5: MEM holds a WFI that waits, `mem_waiting`): a register, high from the second cycle of the wait through the cycle in which the WFI retires |
 
 ### `pipe` (T4, T5)
 
@@ -406,8 +406,8 @@ by a factor of 43 to 76, which a web server's transfer compression gives for fre
 | `make check-obs` | for each of T1 to T5 (T4 and T5 on `Forward`): bundles of `add`, `lw`, `beq` (directed assembly programs in `software/programs/`), `muldiv` and `uart` (20,000 cycles at most) that validate, the refusals above, and the Dhrystone budget |
 | `sbt singleCycle/testOnly mycpu.singlecycle.ObsSpec` | each probe equals the signal it names, cycle by cycle |
 | `sbt rv32im/testOnly mycpu.rv32im.T2ObsSpec` | the same for T2, the divider included |
-| `sbt csrTrap/testOnly mycpu.csrtrap.CsrProbesSpec` | T3: `csr.mepc`, `mcause`, `mstatus`, `mie`, `mtvec` equal the golden model's in every cycle of a timer interrupt, an `ecall` and their `mret`s; `trap`, `cause`, `irq`, `mret`, `mip` and the CSR access fields say what each record is (`wfi` is not exercised) |
-| `sbt pipeline/testOnly mycpu.pipeline.PipeProbesSpec` | per variant, on the `hazards` program: `pipe.loadUseStall` and the EX bubbles give `HazardSpec`'s counts for its 21 sequences (the numbers the browser test counts); the `stall`, `flush` and `bubble` bits of ID, EX and MEM say what the stage holds next (also on `Forward` with wait states); each stage's `inst` is the program's word at its `pc`; MEM holds each committed instruction |
+| `sbt csrTrap/testOnly mycpu.csrtrap.CsrProbesSpec` | T3: `csr.mepc`, `mcause`, `mstatus`, `mie`, `mtvec` equal the golden model's in every cycle of a timer interrupt, an `ecall` and their `mret`s; `trap`, `cause`, `irq`, `mret`, `mip` and the CSR access fields say what each record is (`wfi` is exercised by `WfiSpec`) |
+| `sbt pipeline/testOnly mycpu.pipeline.PipeProbesSpec` | per variant, on the `hazards` program: `pipe.loadUseStall` and the EX bubbles give `HazardSpec`'s counts for its 21 sequences (the bubbles only, for the 4 rows whose stall counts it holds back) (the numbers the browser test counts); the `stall`, `flush` and `bubble` bits of ID, EX and MEM say what the stage holds next (also on `Forward` with wait states); each stage's `inst` is the program's word at its `pc`; MEM holds each committed instruction |
 | `sbt soc/testOnly mycpu.soc.BusProbeSpec` | each `bus` field equals the data master's interface as the crossbar sees it, in every cycle, with and without RAM wait states; the transfers of two stores and two loads, OKAY from the RAM and DECERR where no device is (`aw.addr` and `ar.addr`, and `b.ready` and `r.ready`, carry equal signals, so a swap of them goes unseen) |
 
 ## Interactive execution: measured, go and no-go
