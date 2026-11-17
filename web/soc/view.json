@@ -1,0 +1,6 @@
+{
+ "title": "SoC bus",
+ "order": 14,
+ "tasks": ["T5"],
+ "summary": "The SoC block diagram with the D12 memory map, the five AXI4-Lite channels of the data master at the cursor, and the transactions of the window on their slaves."
+}

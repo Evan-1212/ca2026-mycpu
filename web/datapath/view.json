@@ -1,0 +1,5 @@
+{
+ "title": "Datapath",
+ "order": 10,
+ "summary": "The modules of the core and the signals between them, with the value of every probe field at the cursor."
+}

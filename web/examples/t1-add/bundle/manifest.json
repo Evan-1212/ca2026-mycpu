@@ -1,0 +1,70 @@
+{
+ "format": "mycpu-obs-bundle",
+ "schema": "1.0",
+ "header": {
+  "task": "T1",
+  "variant": "single-cycle",
+  "commit": "872ee4c5266df6340ce1e510a2b386e3369963c6",
+  "top": "mycpu.singlecycle.Top",
+  "program": "add",
+  "elf_sha256": "0cb4fac7fd100b274f5c08cc9b4ede04c4b268ca4501b66783f4ccdd4d0efbb6",
+  "schema": "1.0",
+  "uart_divider": 16,
+  "ram_base": 2147483648,
+  "ram_bytes": 4194304,
+  "conventions": {
+   "edge": "rising",
+   "sample": "after-start-edge",
+   "cycle0": "first-after-reset",
+   "uart_bit": "uart_divider",
+   "pixel_enable": "vga.tick"
+  }
+ },
+ "run": {
+  "cycles": 570,
+  "instret": 570,
+  "how": "exit=0",
+  "first": 17,
+  "count": 40,
+  "limit": 40
+ },
+ "groups": [
+  "core",
+  "uart",
+  "retire"
+ ],
+ "chunks": [
+  {
+   "file": "cycles/000000000017.json",
+   "bytes": 25945,
+   "sha256": "37ad0a41ce00dbf54eaea01c36bca55a1f274cb2f8f66603cc1895263ccff971",
+   "first": 17,
+   "count": 40
+  }
+ ],
+ "uart": {
+  "file": "uart.bin",
+  "bytes": 0,
+  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+ },
+ "vga": [],
+ "tests": {
+  "sha256": "beffdc3aab09c531c7cf57ac7c24ea6c34dfa7789958fc4b31223b51f9a7b66e",
+  "results": [
+   {
+    "name": "exit-code",
+    "result": "pass",
+    "detail": "0 (expected 0)"
+   },
+   {
+    "name": "expected-output",
+    "result": "pass"
+   }
+  ]
+ },
+ "sources": {
+  "trace_sha256": "a68571ac182cd6d72935ff68359ca65fd9d4346c3e392100f6fad1a6f9af04ef",
+  "retire_log_sha256": "90da74a7b5300f316a5ec5d9ff2202077bbcfe7a862441ff2a2d680ced33d8fd",
+  "uart_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+ }
+}

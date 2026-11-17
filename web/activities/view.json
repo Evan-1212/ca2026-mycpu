@@ -1,0 +1,6 @@
+{
+ "title": "Activities",
+ "order": 30,
+ "tasks": ["T1", "T2", "T3", "T4", "T5"],
+ "summary": "Predict what the core does in chosen cycles, then compare with the recorded run."
+}

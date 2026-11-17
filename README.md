@@ -205,8 +205,8 @@ The pins of the external repositories are variables of the `Makefile` (`BOOTCAMP
 - `EXERCISES.md`: the file and line of every blank
 - each task's `README.md`: goals, block diagram, exercises, commands, expected results, and what
   to submit
-- the course handout, published by the course as one note per task: the exercise comments cite
-  its sections as `handout §T<n>.<m>`
+- the [course handout](https://hackmd.io/@sysprog/arch2026-lab3) (Lab 3 on HackMD): the exercise
+  comments cite its sections as `handout §T<n>.<m>`
 
 ## License
 

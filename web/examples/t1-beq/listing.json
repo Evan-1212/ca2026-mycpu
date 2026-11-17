@@ -1,0 +1,120 @@
+{
+ "elf_sha256": "5ddb3f706912c2bbbfaa7a750cc6692cf1867c6fccd5cc3db669c48379769a85",
+ "lines": {
+  "80000044": {
+   "function": "main",
+   "text": "addi sp,sp,-16",
+   "word": "ff010113"
+  },
+  "80000048": {
+   "function": "main",
+   "text": "sw ra,12(sp)",
+   "word": "00112623"
+  },
+  "8000004c": {
+   "function": "main",
+   "text": "li t0,5",
+   "word": "00500293"
+  },
+  "80000050": {
+   "function": "main",
+   "text": "li t1,0",
+   "word": "00000313"
+  },
+  "80000054": {
+   "function": "loop",
+   "text": "beqz t0,80000064 <done>",
+   "word": "00028863"
+  },
+  "80000058": {
+   "function": "loop",
+   "text": "addi t0,t0,-1",
+   "word": "fff28293"
+  },
+  "8000005c": {
+   "function": "loop",
+   "text": "addi t1,t1,1",
+   "word": "00130313"
+  },
+  "80000060": {
+   "function": "loop",
+   "text": "beqz zero,80000054 <loop>",
+   "word": "fe000ae3"
+  },
+  "80000064": {
+   "function": "done",
+   "text": "li a1,5",
+   "word": "00500593"
+  },
+  "80000068": {
+   "function": "done",
+   "text": "beq t1,a1,80000080 <done+0x1c>",
+   "word": "00b30c63"
+  },
+  "80000080": {
+   "function": "done",
+   "text": "auipc a0,0x2",
+   "word": "00002517"
+  },
+  "80000084": {
+   "function": "done",
+   "text": "addi a0,a0,-676 # 80001ddc <ok>",
+   "word": "d5c50513"
+  },
+  "80000088": {
+   "function": "done",
+   "text": "jal 800011b0 <puts>",
+   "word": "128010ef"
+  },
+  "800011b0": {
+   "function": "puts",
+   "text": "addi sp,sp,-16",
+   "word": "ff010113"
+  },
+  "800011b4": {
+   "function": "puts",
+   "text": "sw s0,8(sp)",
+   "word": "00812423"
+  },
+  "800011b8": {
+   "function": "puts",
+   "text": "sw ra,12(sp)",
+   "word": "00112623"
+  },
+  "800011bc": {
+   "function": "puts",
+   "text": "mv s0,a0",
+   "word": "00050413"
+  },
+  "800011c0": {
+   "function": "puts",
+   "text": "lbu a0,0(a0)",
+   "word": "00054503"
+  },
+  "800011c4": {
+   "function": "puts",
+   "text": "beqz a0,800011d8 <puts+0x28>",
+   "word": "00050a63"
+  },
+  "800011c8": {
+   "function": "puts",
+   "text": "addi s0,s0,1",
+   "word": "00140413"
+  },
+  "800011cc": {
+   "function": "puts",
+   "text": "jal 800019dc <platform_putchar>",
+   "word": "011000ef"
+  },
+  "800019dc": {
+   "function": "platform_putchar",
+   "text": "lui a5,0x10001",
+   "word": "100017b7"
+  },
+  "800019e0": {
+   "function": "platform_putchar",
+   "text": "zext.b a0,a0",
+   "word": "0ff57513"
+  }
+ }
+}

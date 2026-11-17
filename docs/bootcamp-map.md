@@ -12,7 +12,7 @@ It names where to look, not what to write: no entry describes the content of a b
 Notebook numbers and section titles are those of chisel-bootcamp at the commit this repository
 pins. "Unprivileged spec" is *The RISC-V Instruction Set Manual, Volume I: Unprivileged
 Architecture*; its chapters are cited by name, as in the exercise comments. "Handout" is the
-course handout, whose sections are numbered by task.
+[course handout](https://hackmd.io/@sysprog/arch2026-lab3), whose sections are numbered by task.
 
 ## Notebooks used
 

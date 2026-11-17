@@ -1,0 +1,4 @@
+# SPDX-License-Identifier: MIT
+# riscv-arch-test commit for ACT4 (D6). The last word of this file is the pin;
+# the top-level Makefile and tests/act4/Makefile read it.
+70907fc6710829794739d48ae7a8be861360263f

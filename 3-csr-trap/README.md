@@ -373,12 +373,12 @@ rv32im_zicntr_zicsr_zifencei_zihpm_zvl32b_zvl64b_zvl128b_zvl256b
 ```
 
 (the `zvl*` entries are an artifact of Sail's printer: `V.support_level` is `Disabled`). What it
-sets, and what must go into the `sail.json` of the ACT4 DUT configurations (VER-01), together with
+sets, and what must go into the `sail.json` of the ACT4 DUT configurations (`tests/act4/`), together with
 the memory regions of `link.ld`:
 
 | Key | Value | Why |
 |-----|-------|-----|
-| `extensions.*.supported` | `false` for all but `M`, `Zicsr`, `Zicntr`, `Zihpm`, `Zifencei` | M-mode only, no A/F/D/C/S/U (D5) |
+| `extensions.*.supported` | `false` for all but `M`, `Zicsr`, `Zicntr`, `Zihpm`, `Zifencei` | M-mode only, no A/F/D/C/S/U |
 | `extensions.M.mutable_misa` | `false` | `misa` ignores writes |
 | `extensions.V.support_level`, `extensions.Stateen.*` | `Disabled`, `false` | no vectors, no `mstateen` CSRs |
 | `base.mstatus.fs_legal_states`, `vs_legal_states` | `ExtContext_Off` | `mstatus.FS` and `VS` read 0 (Sail requires it without F and S) |
@@ -386,7 +386,7 @@ the memory regions of `link.ld`:
 | `base.hpmevent_width_bits` | `4` | `mhpmevent3..10` are 4-bit fields |
 | `base.mcountinhibit.writable_bits` | `0x0000_07FD` | CY, IR, HPM3..10 |
 | `memory.physaddr_bits`, `memory.pmp.count` | `32`, `0` | no Sv32, no PMP CSRs |
-| `memory.misaligned.exceptions.load_store` | `AlignmentException` | misaligned loads and stores trap (D5) |
+| `memory.misaligned.exceptions.load_store` | `AlignmentException` | misaligned loads and stores trap |
 | `platform.event_selectors` | `[]` | Sail's own hpm events (fence, misaligned access) count nothing |
 
 Checked by experiment, with assembly programs run on Sail under this configuration (2026-11-15):
@@ -421,8 +421,8 @@ What does not agree, and no configuration key changes it:
   M-mode-only hart. A test that reads `mstatus` before writing it would differ.
 - **The CLINT's `mtimecmp` resets to 0 on Sail**, so MTIP is pending from reset (`mip` reads 0x80).
   `platform.clint` has only `supported`, `base` and `size`. This design resets `mtimecmp` to all
-  ones (T3-05). A test that enables MTIE, or reads `mip`, before it writes `mtimecmp` would
-  differ; VER-01 has to confirm that no ACT4 test does.
+  ones. A test that enables MTIE, or reads `mip`, before it writes `mtimecmp` would
+  differ; the ACT4 runs have to confirm that no ACT4 test does.
 - **`mcycle` and `time` follow Sail's platform clock** (`platform.instructions_per_tick`), not a
   cycle count: no value of them is comparable, only that they advance.
 - **`mhpmcounter3..10` count this design's events** (`docs/hpm-events.md`); on Sail, with no
@@ -430,7 +430,7 @@ What does not agree, and no configuration key changes it:
   then reads the counter differs, unless the counter is inhibited.
 
 Not checked here: the external interrupt (Sail raises it from its own test device), the time a
-WFI waits, and the device regions of `sail.json`; they belong to VER-01.
+WFI waits, and the device regions of `sail.json`; they belong to the ACT4 runs (`tests/act4/README.md`).
 
 ## What You Submit
 

@@ -1,0 +1,5 @@
+{
+ "title": "Waveforms",
+ "order": 20,
+ "summary": "Every probe field of the bundle as a waveform, with two cursors, a trigger and a UART decoder that traces a character back to its store."
+}

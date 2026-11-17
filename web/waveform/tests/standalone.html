@@ -1,0 +1,40 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: MIT -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Waveform and board test page</title>
+<style>
+  body { margin: 0; background: #ffffff; color: #1f2328; font: 14px system-ui, sans-serif; }
+  @media (prefers-color-scheme: dark) { body { background: #16191d; color: #e6e8eb; } }
+  nav { padding: 6px 12px; display: flex; gap: 6px; }
+</style>
+</head>
+<body>
+<!-- The test host of web/waveform/tests/host.js. ?bundle=<url of a bundle directory>&view=waveform|board -->
+<nav>
+  <button type="button" data-show="waveform">Waveforms</button>
+  <button type="button" data-show="board">Board</button>
+</nav>
+<main id="view"></main>
+<script type="module">
+  import { createHost } from './host.js';
+
+  const params = new URLSearchParams(location.search);
+  const container = document.getElementById('view');
+  try {
+    const host = await createHost(params.get('bundle') || '../../../build/web/bundles/t1-uart/', container);
+    window.testHost = host;
+    for (const b of document.querySelectorAll('[data-show]')) {
+      b.addEventListener('click', () => host.show(b.dataset.show));
+    }
+    await host.show(params.get('view') || 'waveform');
+    document.body.dataset.host = 'ready';
+  } catch (e) {
+    document.body.dataset.host = 'error';
+    container.textContent = `The test host failed: ${e.message}`;
+  }
+</script>
+</body>
+</html>

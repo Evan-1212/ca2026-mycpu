@@ -59,8 +59,8 @@ of the repository; `make check-diagrams` fails when the two differ.
 | Base | Size | Slave | Notes |
 |------|------|-------|-------|
 | `0x0000_1000` | 4 KiB | boot ROM | the reset vector; a write is answered `SLVERR` (a store access fault) |
-| `0x0200_0000` | 64 KiB | CLINT | `msip`, `mtimecmp`, `mtime` (SiFive layout, T3-05) |
-| `0x1000_0000` | 4 KiB | UART | `TXDATA`, `RXDATA`, `STATUS`, `CTRL` (T1-08); RX interrupt |
+| `0x0200_0000` | 64 KiB | CLINT | `msip`, `mtimecmp`, `mtime` (SiFive layout, `3-csr-trap/README.md`) |
+| `0x1000_0000` | 4 KiB | UART | `TXDATA`, `RXDATA`, `STATUS`, `CTRL` (`1-single-cycle/README.md`); RX interrupt |
 | `0x1000_1000` | 4 KiB | SimCtrl | simulation only: `EXIT`, `PUTC`, counters, `MARK`, `MEIP` |
 | `0x2000_0000` | 64 KiB | VGA | `ID`, `STATUS`, `CTRL`, `FRAME`, `SWAPS`, palette, two buffers (`mycpu.soc.Vga`) |
 | `0x8000_0000` | 4 MiB | RAM | programs and data |

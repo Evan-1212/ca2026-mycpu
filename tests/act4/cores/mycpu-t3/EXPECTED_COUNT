@@ -1,0 +1,15 @@
+# SPDX-License-Identifier: MIT
+# Tests per ACT4 suite at the riscv-arch-test commit of tests/act4/VERSION,
+# with mycpu-t3.yaml and EXCLUDED as they are. Measured, not estimated:
+# `make -C tests/act4 elfs TASK=3 && make -C tests/act4 expected-count TASK=3`
+# rewrites the lines below and keeps these comments (README.md, "Pin bump").
+ExceptionsSm 4
+I 39
+InterruptsSm 7
+M 8
+Sm 28
+Zicntr 2
+Zicsr 6
+Zifencei 1
+Zihpm 2
+Zmmul 4

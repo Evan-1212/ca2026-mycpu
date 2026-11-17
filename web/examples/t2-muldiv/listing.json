@@ -1,0 +1,60 @@
+{
+ "elf_sha256": "da97090a93e9b5689fa60fad4e51d143ac7e6886571ec1f9c1cfbd5374943c97",
+ "lines": {
+  "80000b9c": {
+   "function": "format.constprop.0",
+   "text": "remu a5,a0,s3",
+   "word": "033577b3"
+  },
+  "80000ba0": {
+   "function": "format.constprop.0",
+   "text": "addi s11,s11,1",
+   "word": "001d8d93"
+  },
+  "80000ba4": {
+   "function": "format.constprop.0",
+   "text": "add a1,s10,s11",
+   "word": "01bd05b3"
+  },
+  "80000ba8": {
+   "function": "format.constprop.0",
+   "text": "mv a3,a0",
+   "word": "00050693"
+  },
+  "80000bac": {
+   "function": "format.constprop.0",
+   "text": "add a5,s2,a5",
+   "word": "00f907b3"
+  },
+  "80000bb0": {
+   "function": "format.constprop.0",
+   "text": "lbu a5,0(a5)",
+   "word": "0007c783"
+  },
+  "80000bb4": {
+   "function": "format.constprop.0",
+   "text": "divu a0,a0,s3",
+   "word": "03355533"
+  },
+  "8000117c": {
+   "function": "format.constprop.0",
+   "text": "li s3,16",
+   "word": "01000993"
+  },
+  "80001180": {
+   "function": "format.constprop.0",
+   "text": "li s11,0",
+   "word": "00000d93"
+  },
+  "80001184": {
+   "function": "format.constprop.0",
+   "text": "addi s10,sp,24",
+   "word": "01810d13"
+  },
+  "80001188": {
+   "function": "format.constprop.0",
+   "text": "j 80000b9c <format.constprop.0+0x350>",
+   "word": "a15ff06f"
+  }
+ }
+}

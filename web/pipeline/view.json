@@ -1,0 +1,6 @@
+{
+ "title": "Pipeline",
+ "order": 12,
+ "tasks": ["T4", "T5"],
+ "summary": "The five stages at the cursor, a pipeline chart with its stalls, flushes and bubbles, the hazards of the window, and the variants side by side."
+}

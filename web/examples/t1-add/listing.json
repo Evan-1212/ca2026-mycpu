@@ -1,0 +1,175 @@
+{
+ "elf_sha256": "0cb4fac7fd100b274f5c08cc9b4ede04c4b268ca4501b66783f4ccdd4d0efbb6",
+ "lines": {
+  "80000044": {
+   "function": "main",
+   "text": "addi sp,sp,-16",
+   "word": "ff010113"
+  },
+  "80000048": {
+   "function": "main",
+   "text": "sw ra,12(sp)",
+   "word": "00112623"
+  },
+  "8000004c": {
+   "function": "main",
+   "text": "li t0,1234",
+   "word": "4d200293"
+  },
+  "80000050": {
+   "function": "main",
+   "text": "li t1,-34",
+   "word": "fde00313"
+  },
+  "80000054": {
+   "function": "main",
+   "text": "add t2,t0,t1",
+   "word": "006283b3"
+  },
+  "80000058": {
+   "function": "main",
+   "text": "add t3,t2,t2",
+   "word": "00738e33"
+  },
+  "8000005c": {
+   "function": "main",
+   "text": "lui t4,0x80000",
+   "word": "80000eb7"
+  },
+  "80000060": {
+   "function": "main",
+   "text": "addi t4,t4,-1 # 7fffffff <_start-0x1>",
+   "word": "fffe8e93"
+  },
+  "80000064": {
+   "function": "main",
+   "text": "li t5,1",
+   "word": "00100f13"
+  },
+  "80000068": {
+   "function": "main",
+   "text": "add t6,t4,t5",
+   "word": "01ee8fb3"
+  },
+  "8000006c": {
+   "function": "main",
+   "text": "add zero,t0,t1",
+   "word": "00628033"
+  },
+  "80000070": {
+   "function": "main",
+   "text": "lui a1,0x1",
+   "word": "000015b7"
+  },
+  "80000074": {
+   "function": "main",
+   "text": "addi a1,a1,-1696 # 960 <_start-0x7ffff6a0>",
+   "word": "96058593"
+  },
+  "80000078": {
+   "function": "main",
+   "text": "bne t3,a1,8000009c <main+0x58>",
+   "word": "02be1263"
+  },
+  "8000007c": {
+   "function": "main",
+   "text": "lui a1,0x80000",
+   "word": "800005b7"
+  },
+  "80000080": {
+   "function": "main",
+   "text": "bne t6,a1,8000009c <main+0x58>",
+   "word": "00bf9e63"
+  },
+  "80000084": {
+   "function": "main",
+   "text": "bnez zero,8000009c <main+0x58>",
+   "word": "00001c63"
+  },
+  "80000088": {
+   "function": "main",
+   "text": "auipc a0,0x2",
+   "word": "00002517"
+  },
+  "8000008c": {
+   "function": "main",
+   "text": "addi a0,a0,-656 # 80001df8 <ok>",
+   "word": "d7050513"
+  },
+  "80000090": {
+   "function": "main",
+   "text": "jal 800011cc <puts>",
+   "word": "13c010ef"
+  },
+  "800011cc": {
+   "function": "puts",
+   "text": "addi sp,sp,-16",
+   "word": "ff010113"
+  },
+  "800011d0": {
+   "function": "puts",
+   "text": "sw s0,8(sp)",
+   "word": "00812423"
+  },
+  "800011d4": {
+   "function": "puts",
+   "text": "sw ra,12(sp)",
+   "word": "00112623"
+  },
+  "800011d8": {
+   "function": "puts",
+   "text": "mv s0,a0",
+   "word": "00050413"
+  },
+  "800011dc": {
+   "function": "puts",
+   "text": "lbu a0,0(a0)",
+   "word": "00054503"
+  },
+  "800011e0": {
+   "function": "puts",
+   "text": "beqz a0,800011f4 <puts+0x28>",
+   "word": "00050a63"
+  },
+  "800011e4": {
+   "function": "puts",
+   "text": "addi s0,s0,1",
+   "word": "00140413"
+  },
+  "800011e8": {
+   "function": "puts",
+   "text": "jal 800019f8 <platform_putchar>",
+   "word": "011000ef"
+  },
+  "800011ec": {
+   "function": "puts",
+   "text": "lbu a0,0(s0)",
+   "word": "00044503"
+  },
+  "800011f0": {
+   "function": "puts",
+   "text": "bnez a0,800011e4 <puts+0x18>",
+   "word": "fe051ae3"
+  },
+  "800019f8": {
+   "function": "platform_putchar",
+   "text": "lui a5,0x10001",
+   "word": "100017b7"
+  },
+  "800019fc": {
+   "function": "platform_putchar",
+   "text": "zext.b a0,a0",
+   "word": "0ff57513"
+  },
+  "80001a00": {
+   "function": "platform_putchar",
+   "text": "sw a0,4(a5) # 10001004 <_start-0x6fffeffc>",
+   "word": "00a7a223"
+  },
+  "80001a04": {
+   "function": "platform_putchar",
+   "text": "ret",
+   "word": "00008067"
+  }
+ }
+}

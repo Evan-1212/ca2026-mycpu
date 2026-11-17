@@ -1,0 +1,48 @@
+{
+ "examples": [
+  {
+   "id": "t1-add",
+   "task": "T1",
+   "program": "add",
+   "title": "T1, add: register sums, a sum that wraps, a sum written to x0",
+   "bundle": "examples/t1-add/bundle",
+   "listing": "examples/t1-add/listing.json",
+   "first": 17,
+   "count": 40,
+   "bytes": 31075
+  },
+  {
+   "id": "t1-lw",
+   "task": "T1",
+   "program": "lw",
+   "title": "T1, lw: words loaded from a table, a load to x0",
+   "bundle": "examples/t1-lw/bundle",
+   "listing": "examples/t1-lw/listing.json",
+   "first": 17,
+   "count": 40,
+   "bytes": 31663
+  },
+  {
+   "id": "t1-beq",
+   "task": "T1",
+   "program": "beq",
+   "title": "T1, beq: a loop of branches not taken and taken",
+   "bundle": "examples/t1-beq/bundle",
+   "listing": "examples/t1-beq/listing.json",
+   "first": 17,
+   "count": 40,
+   "bytes": 29284
+  },
+  {
+   "id": "t2-muldiv",
+   "task": "T2",
+   "program": "muldiv",
+   "title": "T2, muldiv: a division and the stall around it",
+   "bundle": "examples/t2-muldiv/bundle",
+   "listing": "examples/t2-muldiv/listing.json",
+   "first": 545,
+   "count": 48,
+   "bytes": 33686
+  }
+ ]
+}

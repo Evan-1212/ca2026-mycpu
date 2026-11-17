@@ -1,0 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Template of the command that runs one ELF on the T3 Verilator model. tests/act4/Makefile
+# fills in the @...@ placeholders (absolute paths are known only at run time) and hands the
+# line to riscv-arch-test's run_tests.py, which appends the ELF path. Leading NAME=value
+# words become the environment of run_one.sh.
+SIM="@SIM@" MAX_CYCLES=@MAX_CYCLES@ SIM_ARGS="@SIM_ARGS@" "@ACT4@/run_one.sh"

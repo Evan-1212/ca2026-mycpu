@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: MIT
+# ACT4 test groups (suite names, as in EXPECTED_COUNT) that tests/act4/Makefile
+# passes to the generator as EXCLUDE_EXTENSIONS, one per line, each with its
+# reason after a '#':
+#   <suite>  # <why the T3 core cannot or need not pass it>
+#
+# None is excluded. At riscv-arch-test 70907fc, with mycpu-t3.yaml, the
+# generator selects 101 tests in 10 suites, and all of them pass on Sail 0.16
+# with sail.json (`make ref TASK=3`). The Sail disagreements recorded in
+# 3-csr-trap/README.md do not reach any of them (tests/act4/README.md, "Known
+# Sail disagreements"), so the T3 core must pass every one.

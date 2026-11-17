@@ -1,0 +1,30 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: MIT -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>MyCPU Observation</title>
+<link rel="stylesheet" href="style.css">
+<script type="module" src="app.js"></script>
+</head>
+<body>
+<header class="site">
+  <a class="brand" href="#/">MyCPU observation</a>
+  <nav id="menu" aria-label="Views"></nav>
+</header>
+<section id="bundle-bar" class="bar" hidden></section>
+<section id="cursor-bar" class="bar" hidden></section>
+<main id="main">
+  <p id="boot-note" class="note">
+    This page is a set of JavaScript modules, which a browser loads only from a web server.
+    From the repository's root, run <code>make -C web serve</code> (or
+    <code>python3 -m http.server</code>) and open <code>http://localhost:8000/web/</code>.
+  </p>
+</main>
+<footer class="site">
+  Replays of recorded simulation runs of the RTL. Progress is kept in this browser only and is not used for grading.
+</footer>
+</body>
+</html>

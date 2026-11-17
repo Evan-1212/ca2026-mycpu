@@ -19,7 +19,8 @@ The data flows like this:
 4. `scripts/obs-validate.py` checks a bundle against the schema and against the retire log.
 
 `make obs PROG=<name>` in a task directory runs steps 2 to 4 on the design of step 1 and writes
-the bundle to `build/t<n>/obs/<name>/bundle/` (the default model of task T<n>). `make check-obs`
+the bundle to `build/<model>/obs/<name>/bundle/`: the model is `t1`, `t2` or `t3` for T1 to T3, and
+`t4-forward` or `t5-forward` for T4 and T5 (their default `VARIANT=Forward`). `make check-obs`
 at the top runs the acceptance set for every task.
 
 ## Sampling

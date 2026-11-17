@@ -1,0 +1,5 @@
+{
+ "title": "Virtual board",
+ "order": 50,
+ "summary": "The recorded design as a virtual teaching board: its parts, a UART terminal, a VGA screen and probes that open the waveform."
+}

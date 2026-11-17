@@ -1,0 +1,180 @@
+{
+ "elf_sha256": "9f5492051200cce114a5abe6906dcafab691055f2b994417cbcaafcbbe66aa93",
+ "lines": {
+  "80000044": {
+   "function": "main",
+   "text": "addi sp,sp,-16",
+   "word": "ff010113"
+  },
+  "80000048": {
+   "function": "main",
+   "text": "sw ra,12(sp)",
+   "word": "00112623"
+  },
+  "8000004c": {
+   "function": "main",
+   "text": "auipc t0,0x2",
+   "word": "00002297"
+  },
+  "80000050": {
+   "function": "main",
+   "text": "addi t0,t0,36 # 80002070 <table>",
+   "word": "02428293"
+  },
+  "80000054": {
+   "function": "main",
+   "text": "lw t1,0(t0)",
+   "word": "0002a303"
+  },
+  "80000058": {
+   "function": "main",
+   "text": "lw t2,4(t0)",
+   "word": "0042a383"
+  },
+  "8000005c": {
+   "function": "main",
+   "text": "addi t3,t0,12",
+   "word": "00c28e13"
+  },
+  "80000060": {
+   "function": "main",
+   "text": "lw t4,-4(t3)",
+   "word": "ffce2e83"
+  },
+  "80000064": {
+   "function": "main",
+   "text": "lw zero,0(t0)",
+   "word": "0002a003"
+  },
+  "80000068": {
+   "function": "main",
+   "text": "lui a1,0x11223",
+   "word": "112235b7"
+  },
+  "8000006c": {
+   "function": "main",
+   "text": "addi a1,a1,836 # 11223344 <_start-0x6eddccbc>",
+   "word": "34458593"
+  },
+  "80000070": {
+   "function": "main",
+   "text": "bne t1,a1,800000a0 <main+0x5c>",
+   "word": "02b31863"
+  },
+  "80000074": {
+   "function": "main",
+   "text": "lui a1,0xdeadc",
+   "word": "deadc5b7"
+  },
+  "80000078": {
+   "function": "main",
+   "text": "addi a1,a1,-273 # deadbeef <__stack_top+0x5e6dbeef>",
+   "word": "eef58593"
+  },
+  "8000007c": {
+   "function": "main",
+   "text": "bne t2,a1,800000a0 <main+0x5c>",
+   "word": "02b39263"
+  },
+  "80000080": {
+   "function": "main",
+   "text": "li a1,66",
+   "word": "04200593"
+  },
+  "80000084": {
+   "function": "main",
+   "text": "bne t4,a1,800000a0 <main+0x5c>",
+   "word": "00be9e63"
+  },
+  "80000088": {
+   "function": "main",
+   "text": "bnez zero,800000a0 <main+0x5c>",
+   "word": "00001c63"
+  },
+  "8000008c": {
+   "function": "main",
+   "text": "auipc a0,0x2",
+   "word": "00002517"
+  },
+  "80000090": {
+   "function": "main",
+   "text": "addi a0,a0,-656 # 80001dfc <ok>",
+   "word": "d7050513"
+  },
+  "80000094": {
+   "function": "main",
+   "text": "jal 800011d0 <puts>",
+   "word": "13c010ef"
+  },
+  "800011d0": {
+   "function": "puts",
+   "text": "addi sp,sp,-16",
+   "word": "ff010113"
+  },
+  "800011d4": {
+   "function": "puts",
+   "text": "sw s0,8(sp)",
+   "word": "00812423"
+  },
+  "800011d8": {
+   "function": "puts",
+   "text": "sw ra,12(sp)",
+   "word": "00112623"
+  },
+  "800011dc": {
+   "function": "puts",
+   "text": "mv s0,a0",
+   "word": "00050413"
+  },
+  "800011e0": {
+   "function": "puts",
+   "text": "lbu a0,0(a0)",
+   "word": "00054503"
+  },
+  "800011e4": {
+   "function": "puts",
+   "text": "beqz a0,800011f8 <puts+0x28>",
+   "word": "00050a63"
+  },
+  "800011e8": {
+   "function": "puts",
+   "text": "addi s0,s0,1",
+   "word": "00140413"
+  },
+  "800011ec": {
+   "function": "puts",
+   "text": "jal 800019fc <platform_putchar>",
+   "word": "011000ef"
+  },
+  "800011f0": {
+   "function": "puts",
+   "text": "lbu a0,0(s0)",
+   "word": "00044503"
+  },
+  "800011f4": {
+   "function": "puts",
+   "text": "bnez a0,800011e8 <puts+0x18>",
+   "word": "fe051ae3"
+  },
+  "800019fc": {
+   "function": "platform_putchar",
+   "text": "lui a5,0x10001",
+   "word": "100017b7"
+  },
+  "80001a00": {
+   "function": "platform_putchar",
+   "text": "zext.b a0,a0",
+   "word": "0ff57513"
+  },
+  "80001a04": {
+   "function": "platform_putchar",
+   "text": "sw a0,4(a5) # 10001004 <_start-0x6fffeffc>",
+   "word": "00a7a223"
+  },
+  "80001a08": {
+   "function": "platform_putchar",
+   "text": "ret",
+   "word": "00008067"
+  }
+ }
+}

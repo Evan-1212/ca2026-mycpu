@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: MIT
+# ACT4 framework configuration of the T3 core (3-csr-trap):
+# RV32IM_Zicsr_Zicntr_Zihpm_Zifencei, machine mode only. Paths are relative to
+# this file. The tools are found on PATH, which tests/act4/Makefile sets up.
+name: mycpu-t3
+compiler_exe: riscv-none-elf-gcc
+objdump_exe: riscv-none-elf-objdump
+ref_model_exe: sail_riscv_sim
+udb_config: mycpu-t3.yaml
+linker_script: link.ld
+dut_include_dir: .
+harts: 1
+include_priv_tests: True

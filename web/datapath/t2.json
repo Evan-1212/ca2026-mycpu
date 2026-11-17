@@ -1,0 +1,815 @@
+{
+ "format": "mycpu-datapath",
+ "version": 1,
+ "task": "T2",
+ "title": "T2 RV32IM datapath with the multiplier and the divider",
+ "size": [
+  1320,
+  760
+ ],
+ "about": "The modules of 2-rv32im and the signals between them, as its README's block diagram draws them: T1's stages, this task's decode and execute, the multiplier and the divider. Every value comes from the bundle's record of the cycle at the cursor; a box or wire without a probe field is a concept sketch.",
+ "components": [
+  {
+   "id": "fetch",
+   "label": "InstructionFetch",
+   "x": 30,
+   "y": 40,
+   "w": 210,
+   "h": 120,
+   "rows": [
+    [
+     "core.pc"
+    ],
+    [
+     "core.nextPc"
+    ],
+    [
+     "core.fetchValid"
+    ]
+   ],
+   "chisel": {
+    "file": "1-single-cycle/src/main/scala/mycpu/singlecycle/InstructionFetch.scala",
+    "module": "InstructionFetch"
+   },
+   "notebook": "5.4",
+   "tests": [
+    "T2CpuSpec"
+   ],
+   "note": "T1's module, used by T2 unchanged.",
+   "alert": {
+    "field": "div.busy",
+    "value": 1,
+    "text": "div.busy = 1"
+   }
+  },
+  {
+   "id": "imem",
+   "label": "riscv.Ram, fetch port",
+   "x": 30,
+   "y": 220,
+   "w": 140,
+   "h": 56,
+   "rows": [],
+   "bootcamp": {
+    "file": "riscv/src/main/scala/riscv/Memory.scala",
+    "module": "riscv.Ram"
+   },
+   "notebook": "5.4",
+   "tests": [
+    "T2CpuSpec"
+   ]
+  },
+  {
+   "id": "decode",
+   "label": "InstructionDecode",
+   "x": 310,
+   "y": 40,
+   "w": 250,
+   "h": 150,
+   "rows": [
+    [
+     "core.legal",
+     "core.rdWrite"
+    ],
+    [
+     "core.load",
+     "core.store",
+     "core.branch"
+    ],
+    [
+     "core.jal",
+     "core.jalr"
+    ],
+    [
+     "core.ecall",
+     "core.ebreak"
+    ]
+   ],
+   "chisel": {
+    "file": "2-rv32im/src/main/scala/mycpu/rv32im/InstructionDecode.scala",
+    "module": "InstructionDecode"
+   },
+   "notebook": "5.3",
+   "tests": [
+    "T2CpuSpec"
+   ],
+   "note": "This task's decode stage around its table (Decode.scala) and riscv.ImmGen; the immediate is not a probe field."
+  },
+  {
+   "id": "regfile",
+   "label": "riscv.RegFile",
+   "x": 620,
+   "y": 40,
+   "w": 250,
+   "h": 170,
+   "rows": [
+    [
+     "core.rs1",
+     "core.rs2"
+    ],
+    [
+     "core.rs1Value"
+    ],
+    [
+     "core.rs2Value"
+    ],
+    [
+     "core.wbEnable",
+     "core.wbRd"
+    ],
+    [
+     "core.wbValue"
+    ]
+   ],
+   "bootcamp": {
+    "file": "riscv/src/main/scala/riscv/RegFile.scala",
+    "module": "riscv.RegFile"
+   },
+   "notebook": "5.2",
+   "tests": [
+    "CoSimSpec"
+   ]
+  },
+  {
+   "id": "execute",
+   "label": "Execute",
+   "x": 310,
+   "y": 330,
+   "w": 250,
+   "h": 150,
+   "rows": [
+    [
+     "core.aluA"
+    ],
+    [
+     "core.aluB"
+    ],
+    [
+     "core.aluResult"
+    ],
+    [
+     "core.branchTaken"
+    ]
+   ],
+   "chisel": {
+    "file": "2-rv32im/src/main/scala/mycpu/rv32im/Execute.scala",
+    "module": "Execute"
+   },
+   "notebook": "5.4",
+   "tests": [
+    "T2ExecuteSpec",
+    "StallSpec"
+   ],
+   "note": "This task's execute stage: T1's Execute (the ALU, the branch unit), the multiplier and the divider."
+  },
+  {
+   "id": "memaccess",
+   "label": "MemoryAccess",
+   "x": 620,
+   "y": 330,
+   "w": 250,
+   "h": 150,
+   "rows": [
+    [
+     "core.memReqValid",
+     "core.memReqReady"
+    ],
+    [
+     "core.memRespValid",
+     "core.memRespError"
+    ]
+   ],
+   "chisel": {
+    "file": "1-single-cycle/src/main/scala/mycpu/singlecycle/MemoryAccess.scala",
+    "module": "MemoryAccess"
+   },
+   "notebook": "5.4",
+   "tests": [
+    "T2CpuSpec"
+   ],
+   "note": "Holds your bootcamp riscv.LoadExtend; the extended load value is not a probe field. T1's module, used by T2 unchanged."
+  },
+  {
+   "id": "writeback",
+   "label": "WriteBack",
+   "x": 1020,
+   "y": 40,
+   "w": 190,
+   "h": 170,
+   "rows": [
+    [
+     "core.wbSource"
+    ],
+    [
+     "core.wbEnable",
+     "core.wbRd"
+    ],
+    [
+     "core.wbValue"
+    ]
+   ],
+   "chisel": {
+    "file": "1-single-cycle/src/main/scala/mycpu/singlecycle/WriteBack.scala",
+    "module": "WriteBack"
+   },
+   "notebook": "5.4",
+   "tests": [
+    "T2CpuSpec"
+   ],
+   "note": "T1's module, used by T2 unchanged."
+  },
+  {
+   "id": "databus",
+   "label": "DataBus",
+   "x": 1020,
+   "y": 330,
+   "w": 190,
+   "h": 150,
+   "rows": [
+    [
+     "core.memReqAddr"
+    ],
+    [
+     "core.memRespRdata"
+    ]
+   ],
+   "chisel": {
+    "file": "1-single-cycle/src/main/scala/mycpu/singlecycle/DataBus.scala",
+    "module": "DataBus"
+   },
+   "notebook": "5.8",
+   "tests": [
+    "T2CpuSpec"
+   ],
+   "note": "T1's module, used by T2 unchanged."
+  },
+  {
+   "id": "cpu",
+   "label": "CPU: completes, halt, retire",
+   "x": 30,
+   "y": 540,
+   "w": 210,
+   "h": 150,
+   "rows": [
+    [
+     "retire.pc"
+    ],
+    [
+     "retire.next"
+    ],
+    [
+     "retire.rd"
+    ],
+    [
+     "retire.val"
+    ]
+   ],
+   "chisel": {
+    "file": "2-rv32im/src/main/scala/mycpu/rv32im/CPU.scala",
+    "module": "CPU"
+   },
+   "notebook": "5.4",
+   "tests": [
+    "T2CpuSpec",
+    "T2HaltSpec",
+    "StallSpec"
+   ],
+   "note": "The retire record is present only in a cycle in which an instruction retires; otherwise its rows show \u2013.",
+   "alert": {
+    "field": "div.busy",
+    "value": 1,
+    "text": "div.busy = 1"
+   }
+  },
+  {
+   "id": "dram",
+   "label": "riscv.Ram, data port",
+   "x": 880,
+   "y": 640,
+   "w": 130,
+   "h": 60,
+   "rows": [],
+   "bootcamp": {
+    "file": "riscv/src/main/scala/riscv/Memory.scala",
+    "module": "riscv.Ram"
+   },
+   "notebook": "5.4",
+   "tests": [
+    "CoSimSpec"
+   ],
+   "concept": true
+  },
+  {
+   "id": "uart",
+   "label": "Uart",
+   "x": 1030,
+   "y": 620,
+   "w": 140,
+   "h": 100,
+   "rows": [
+    [
+     "uart.txd"
+    ],
+    [
+     "uart.txCount"
+    ],
+    [
+     "uart.rxCount"
+    ]
+   ],
+   "chisel": {
+    "file": "common/src/main/scala/mycpu/common/Uart.scala",
+    "module": "Uart"
+   },
+   "notebook": "5.8",
+   "tests": [
+    "CoSimSpec"
+   ]
+  },
+  {
+   "id": "simctrl",
+   "label": "SimCtrl",
+   "x": 1190,
+   "y": 640,
+   "w": 110,
+   "h": 60,
+   "rows": [],
+   "chisel": {
+    "file": "common/src/main/scala/mycpu/common/SimCtrl.scala",
+    "module": "SimCtrl"
+   },
+   "tests": [
+    "T2HaltSpec"
+   ],
+   "concept": true
+  },
+  {
+   "id": "divider",
+   "label": "Divider",
+   "x": 310,
+   "y": 560,
+   "w": 250,
+   "h": 170,
+   "rows": [
+    [
+     "div.reqValid",
+     "div.reqReady"
+    ],
+    [
+     "div.op",
+     "div.busy"
+    ],
+    [
+     "div.dividend"
+    ],
+    [
+     "div.divisor"
+    ],
+    [
+     "div.respValid",
+     "div.kill"
+    ],
+    [
+     "div.result"
+    ]
+   ],
+   "chisel": {
+    "file": "2-rv32im/src/main/scala/mycpu/rv32im/Divider.scala",
+    "module": "Divider"
+   },
+   "notebook": "2.6",
+   "tests": [
+    "DivSpec",
+    "StallSpec",
+    "DivMutantSpec"
+   ],
+   "note": "div.result is the divider's result register; it is a result only in a cycle with div.respValid = 1."
+  },
+  {
+   "id": "multiplier",
+   "label": "Multiplier",
+   "x": 620,
+   "y": 600,
+   "w": 160,
+   "h": 60,
+   "rows": [],
+   "chisel": {
+    "file": "2-rv32im/src/main/scala/mycpu/rv32im/Multiplier.scala",
+    "module": "Multiplier"
+   },
+   "notebook": "2.7",
+   "tests": [
+    "MulSpec"
+   ],
+   "concept": true,
+   "note": "Combinational; no probe observes it. Its product reaches write-back as the execute stage's result."
+  }
+ ],
+ "wires": [
+  {
+   "id": "pc-imem",
+   "name": "pc",
+   "from": "fetch.bottom.0.2",
+   "to": "imem.top.0.3",
+   "bits": 32,
+   "field": "core.pc",
+   "label": [
+    76,
+    172,
+    "start"
+   ]
+  },
+  {
+   "id": "inst-imem",
+   "name": "inst",
+   "from": "imem.top.0.75",
+   "to": "fetch.bottom.0.5",
+   "bits": 32,
+   "field": "core.inst",
+   "label": [
+    139,
+    196,
+    "start"
+   ]
+  },
+  {
+   "id": "inst",
+   "name": "inst",
+   "from": "fetch.right.0.3",
+   "to": "decode.left.0.3",
+   "bits": 32,
+   "field": "core.inst"
+  },
+  {
+   "id": "rs1",
+   "name": "rs1",
+   "from": "decode.right.0.25",
+   "to": "regfile.left.0.22",
+   "bits": 5,
+   "field": "core.rs1"
+  },
+  {
+   "id": "rs2",
+   "name": "rs2",
+   "from": "decode.right.0.5",
+   "to": "regfile.left.0.44",
+   "bits": 5,
+   "field": "core.rs2"
+  },
+  {
+   "id": "imm",
+   "name": "imm",
+   "from": "decode.bottom.0.3",
+   "to": "execute.top.0.3",
+   "bits": 32
+  },
+  {
+   "id": "rs1v",
+   "name": "rs1 value",
+   "from": "regfile.bottom.0.05",
+   "to": "execute.right.0.2",
+   "bits": 32,
+   "field": "core.rs1Value",
+   "via": [
+    [
+     632.5,
+     280
+    ],
+    [
+     600,
+     280
+    ],
+    [
+     600,
+     360
+    ]
+   ],
+   "label": [
+    637,
+    236,
+    "start"
+   ]
+  },
+  {
+   "id": "rs2v",
+   "name": "rs2 value",
+   "from": "regfile.bottom.0.14",
+   "to": "execute.right.0.45",
+   "bits": 32,
+   "field": "core.rs2Value",
+   "via": [
+    [
+     655,
+     300
+    ],
+    [
+     585,
+     300
+    ],
+    [
+     585,
+     397.5
+    ]
+   ],
+   "label": [
+    660,
+    266,
+    "start"
+   ]
+  },
+  {
+   "id": "store-data",
+   "name": "store data",
+   "from": "regfile.bottom.0.7",
+   "to": "memaccess.top.0.7",
+   "bits": 32,
+   "field": "core.rs2Value"
+  },
+  {
+   "id": "pc-exec",
+   "name": "pc",
+   "from": "fetch.right.0.65",
+   "to": "execute.left.0.3",
+   "bits": 32,
+   "field": "core.pc",
+   "via": [
+    [
+     270,
+     118
+    ],
+    [
+     270,
+     375
+    ]
+   ],
+   "label": [
+    274,
+    246,
+    "start"
+   ]
+  },
+  {
+   "id": "alu-mem",
+   "name": "address",
+   "from": "execute.right.0.85",
+   "to": "memaccess.left.0.85",
+   "bits": 32,
+   "field": "core.aluResult"
+  },
+  {
+   "id": "result-wb",
+   "name": "execute result",
+   "from": "execute.bottom.0.5",
+   "to": "writeback.left.0.7",
+   "bits": 32,
+   "via": [
+    [
+     435,
+     515
+    ],
+    [
+     965,
+     515
+    ],
+    [
+     965,
+     159
+    ]
+   ],
+   "label": [
+    700,
+    498
+   ]
+  },
+  {
+   "id": "redirect",
+   "name": "redirect",
+   "from": "execute.left.0.8",
+   "to": "fetch.bottom.0.75",
+   "bits": 1,
+   "field": "core.branchTaken",
+   "via": [
+    [
+     187.5,
+     450
+    ]
+   ],
+   "label": [
+    192,
+    300,
+    "start"
+   ]
+  },
+  {
+   "id": "commit",
+   "name": "completes",
+   "from": "cpu.top.0.93",
+   "to": "fetch.bottom.0.93",
+   "bits": 1,
+   "label": [
+    230,
+    500,
+    "start"
+   ]
+  },
+  {
+   "id": "req-addr",
+   "name": "req addr",
+   "from": "memaccess.right.0.2",
+   "to": "databus.left.0.2",
+   "bits": 32,
+   "field": "core.memReqAddr"
+  },
+  {
+   "id": "wstrb",
+   "name": "wstrb",
+   "from": "memaccess.right.0.4",
+   "to": "databus.left.0.4",
+   "bits": 4,
+   "field": "core.memReqWstrb"
+  },
+  {
+   "id": "wdata",
+   "name": "wdata",
+   "from": "memaccess.right.0.6",
+   "to": "databus.left.0.6",
+   "bits": 32,
+   "field": "core.memReqWdata"
+  },
+  {
+   "id": "rdata",
+   "name": "rdata",
+   "from": "databus.left.0.8",
+   "to": "memaccess.right.0.8",
+   "bits": 32,
+   "field": "core.memRespRdata"
+  },
+  {
+   "id": "load",
+   "name": "load value",
+   "from": "memaccess.bottom.0.8",
+   "to": "writeback.left.0.88",
+   "bits": 32,
+   "via": [
+    [
+     820,
+     495
+    ],
+    [
+     990,
+     495
+    ],
+    [
+     990,
+     189.6
+    ]
+   ],
+   "label": [
+    905,
+    478
+   ]
+  },
+  {
+   "id": "link",
+   "name": "link (pc + 4)",
+   "from": "fetch.top.0.5",
+   "to": "writeback.top.0.5",
+   "bits": 32,
+   "via": [
+    [
+     135,
+     28
+    ],
+    [
+     1115,
+     28
+    ]
+   ],
+   "label": [
+    620,
+    10
+   ]
+  },
+  {
+   "id": "wb-value",
+   "name": "wdata",
+   "from": "writeback.left.0.1",
+   "to": "regfile.right.0.1",
+   "bits": 32,
+   "field": "core.wbValue"
+  },
+  {
+   "id": "wb-rd",
+   "name": "rd",
+   "from": "writeback.left.0.28",
+   "to": "regfile.right.0.28",
+   "bits": 5,
+   "field": "core.wbRd"
+  },
+  {
+   "id": "wb-en",
+   "name": "wen",
+   "from": "writeback.left.0.46",
+   "to": "regfile.right.0.46",
+   "bits": 1,
+   "field": "core.wbEnable"
+  },
+  {
+   "id": "sel-ram",
+   "name": "select",
+   "from": "databus.bottom.0.2",
+   "to": "dram.top.0.5",
+   "bits": 1,
+   "via": [
+    [
+     1058,
+     570
+    ],
+    [
+     945,
+     570
+    ]
+   ]
+  },
+  {
+   "id": "sel-uart",
+   "name": "select",
+   "from": "databus.bottom.0.42",
+   "to": "uart.top.0.5",
+   "bits": 1
+  },
+  {
+   "id": "sel-simctrl",
+   "name": "select",
+   "from": "databus.bottom.0.85",
+   "to": "simctrl.top.0.5",
+   "bits": 1,
+   "via": [
+    [
+     1181,
+     570
+    ],
+    [
+     1245,
+     570
+    ]
+   ]
+  },
+  {
+   "id": "div-req",
+   "name": "req",
+   "from": "execute.bottom.0.2",
+   "to": "divider.top.0.2",
+   "bits": 1,
+   "field": "div.reqValid"
+  },
+  {
+   "id": "div-resp",
+   "name": "resp",
+   "from": "divider.top.0.75",
+   "to": "execute.bottom.0.75",
+   "bits": 1,
+   "field": "div.respValid"
+  },
+  {
+   "id": "div-busy",
+   "name": "busy",
+   "from": "divider.left.0.3",
+   "to": "cpu.right.0.4",
+   "bits": 1,
+   "field": "div.busy",
+   "via": [
+    [
+     285,
+     611
+    ],
+    [
+     285,
+     600
+    ]
+   ]
+  },
+  {
+   "id": "mul",
+   "name": "operands, product",
+   "from": "execute.right.0.97",
+   "to": "multiplier.left.0.5",
+   "bits": 32,
+   "via": [
+    [
+     590,
+     475
+    ],
+    [
+     590,
+     630
+    ]
+   ],
+   "label": [
+    594,
+    560,
+    "start"
+   ]
+  }
+ ]
+}

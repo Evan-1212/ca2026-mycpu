@@ -1,0 +1,6 @@
+{
+ "title": "VGA",
+ "order": 16,
+ "tasks": ["T5"],
+ "summary": "A frame from the video signals, the framebuffer its stores wrote, the store behind each pixel, and a second design next to it."
+}

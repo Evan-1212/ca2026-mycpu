@@ -352,7 +352,7 @@ PASS jit: 792 records in 792 cycles (0 without a record) agree with the golden m
 
 Built for `rv32i`, every row has CPI 1.000 and the numbers of T1.
 
-**libgcc against hardware M (T2-05).**
+**libgcc against hardware M.**
 
 - DureMark runs 2.07 times faster in cycles, and retires half the instructions (921145 against
   1909844): where the `rv32i` build calls libgcc's `__mulsi3`, a loop of instructions, the

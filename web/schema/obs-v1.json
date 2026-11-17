@@ -1,0 +1,1512 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/sysprog21/ca2026-mycpu/web/schema/obs-v1.json",
+  "title": "MyCPU observation schema",
+  "description": "Observation bundles of the Verilator harness. docs/observation.md defines every field; a field's x-width is its width in bits and x-sample its sampling class (state, comb or input).",
+  "x-version": "1.1",
+  "$ref": "#/$defs/manifest",
+  "$defs": {
+    "u1": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "An unsigned 1-bit value."
+    },
+    "u2": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3,
+      "description": "An unsigned 2-bit value."
+    },
+    "u3": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 7,
+      "description": "An unsigned 3-bit value."
+    },
+    "u4": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 15,
+      "description": "An unsigned 4-bit value."
+    },
+    "u5": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 31,
+      "description": "An unsigned 5-bit value."
+    },
+    "u10": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1023,
+      "description": "An unsigned 10-bit value."
+    },
+    "u12": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4095,
+      "description": "An unsigned 12-bit value."
+    },
+    "u24": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 16777215,
+      "description": "An unsigned 24-bit value."
+    },
+    "u32": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4294967295,
+      "description": "An unsigned 32-bit value."
+    },
+    "count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991,
+      "description": "A count or cycle number (at most 2^53 - 1, exact in JavaScript)."
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "A SHA-256 digest, 64 lowercase hex digits."
+    },
+    "file": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._/-]*$",
+      "description": "A file of the bundle, relative to the manifest."
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^1\\.[0-9]+$",
+      "description": "The schema version, <major>.<minor>; this schema is major version 1."
+    },
+    "core": {
+      "type": "object",
+      "description": "T1 on: the datapath of the instruction at the PC (single-cycle cores).",
+      "additionalProperties": false,
+      "required": [
+        "pc",
+        "inst",
+        "fetchValid",
+        "legal",
+        "load",
+        "store",
+        "branch",
+        "jal",
+        "jalr",
+        "ecall",
+        "ebreak",
+        "rdWrite",
+        "rs1",
+        "rs1Value",
+        "rs2",
+        "rs2Value",
+        "aluA",
+        "aluB",
+        "aluResult",
+        "branchTaken",
+        "nextPc",
+        "wbSource",
+        "wbEnable",
+        "wbRd",
+        "wbValue",
+        "memReqValid",
+        "memReqReady",
+        "memReqAddr",
+        "memReqWstrb",
+        "memReqWdata",
+        "memRespValid",
+        "memRespRdata",
+        "memRespError"
+      ],
+      "properties": {
+        "pc": {
+          "$ref": "#/$defs/u32",
+          "description": "The PC register: the address of the instruction in this cycle (InstructionFetch.io.pc).",
+          "x-width": 32,
+          "x-sample": "state"
+        },
+        "inst": {
+          "$ref": "#/$defs/u32",
+          "description": "The word fetched at pc (InstructionFetch.io.inst); 0 when the fetch faulted.",
+          "x-width": 32,
+          "x-sample": "comb"
+        },
+        "fetchValid": {
+          "$ref": "#/$defs/u1",
+          "description": "The instruction port answered in this cycle (InstructionFetch.io.inst_valid); 0 while the core is in reset or halted.",
+          "x-width": 1,
+          "x-sample": "comb"
+        },
+        "legal": {
+          "$ref": "#/$defs/u1",
+          "description": "Decode: inst is an instruction of the task's ISA (DecodedInst.legal). The flags below are 0 when it is not.",
+          "x-width": 1,
+          "x-sample": "comb"
+        },
+        "load": {
+          "$ref": "#/$defs/u1",
+          "description": "Decode: a load (DecodedInst.load).",
+          "x-width": 1,
+          "x-sample": "comb"
+        },
+        "store": {
+          "$ref": "#/$defs/u1",
+          "description": "Decode: a store (DecodedInst.store).",
+          "x-width": 1,
+          "x-sample": "comb"
+        },
+        "branch": {
+          "$ref": "#/$defs/u1",
+          "description": "Decode: a conditional branch (DecodedInst.branch).",
+          "x-width": 1,
+          "x-sample": "comb"
+        },
+        "jal": {
+          "$ref": "#/$defs/u1",
+          "description": "Decode: JAL (DecodedInst.jal).",
+          "x-width": 1,
+          "x-sample": "comb"
+        },
+        "jalr": {
+          "$ref": "#/$defs/u1",
+          "description": "Decode: JALR (DecodedInst.jalr).",
+          "x-width": 1,
+          "x-sample": "comb"
+        },
+        "ecall": {
+          "$ref": "#/$defs/u1",
+          "description": "Decode: ECALL (DecodedInst.ecall).",
+          "x-width": 1,
+          "x-sample": "comb"
+        },
+        "ebreak": {
+          "$ref": "#/$defs/u1",
+          "description": "Decode: EBREAK (DecodedInst.ebreak).",
+          "x-width": 1,
+          "x-sample": "comb"
+        },
+        "rdWrite": {
+          "$ref": "#/$defs/u1",
+          "description": "Decode: the instruction writes a result to rd, x0 included (DecodedInst.rd_write).",
+          "x-width": 1,
+          "x-sample": "comb"
+        },
+        "rs1": {
+          "$ref": "#/$defs/u5",
+          "description": "Register file read port 1: the register index (RegFile.io.rs1).",
+          "x-width": 5,
+          "x-sample": "comb"
+        },
+        "rs1Value": {
+          "$ref": "#/$defs/u32",
+          "description": "Register file read port 1: the value read (RegFile.io.rs1Data).",
+          "x-width": 32,
+          "x-sample": "comb"
+        },
+        "rs2": {
+          "$ref": "#/$defs/u5",
+          "description": "Register file read port 2: the register index (RegFile.io.rs2).",
+          "x-width": 5,
+          "x-sample": "comb"
+        },
+        "rs2Value": {
+          "$ref": "#/$defs/u32",
+          "description": "Register file read port 2: the value read (RegFile.io.rs2Data).",
+          "x-width": 32,
+          "x-sample": "comb"
+        },
+        "aluA": {
+          "$ref": "#/$defs/u32",
+          "description": "The ALU's first operand (Alu.io.a).",
+          "x-width": 32,
+          "x-sample": "comb"
+        },
+        "aluB": {
+          "$ref": "#/$defs/u32",
+          "description": "The ALU's second operand (Alu.io.b).",
+          "x-width": 32,
+          "x-sample": "comb"
+        },
+        "aluResult": {
+          "$ref": "#/$defs/u32",
+          "description": "The ALU's output (Alu.io.out); also the address of a load or store.",
+          "x-width": 32,
+          "x-sample": "comb"
+        },
+        "branchTaken": {
+          "$ref": "#/$defs/u1",
+          "description": "Control goes to a target other than pc + 4: a taken branch, JAL or JALR (Execute.io.redirect.valid).",
+          "x-width": 1,
+          "x-sample": "comb"
+        },
+        "nextPc": {
+          "$ref": "#/$defs/u32",
+          "description": "The address of the instruction after this one in program order (InstructionFetch.io.next_pc); the PC takes it at the next rising edge only if the instruction completes.",
+          "x-width": 32,
+          "x-sample": "comb"
+        },
+        "wbSource": {
+          "$ref": "#/$defs/u2",
+          "description": "The write-back select (WriteBack.io.rd_source): 0 the execute stage's result (the ALU, and in T2 also the multiplier or the divider), 1 the loaded value, 2 the link address pc + 4.",
+          "x-width": 2,
+          "x-sample": "comb"
+        },
+        "wbEnable": {
+          "$ref": "#/$defs/u1",
+          "description": "The register file's write enable (RegFile.io.wen): rd changes at the next rising edge.",
+          "x-width": 1,
+          "x-sample": "comb"
+        },
+        "wbRd": {
+          "$ref": "#/$defs/u5",
+          "description": "The register file's write address (RegFile.io.rd).",
+          "x-width": 5,
+          "x-sample": "comb"
+        },
+        "wbValue": {
+          "$ref": "#/$defs/u32",
+          "description": "The register file's write data (RegFile.io.wdata), meaningful when wbEnable is 1.",
+          "x-width": 32,
+          "x-sample": "comb"
+        },
+        "memReqValid": {
+          "$ref": "#/$defs/u1",
+          "description": "Data port: a request is on the port (MemPort.req.valid).",
+          "x-width": 1,
+          "x-sample": "comb"
+        },
+        "memReqReady": {
+          "$ref": "#/$defs/u1",
+          "description": "Data port: the device takes the request (MemPort.req.ready).",
+          "x-width": 1,
+          "x-sample": "comb"
+        },
+        "memReqAddr": {
+          "$ref": "#/$defs/u32",
+          "description": "Data port: the word address of the request, low two bits 0 (MemPort.req.bits.addr).",
+          "x-width": 32,
+          "x-sample": "comb"
+        },
+        "memReqWstrb": {
+          "$ref": "#/$defs/u4",
+          "description": "Data port: the byte strobes, bit i for byte lane i; 0 for a read (MemPort.req.bits.wstrb).",
+          "x-width": 4,
+          "x-sample": "comb"
+        },
+        "memReqWdata": {
+          "$ref": "#/$defs/u32",
+          "description": "Data port: the write data, by byte lane (MemPort.req.bits.wdata).",
+          "x-width": 32,
+          "x-sample": "comb"
+        },
+        "memRespValid": {
+          "$ref": "#/$defs/u1",
+          "description": "Data port: the device answers in this cycle (MemPort.resp.valid).",
+          "x-width": 1,
+          "x-sample": "comb"
+        },
+        "memRespRdata": {
+          "$ref": "#/$defs/u32",
+          "description": "Data port: the word read (MemPort.resp.bits.rdata), meaningful when memRespValid is 1.",
+          "x-width": 32,
+          "x-sample": "comb"
+        },
+        "memRespError": {
+          "$ref": "#/$defs/u1",
+          "description": "Data port: no device at the address (MemPort.resp.bits.error), meaningful when memRespValid is 1.",
+          "x-width": 1,
+          "x-sample": "comb"
+        }
+      }
+    },
+    "div": {
+      "type": "object",
+      "description": "T2 on: the divider's ports.",
+      "additionalProperties": false,
+      "required": [
+        "reqValid",
+        "reqReady",
+        "op",
+        "dividend",
+        "divisor",
+        "busy",
+        "respValid",
+        "result",
+        "kill"
+      ],
+      "properties": {
+        "reqValid": {
+          "$ref": "#/$defs/u1",
+          "description": "A division is requested (Divider.io.req.valid).",
+          "x-width": 1,
+          "x-sample": "comb"
+        },
+        "reqReady": {
+          "$ref": "#/$defs/u1",
+          "description": "The divider accepts a request (Divider.io.req.ready).",
+          "x-width": 1,
+          "x-sample": "comb"
+        },
+        "op": {
+          "$ref": "#/$defs/u2",
+          "description": "The operation of the request (Divider.io.req.bits.op): 0 div, 1 divu, 2 rem, 3 remu.",
+          "x-width": 2,
+          "x-sample": "comb"
+        },
+        "dividend": {
+          "$ref": "#/$defs/u32",
+          "description": "The dividend of the request (Divider.io.req.bits.dividend).",
+          "x-width": 32,
+          "x-sample": "comb"
+        },
+        "divisor": {
+          "$ref": "#/$defs/u32",
+          "description": "The divisor of the request (Divider.io.req.bits.divisor).",
+          "x-width": 32,
+          "x-sample": "comb"
+        },
+        "busy": {
+          "$ref": "#/$defs/u1",
+          "description": "The divider is working on an accepted request (Divider.io.busy).",
+          "x-width": 1,
+          "x-sample": "state"
+        },
+        "respValid": {
+          "$ref": "#/$defs/u1",
+          "description": "The divider answers in this cycle (Divider.io.resp.valid).",
+          "x-width": 1,
+          "x-sample": "comb"
+        },
+        "result": {
+          "$ref": "#/$defs/u32",
+          "description": "The quotient or remainder (Divider.io.resp.bits), meaningful when respValid is 1.",
+          "x-width": 32,
+          "x-sample": "state"
+        },
+        "kill": {
+          "$ref": "#/$defs/u1",
+          "description": "The division in progress is abandoned (Divider.io.kill).",
+          "x-width": 1,
+          "x-sample": "comb"
+        }
+      }
+    },
+    "csr": {
+      "type": "object",
+      "description": "T3 on: CSR accesses, traps, MRET, interrupts and WFI.",
+      "additionalProperties": false,
+      "required": [
+        "access",
+        "addr",
+        "op",
+        "write",
+        "rdata",
+        "wdata",
+        "trap",
+        "cause",
+        "mret",
+        "irq",
+        "mip",
+        "mie",
+        "mstatus",
+        "mtvec",
+        "mepc",
+        "mcause",
+        "wfi"
+      ],
+      "properties": {
+        "access": {
+          "$ref": "#/$defs/u1",
+          "description": "The instruction accesses a CSR.",
+          "x-width": 1,
+          "x-sample": "comb"
+        },
+        "addr": {
+          "$ref": "#/$defs/u12",
+          "description": "The CSR address of the access.",
+          "x-width": 12,
+          "x-sample": "comb"
+        },
+        "op": {
+          "$ref": "#/$defs/u2",
+          "description": "The access: 1 read-write, 2 set bits, 3 clear bits (funct3 bits 1..0).",
+          "x-width": 2,
+          "x-sample": "comb"
+        },
+        "write": {
+          "$ref": "#/$defs/u1",
+          "description": "The access writes the CSR (not a set or clear with x0).",
+          "x-width": 1,
+          "x-sample": "comb"
+        },
+        "rdata": {
+          "$ref": "#/$defs/u32",
+          "description": "The value the access reads.",
+          "x-width": 32,
+          "x-sample": "comb"
+        },
+        "wdata": {
+          "$ref": "#/$defs/u32",
+          "description": "The value the access writes, meaningful when write is 1.",
+          "x-width": 32,
+          "x-sample": "comb"
+        },
+        "trap": {
+          "$ref": "#/$defs/u1",
+          "description": "A trap is taken in this cycle: an exception of the instruction, or an interrupt before it.",
+          "x-width": 1,
+          "x-sample": "comb"
+        },
+        "cause": {
+          "$ref": "#/$defs/u32",
+          "description": "The mcause value of the trap (bit 31: an interrupt), meaningful when trap is 1.",
+          "x-width": 32,
+          "x-sample": "comb"
+        },
+        "mret": {
+          "$ref": "#/$defs/u1",
+          "description": "An MRET completes in this cycle.",
+          "x-width": 1,
+          "x-sample": "comb"
+        },
+        "irq": {
+          "$ref": "#/$defs/u1",
+          "description": "An interrupt is pending and enabled, so one would be taken before the next instruction.",
+          "x-width": 1,
+          "x-sample": "comb"
+        },
+        "mip": {
+          "$ref": "#/$defs/u32",
+          "description": "The mip CSR.",
+          "x-width": 32,
+          "x-sample": "state"
+        },
+        "mie": {
+          "$ref": "#/$defs/u32",
+          "description": "The mie CSR.",
+          "x-width": 32,
+          "x-sample": "state"
+        },
+        "mstatus": {
+          "$ref": "#/$defs/u32",
+          "description": "The mstatus CSR.",
+          "x-width": 32,
+          "x-sample": "state"
+        },
+        "mtvec": {
+          "$ref": "#/$defs/u32",
+          "description": "The mtvec CSR.",
+          "x-width": 32,
+          "x-sample": "state"
+        },
+        "mepc": {
+          "$ref": "#/$defs/u32",
+          "description": "The mepc CSR.",
+          "x-width": 32,
+          "x-sample": "state"
+        },
+        "mcause": {
+          "$ref": "#/$defs/u32",
+          "description": "The mcause CSR.",
+          "x-width": 32,
+          "x-sample": "state"
+        },
+        "wfi": {
+          "$ref": "#/$defs/u1",
+          "description": "The core waits in WFI in this cycle.",
+          "x-width": 1,
+          "x-sample": "state"
+        }
+      }
+    },
+    "stage": {
+      "type": "object",
+      "description": "One pipeline stage (T4); state fields are the stage register's contents in this cycle.",
+      "additionalProperties": false,
+      "required": [
+        "valid",
+        "pc",
+        "inst",
+        "stall",
+        "flush",
+        "bubble"
+      ],
+      "properties": {
+        "valid": {
+          "$ref": "#/$defs/u1",
+          "description": "The stage holds an instruction.",
+          "x-width": 1,
+          "x-sample": "state"
+        },
+        "pc": {
+          "$ref": "#/$defs/u32",
+          "description": "The address of the stage's instruction.",
+          "x-width": 32,
+          "x-sample": "state"
+        },
+        "inst": {
+          "$ref": "#/$defs/u32",
+          "description": "The stage's instruction word.",
+          "x-width": 32,
+          "x-sample": "state"
+        },
+        "stall": {
+          "$ref": "#/$defs/u1",
+          "description": "The stage keeps its instruction at the next rising edge.",
+          "x-width": 1,
+          "x-sample": "comb"
+        },
+        "flush": {
+          "$ref": "#/$defs/u1",
+          "description": "The stage's instruction is discarded at the next rising edge.",
+          "x-width": 1,
+          "x-sample": "comb"
+        },
+        "bubble": {
+          "$ref": "#/$defs/u1",
+          "description": "The stage receives no instruction at the next rising edge.",
+          "x-width": 1,
+          "x-sample": "comb"
+        }
+      }
+    },
+    "pipe": {
+      "type": "object",
+      "description": "T4: the five stages, the forwarding selects and the load-use stall.",
+      "additionalProperties": false,
+      "required": [
+        "fetch",
+        "decode",
+        "execute",
+        "memory",
+        "writeback",
+        "forwardA",
+        "forwardB",
+        "loadUseStall"
+      ],
+      "properties": {
+        "fetch": {
+          "$ref": "#/$defs/stage"
+        },
+        "decode": {
+          "$ref": "#/$defs/stage"
+        },
+        "execute": {
+          "$ref": "#/$defs/stage"
+        },
+        "memory": {
+          "$ref": "#/$defs/stage"
+        },
+        "writeback": {
+          "$ref": "#/$defs/stage"
+        },
+        "forwardA": {
+          "$ref": "#/$defs/u2",
+          "description": "Where the execute stage takes its first operand: 0 the register file (as decode read it), 1 forwarded from the memory stage, 2 forwarded from the write-back stage.",
+          "x-width": 2,
+          "x-sample": "comb"
+        },
+        "forwardB": {
+          "$ref": "#/$defs/u2",
+          "description": "The same for the second operand.",
+          "x-width": 2,
+          "x-sample": "comb"
+        },
+        "loadUseStall": {
+          "$ref": "#/$defs/u1",
+          "description": "The pipeline stalls in this cycle because an instruction needs a value that a load has not loaded yet.",
+          "x-width": 1,
+          "x-sample": "comb"
+        }
+      }
+    },
+    "bus": {
+      "type": "object",
+      "description": "T5: the five AXI4-Lite channels of the core's data port.",
+      "additionalProperties": false,
+      "required": [
+        "aw",
+        "w",
+        "b",
+        "ar",
+        "r"
+      ],
+      "properties": {
+        "aw": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "valid",
+            "ready",
+            "addr"
+          ],
+          "properties": {
+            "valid": {
+              "$ref": "#/$defs/u1",
+              "description": "AWVALID.",
+              "x-width": 1,
+              "x-sample": "comb"
+            },
+            "ready": {
+              "$ref": "#/$defs/u1",
+              "description": "AWREADY.",
+              "x-width": 1,
+              "x-sample": "comb"
+            },
+            "addr": {
+              "$ref": "#/$defs/u32",
+              "description": "AWADDR.",
+              "x-width": 32,
+              "x-sample": "comb"
+            }
+          }
+        },
+        "w": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "valid",
+            "ready",
+            "data",
+            "strb"
+          ],
+          "properties": {
+            "valid": {
+              "$ref": "#/$defs/u1",
+              "description": "WVALID.",
+              "x-width": 1,
+              "x-sample": "comb"
+            },
+            "ready": {
+              "$ref": "#/$defs/u1",
+              "description": "WREADY.",
+              "x-width": 1,
+              "x-sample": "comb"
+            },
+            "data": {
+              "$ref": "#/$defs/u32",
+              "description": "WDATA.",
+              "x-width": 32,
+              "x-sample": "comb"
+            },
+            "strb": {
+              "$ref": "#/$defs/u4",
+              "description": "WSTRB.",
+              "x-width": 4,
+              "x-sample": "comb"
+            }
+          }
+        },
+        "b": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "valid",
+            "ready",
+            "resp"
+          ],
+          "properties": {
+            "valid": {
+              "$ref": "#/$defs/u1",
+              "description": "BVALID.",
+              "x-width": 1,
+              "x-sample": "comb"
+            },
+            "ready": {
+              "$ref": "#/$defs/u1",
+              "description": "BREADY.",
+              "x-width": 1,
+              "x-sample": "comb"
+            },
+            "resp": {
+              "$ref": "#/$defs/u2",
+              "description": "BRESP.",
+              "x-width": 2,
+              "x-sample": "comb"
+            }
+          }
+        },
+        "ar": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "valid",
+            "ready",
+            "addr"
+          ],
+          "properties": {
+            "valid": {
+              "$ref": "#/$defs/u1",
+              "description": "ARVALID.",
+              "x-width": 1,
+              "x-sample": "comb"
+            },
+            "ready": {
+              "$ref": "#/$defs/u1",
+              "description": "ARREADY.",
+              "x-width": 1,
+              "x-sample": "comb"
+            },
+            "addr": {
+              "$ref": "#/$defs/u32",
+              "description": "ARADDR.",
+              "x-width": 32,
+              "x-sample": "comb"
+            }
+          }
+        },
+        "r": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "valid",
+            "ready",
+            "data",
+            "resp"
+          ],
+          "properties": {
+            "valid": {
+              "$ref": "#/$defs/u1",
+              "description": "RVALID.",
+              "x-width": 1,
+              "x-sample": "comb"
+            },
+            "ready": {
+              "$ref": "#/$defs/u1",
+              "description": "RREADY.",
+              "x-width": 1,
+              "x-sample": "comb"
+            },
+            "data": {
+              "$ref": "#/$defs/u32",
+              "description": "RDATA.",
+              "x-width": 32,
+              "x-sample": "comb"
+            },
+            "resp": {
+              "$ref": "#/$defs/u2",
+              "description": "RRESP.",
+              "x-width": 2,
+              "x-sample": "comb"
+            }
+          }
+        }
+      }
+    },
+    "uart": {
+      "type": "object",
+      "description": "The UART's lines and the fill levels of its FIFOs.",
+      "additionalProperties": false,
+      "required": [
+        "txd",
+        "rxd",
+        "txCount",
+        "rxCount"
+      ],
+      "properties": {
+        "txd": {
+          "$ref": "#/$defs/u1",
+          "description": "The transmit line, idle high (SimIO.uartTxd).",
+          "x-width": 1,
+          "x-sample": "state"
+        },
+        "rxd": {
+          "$ref": "#/$defs/u1",
+          "description": "The receive line, as the harness drives it in this cycle (SimIO.uartRxd).",
+          "x-width": 1,
+          "x-sample": "input"
+        },
+        "txCount": {
+          "$ref": "#/$defs/u4",
+          "description": "Bytes in the transmit FIFO, 0 to 8.",
+          "x-width": 4,
+          "x-sample": "state"
+        },
+        "rxCount": {
+          "$ref": "#/$defs/u4",
+          "description": "Bytes in the receive FIFO, 0 to 8.",
+          "x-width": 4,
+          "x-sample": "state"
+        }
+      }
+    },
+    "vga": {
+      "type": "object",
+      "description": "T5: the video signals of the VGA.",
+      "additionalProperties": false,
+      "required": [
+        "hsync",
+        "vsync",
+        "active",
+        "tick",
+        "rgb",
+        "x",
+        "y"
+      ],
+      "properties": {
+        "hsync": {
+          "$ref": "#/$defs/u1",
+          "description": "Horizontal sync, negative (VgaIO.hsync).",
+          "x-width": 1,
+          "x-sample": "state"
+        },
+        "vsync": {
+          "$ref": "#/$defs/u1",
+          "description": "Vertical sync, negative (VgaIO.vsync).",
+          "x-width": 1,
+          "x-sample": "state"
+        },
+        "active": {
+          "$ref": "#/$defs/u1",
+          "description": "Data enable: a visible pixel (VgaIO.active).",
+          "x-width": 1,
+          "x-sample": "state"
+        },
+        "tick": {
+          "$ref": "#/$defs/u1",
+          "description": "The pixel clock enable (VgaIO.tick): the other video fields are a pixel only in a cycle in which it is 1.",
+          "x-width": 1,
+          "x-sample": "state"
+        },
+        "rgb": {
+          "$ref": "#/$defs/u24",
+          "description": "The pixel, 0xRRGGBB (VgaIO.rgb).",
+          "x-width": 24,
+          "x-sample": "state"
+        },
+        "x": {
+          "$ref": "#/$defs/u10",
+          "description": "The pixel's column, 0 to 799 (VgaIO.x).",
+          "x-width": 10,
+          "x-sample": "state"
+        },
+        "y": {
+          "$ref": "#/$defs/u10",
+          "description": "The pixel's row, 0 to 524 (VgaIO.y).",
+          "x-width": 10,
+          "x-sample": "state"
+        }
+      }
+    },
+    "retire": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "The retire record of this cycle: the fields of a record line of the retire log (sim/main.cpp), with the same values; absent in a cycle without one.",
+      "required": [
+        "pc",
+        "inst",
+        "next",
+        "rd",
+        "val",
+        "halt",
+        "mip"
+      ],
+      "properties": {
+        "pc": {
+          "$ref": "#/$defs/u32",
+          "description": "pc=",
+          "x-width": 32,
+          "x-sample": "comb"
+        },
+        "inst": {
+          "$ref": "#/$defs/u32",
+          "description": "inst=",
+          "x-width": 32,
+          "x-sample": "comb"
+        },
+        "next": {
+          "$ref": "#/$defs/u32",
+          "description": "next=",
+          "x-width": 32,
+          "x-sample": "comb"
+        },
+        "rd": {
+          "$ref": "#/$defs/u5",
+          "description": "rd=",
+          "x-width": 5,
+          "x-sample": "comb"
+        },
+        "val": {
+          "$ref": "#/$defs/u32",
+          "description": "val=",
+          "x-width": 32,
+          "x-sample": "comb"
+        },
+        "mem": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "write",
+            "addr",
+            "bytes",
+            "data"
+          ],
+          "description": "mem=; absent for mem=-.",
+          "properties": {
+            "write": {
+              "$ref": "#/$defs/u1",
+              "description": "1 for w:, 0 for r:.",
+              "x-width": 1,
+              "x-sample": "comb"
+            },
+            "addr": {
+              "$ref": "#/$defs/u32",
+              "description": "The byte address.",
+              "x-width": 32,
+              "x-sample": "comb"
+            },
+            "bytes": {
+              "type": "integer",
+              "enum": [
+                1,
+                2,
+                4
+              ],
+              "description": "The size in bytes.",
+              "x-width": 3,
+              "x-sample": "comb"
+            },
+            "data": {
+              "$ref": "#/$defs/u32",
+              "description": "The bytes of the access, from bit 0.",
+              "x-width": 32,
+              "x-sample": "comb"
+            }
+          }
+        },
+        "csr": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "addr",
+            "wdata"
+          ],
+          "description": "csr=; absent for csr=-.",
+          "properties": {
+            "addr": {
+              "$ref": "#/$defs/u12",
+              "description": "The CSR address.",
+              "x-width": 12,
+              "x-sample": "comb"
+            },
+            "wdata": {
+              "$ref": "#/$defs/u32",
+              "description": "The value written.",
+              "x-width": 32,
+              "x-sample": "comb"
+            }
+          }
+        },
+        "trap": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "cause",
+            "tval"
+          ],
+          "description": "trap=; absent for trap=-.",
+          "properties": {
+            "cause": {
+              "$ref": "#/$defs/u32",
+              "description": "mcause.",
+              "x-width": 32,
+              "x-sample": "comb"
+            },
+            "tval": {
+              "$ref": "#/$defs/u32",
+              "description": "mtval.",
+              "x-width": 32,
+              "x-sample": "comb"
+            }
+          }
+        },
+        "halt": {
+          "$ref": "#/$defs/u3",
+          "description": "halt= (riscv.HaltCause: 0 running, 1 ecall, 2 ebreak, 3 illegal, 4 misaligned, 5 bad-address).",
+          "x-width": 3,
+          "x-sample": "comb"
+        },
+        "mip": {
+          "$ref": "#/$defs/u32",
+          "description": "mip= (a mip of 0 is written - in the log).",
+          "x-width": 32,
+          "x-sample": "comb"
+        }
+      }
+    },
+    "cycle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cycle"
+      ],
+      "description": "One clock cycle: registers as they are after the rising edge that starts it, combinational values as computed from them in it. A record has exactly the groups that the manifest lists (retire only in a cycle with a retire record).",
+      "properties": {
+        "cycle": {
+          "$ref": "#/$defs/count",
+          "description": "The cycle number; 0 is the first cycle after reset."
+        },
+        "core": {
+          "$ref": "#/$defs/core"
+        },
+        "div": {
+          "$ref": "#/$defs/div"
+        },
+        "csr": {
+          "$ref": "#/$defs/csr"
+        },
+        "pipe": {
+          "$ref": "#/$defs/pipe"
+        },
+        "bus": {
+          "$ref": "#/$defs/bus"
+        },
+        "uart": {
+          "$ref": "#/$defs/uart"
+        },
+        "vga": {
+          "$ref": "#/$defs/vga"
+        },
+        "retire": {
+          "$ref": "#/$defs/retire"
+        }
+      }
+    },
+    "chunk": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "first",
+        "count",
+        "cycles"
+      ],
+      "description": "A data file of the bundle: consecutive cycles.",
+      "properties": {
+        "first": {
+          "$ref": "#/$defs/count"
+        },
+        "count": {
+          "$ref": "#/$defs/count"
+        },
+        "cycles": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/cycle"
+          }
+        }
+      }
+    },
+    "stores": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lo",
+        "hi",
+        "stores"
+      ],
+      "description": "stores.json of a bundle (schema 1.1): the run's stores to [lo, hi), in the order of the retire log, each [cycle, pc, addr, bytes, data] of its record.",
+      "properties": {
+        "lo": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "hi": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4294967296
+        },
+        "stores": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "minItems": 5,
+            "maxItems": 5,
+            "items": {
+              "$ref": "#/$defs/count"
+            }
+          }
+        }
+      }
+    },
+    "header": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "task",
+        "variant",
+        "commit",
+        "top",
+        "program",
+        "elf_sha256",
+        "schema",
+        "uart_divider",
+        "ram_base",
+        "ram_bytes",
+        "conventions"
+      ],
+      "description": "What was run: the model, the program, and the conventions of the records.",
+      "properties": {
+        "task": {
+          "type": "string",
+          "pattern": "^T[1-5]$",
+          "description": "The task of the model: T1 to T5."
+        },
+        "variant": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The model's variant within the task (single-cycle, div34, ...)."
+        },
+        "commit": {
+          "type": "string",
+          "pattern": "^([0-9a-f]{40}(-dirty)?|unknown)$",
+          "description": "The git commit the model was elaborated from, -dirty if tracked files differed from it."
+        },
+        "top": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The Scala class of the top."
+        },
+        "program": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The program: its ELF's file name without .elf."
+        },
+        "elf_sha256": {
+          "$ref": "#/$defs/sha256",
+          "description": "SHA-256 of the ELF file that was run."
+        },
+        "schema": {
+          "$ref": "#/$defs/version"
+        },
+        "uart_divider": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "description": "Clock cycles per UART bit."
+        },
+        "ram_base": {
+          "$ref": "#/$defs/u32"
+        },
+        "ram_bytes": {
+          "$ref": "#/$defs/u32"
+        },
+        "conventions": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "edge",
+            "sample",
+            "cycle0",
+            "uart_bit",
+            "pixel_enable"
+          ],
+          "description": "How the records are sampled (docs/observation.md, Sampling).",
+          "properties": {
+            "edge": {
+              "const": "rising",
+              "description": "Every register changes at the rising edge of the one clock."
+            },
+            "sample": {
+              "const": "after-start-edge",
+              "description": "A record shows the registers as after the rising edge that starts its cycle, and the combinational values computed from them, as the harness reads them just before the next rising edge."
+            },
+            "cycle0": {
+              "const": "first-after-reset",
+              "description": "Cycle 0 is the first cycle in which reset is low."
+            },
+            "uart_bit": {
+              "const": "uart_divider",
+              "description": "A UART bit lasts uart_divider cycles; the UART has no clock enable."
+            },
+            "pixel_enable": {
+              "const": "vga.tick",
+              "description": "The VGA fields are a pixel only in cycles with vga.tick = 1."
+            }
+          }
+        }
+      }
+    },
+    "manifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "format",
+        "schema",
+        "header",
+        "run",
+        "groups",
+        "chunks",
+        "uart",
+        "vga",
+        "tests",
+        "sources"
+      ],
+      "description": "manifest.json of an observation bundle (scripts/obs-pack.py).",
+      "properties": {
+        "format": {
+          "const": "mycpu-obs-bundle"
+        },
+        "schema": {
+          "$ref": "#/$defs/version"
+        },
+        "header": {
+          "$ref": "#/$defs/header"
+        },
+        "run": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "cycles",
+            "instret",
+            "how",
+            "first",
+            "count",
+            "limit"
+          ],
+          "description": "How the run ended (the retire log's end line) and the window of cycles in the bundle.",
+          "properties": {
+            "cycles": {
+              "$ref": "#/$defs/count"
+            },
+            "instret": {
+              "$ref": "#/$defs/count"
+            },
+            "how": {
+              "type": "string",
+              "pattern": "^(exit=[0-9]{1,3}|halt=[0-9]{1,9}|stop=[a-z-]+)$"
+            },
+            "first": {
+              "$ref": "#/$defs/count"
+            },
+            "count": {
+              "$ref": "#/$defs/count"
+            },
+            "limit": {
+              "$ref": "#/$defs/count",
+              "description": "+obs-cycles of the run; 0: to the end."
+            }
+          }
+        },
+        "groups": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "enum": [
+              "core",
+              "div",
+              "csr",
+              "pipe",
+              "bus",
+              "uart",
+              "vga",
+              "retire"
+            ]
+          }
+        },
+        "chunks": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "file",
+              "bytes",
+              "sha256",
+              "first",
+              "count"
+            ],
+            "description": "A data file and the cycles it has.",
+            "properties": {
+              "file": {
+                "$ref": "#/$defs/file"
+              },
+              "bytes": {
+                "$ref": "#/$defs/count"
+              },
+              "sha256": {
+                "$ref": "#/$defs/sha256"
+              },
+              "first": {
+                "$ref": "#/$defs/count"
+              },
+              "count": {
+                "$ref": "#/$defs/count"
+              }
+            }
+          }
+        },
+        "uart": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": false,
+          "required": [
+            "file",
+            "bytes",
+            "sha256"
+          ],
+          "description": "The bytes the UART sent (+uart-log), or null.",
+          "properties": {
+            "file": {
+              "$ref": "#/$defs/file"
+            },
+            "bytes": {
+              "$ref": "#/$defs/count"
+            },
+            "sha256": {
+              "$ref": "#/$defs/sha256"
+            }
+          }
+        },
+        "vga": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "file",
+              "bytes",
+              "sha256",
+              "frame"
+            ],
+            "description": "A frame of +vga-dump (binary PPM).",
+            "properties": {
+              "file": {
+                "$ref": "#/$defs/file"
+              },
+              "bytes": {
+                "$ref": "#/$defs/count"
+              },
+              "sha256": {
+                "$ref": "#/$defs/sha256"
+              },
+              "frame": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 4294967295
+              },
+              "cycle": {
+                "$ref": "#/$defs/count",
+                "description": "The cycle in which the frame's last visible pixel was sampled (schema 1.1; absent in a bundle of an older harness)."
+              }
+            }
+          }
+        },
+        "stores": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "file",
+            "bytes",
+            "sha256",
+            "lo",
+            "hi",
+            "count"
+          ],
+          "description": "stores.json (schema 1.1, optional): every record of the whole run's retire log that stores to a byte address in [lo, hi), as [cycle, pc, addr, bytes, data] (obs-pack.py --stores).",
+          "properties": {
+            "file": {
+              "$ref": "#/$defs/file"
+            },
+            "bytes": {
+              "$ref": "#/$defs/count"
+            },
+            "sha256": {
+              "$ref": "#/$defs/sha256"
+            },
+            "lo": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "hi": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 4294967296
+            },
+            "count": {
+              "$ref": "#/$defs/count"
+            }
+          }
+        },
+        "tests": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": false,
+          "required": [
+            "sha256",
+            "results"
+          ],
+          "description": "The task's test results for this model and program (null: none were given).",
+          "properties": {
+            "sha256": {
+              "$ref": "#/$defs/sha256",
+              "description": "SHA-256 of the results file packed."
+            },
+            "results": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "name",
+                  "result"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "The check."
+                  },
+                  "result": {
+                    "enum": [
+                      "pass",
+                      "fail"
+                    ]
+                  },
+                  "detail": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "sources": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "trace_sha256",
+            "retire_log_sha256",
+            "uart_log_sha256"
+          ],
+          "description": "SHA-256 of the files the bundle was packed from.",
+          "properties": {
+            "trace_sha256": {
+              "$ref": "#/$defs/sha256"
+            },
+            "retire_log_sha256": {
+              "$ref": "#/$defs/sha256"
+            },
+            "uart_log_sha256": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          }
+        }
+      }
+    }
+  }
+}
