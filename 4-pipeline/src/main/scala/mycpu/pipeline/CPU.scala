@@ -124,7 +124,7 @@ class ExMem extends Bundle {
   * @param config
   *   the variant, the divider's latency, the fetch unit's depth and the mutant ([[PipelineConfig]])
   * @param csrFile
-  *   makes the CSR file: the reference, unless a negative test passes one with a bug
+  *   makes T3's CSR file: the student's own, unless a negative test passes one with a bug
   * @param flushUnit
   *   makes the bootcamp's `PipelineFlush`: the student's own, unless a negative test passes one
   *   with a bug
@@ -542,7 +542,7 @@ class CPU(
   record.mem.bits.data  := memory.io.access_data
   record.halt           := HaltCause.Running
   record.trap           := trap
-  record.cause          := Mux(take_interrupt, (BigInt(1) << 31).U(32.W) | csr.io.irq.cause, exception.bits.cause)
+  record.cause          := Mux(take_interrupt, csr.io.irq.mcause, exception.bits.cause)
   record.tval           := Mux(take_interrupt, 0.U, exception.bits.tval)
   record.csr.valid      := csr.io.csr.write
   record.csr.bits.addr  := cmd.bits.addr

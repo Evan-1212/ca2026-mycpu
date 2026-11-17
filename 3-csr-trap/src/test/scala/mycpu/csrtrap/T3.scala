@@ -168,7 +168,7 @@ $body
       each
       c.clock.step()
     }
-    cycles.toSeq
+    cycles.toVector // indexed by cycle
   }
 
   /** Gives every register of `c` the value 0, as the golden model starts with (the register file

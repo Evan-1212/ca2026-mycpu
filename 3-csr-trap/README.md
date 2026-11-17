@@ -113,6 +113,7 @@ hpm8` exactly.
 | `Top.scala` | the system (`SimTop`) and the model emitter (`divLatency`, `tickDivisor`, `mutant`) |
 | `IssCsr.scala` | the golden model's rules of Zicsr, traps and counters (3.13 to 3.15) |
 | `ClintModel.scala` | the golden model's CLINT (3.15) |
+| `Probes.scala` | the `csr` probe group of the observation interface |
 
 ### The golden model
 
@@ -175,6 +176,9 @@ make test-programs        # every user and privileged program against its expect
 make check-rv32emu        # the user programs on rv32emu v1.3 and on your core
 make check-uart           # the uart program echoes its input
 make cosim-programs       # every program, privileged ones included, against the golden model
+make cosim-random         # the random programs alone against the golden model (SEEDS=<n>)
+make obs PROG=irqtrap     # an observation bundle of a program, for the web views
+make check-obs            # the acceptance set of the observation bundles (sim/obs.mk)
 make bench                # the benchmarks with the hpm events -> ../build/bench/t3.csv
 make act4                 # ACT4 on your model (tests/act4)
 make lint
@@ -496,12 +500,12 @@ counter does with that instruction.
     │   └── ClintModel.scala          Exercise 3.15
     └── test/scala/mycpu/csrtrap/
         ├── T3.scala                  shared helpers: the golden model, the frame of a program
-        ├── CsrBench.scala Checks.scala IssLockstep.scala CsrMutants.scala
+        ├── CsrBench.scala Checks.scala IssLockstep.scala CsrMutants.scala (and MutantEmit)
         ├── CsrSpec.scala TrapSpec.scala InterruptSpec.scala CounterSpec.scala ClintSpec.scala
         ├── IssEquivalenceSpec.scala LeafLintSpec.scala IssTrapSpec.scala IssCsrSpec.scala CoSim2ReplaySpec.scala
         ├── T3TrapSpec.scala T3InterruptSpec.scala WfiSpec.scala T3CounterSpec.scala PreciseTrapSpec.scala
         ├── CoSimSpec.scala RiscvTestsSpec.scala MutantSpec.scala CsrProbesSpec.scala
-        └── RetireLogCheck.scala      the +retire-log checker, and MutantEmit
+        └── RetireLogCheck.scala      the +retire-log checker
 ```
 
 The programs of this task are `software/programs/{ecall,irqtrap,perf}`; the event IDs are in

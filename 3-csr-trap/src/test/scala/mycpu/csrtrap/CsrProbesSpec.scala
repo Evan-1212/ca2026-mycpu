@@ -4,21 +4,11 @@
 
 package mycpu.csrtrap
 
-import chisel3._
-import chisel3.simulator.PeekPokeAPI._
 import chisel3.simulator.scalatest.ChiselSim
 import mycpu.common._
 import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.collection.mutable
-
-/** The probe values of one group in one cycle, by field name (`csr.mepc`, ...). */
-object ProbeValues {
-
-  /** Every field of `group`, a probe port named `name`, as it is now. */
-  def peek(group: Data, name: String): Map[String, BigInt] =
-    ObsFields.leaves(group, name).map { case (n, e: Bits) => n -> e.peek().litValue }.toMap
-}
 
 /** OBS-15 on T3: the `csr` probes of the default T3 top (`obs = true`) through a timer interrupt,
   * an `ecall` and the two `mret`s that return from them. In every cycle `csr.mepc`, `csr.mcause`,
@@ -30,7 +20,7 @@ object ProbeValues {
   * enabled but `MIE` is clear: in the handler), and for a CSR instruction `csr.access`, `addr`, `op`, `write`, `wdata`
   * and `rdata` what it read and wrote. The model runs on the core's records ([[CoSim2.replay]]'s
   * `HardwareSample`), so the interrupt is taken where the core took it, and the record must equal
-  * the model's. `csr.wfi` is not exercised: the program has no WFI (`WfiSpec` has).
+  * the model's. `csr.wfi` is not exercised: the program has no WFI (`WfiSpec` checks it).
   */
 class CsrProbesSpec extends AnyFlatSpec with ChiselSim {
   import CsrProbesSpec._
@@ -43,7 +33,7 @@ class CsrProbesSpec extends AnyFlatSpec with ChiselSim {
       val result = CoSim2.replay(cycles.iterator, image, T3.defaultModel)
       result.mismatch.foreach(m => fail(m))
       assert(result.exit.contains(0), s"exit ${result.exit}")
-      val checked = check(cycles, seen.toSeq, image)
+      val checked = check(cycles, seen.toVector, image)
       assert(checked.traps == Seq(Trap.interruptCause(Trap.Mti), Trap.EcallM), s"the traps ${checked.traps}")
       assert(checked.mrets == 2, s"${checked.mrets} mret")
       assert(checked.gated > 0, "no record with an interrupt pending and enabled while MIE is clear")

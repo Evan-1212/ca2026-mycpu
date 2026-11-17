@@ -8,8 +8,8 @@ import chisel3.simulator.scalatest.ChiselSim
 import mycpu.csrtrap.RiscvTests
 import org.scalatest.flatspec.AnyFlatSpec
 
-/** VER-04 for T4: each mutant, on each variant it applies to, fails a riscv-test or a hazard
-  * sequence against the golden model, so the checks of this task cannot pass vacuously. The
+/** VER-04 for T4: each mutant, on the variants listed for it below, fails a riscv-test against
+  * the golden model, so the checks of this task cannot pass vacuously. The
   * `make` targets are checked the same way by `make test-riscv-tests MUTANT=<name>` and
   * `make act4 MUTANT=<name>`, which must exit nonzero.
   */

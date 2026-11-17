@@ -249,9 +249,10 @@ class CPU(
     record.cause     := exception.bits.cause
     record.tval      := exception.bits.tval
   }
+  // an interrupt's own fields, whatever `trap` (exercise 3.9) says
   when(take_interrupt) {
     record.inst  := 0.U // the instruction did not execute
-    record.cause := (BigInt(1) << 31).U(32.W) | csr.io.irq.cause
+    record.cause := csr.io.irq.mcause
     record.tval  := 0.U
   }
   record.csr.valid      := csr.io.csr.write

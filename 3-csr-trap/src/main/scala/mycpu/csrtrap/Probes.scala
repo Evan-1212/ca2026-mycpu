@@ -19,7 +19,9 @@ object CsrProbes {
   /** The group of `csr`, with three signals of the core that the caller reads (with `tap` where
     * they sit below it): `trap`, high in a cycle in which the core takes a trap; `cause`, the
     * `cause` of the core's retire record, which is the trap's `mcause` value in such a cycle; and
-    * `wfi`, high while a WFI waits.
+    * `wfi`, high while a WFI waits. That is a register (T3's `wfi_waiting`, the pipeline's
+    * `mem_waiting`): it is high from the second cycle of the wait through the cycle in which the
+    * WFI retires.
     */
   def csr(csr: CsrFile, trap: Bool, cause: UInt, wfi: Bool): ObsCsr = {
     val o   = Wire(new ObsCsr)

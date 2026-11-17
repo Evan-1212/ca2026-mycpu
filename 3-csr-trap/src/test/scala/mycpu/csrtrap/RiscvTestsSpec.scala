@@ -102,7 +102,7 @@ object PrivTests {
 
   /** `body` with a handler (`trap`) that saves `mcause`, `mepc`, `mtval` and `mstatus` in `s1` to
     * `s3` and `s5`, counts in `s4`, silences the interrupt sources and returns past an exception.
-    * A case fails with `fail <n>` (to `fail_n`, which exits with n).
+    * A case that fails sets `a0` to its number and branches to `fail`, which exits with `a0`.
     */
   private def test(body: String): String = f"""
       la    t0, trap

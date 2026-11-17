@@ -5,7 +5,6 @@
 package mycpu.pipeline
 
 import chisel3.simulator.scalatest.ChiselSim
-import mycpu.common._
 import mycpu.csrtrap.RiscvTests
 import org.scalatest.flatspec.AnyFlatSpec
 
@@ -13,10 +12,10 @@ import org.scalatest.flatspec.AnyFlatSpec
   * tests (`t3mi`), in T3's environment (`mycpu.csrtrap.RiscvTests`), record by record against the
   * golden model.
   *
-  * The environment variable `MUTANT` names a bug to inject (`PipelineConfig.mutants`, or
-  * `mtip-bit5` in the CSR file, see [[MutantEmit]]), on the variant that `VARIANT` names (Forward
-  * by default); the spec must then fail (VER-04): `make test-riscv-tests MUTANT=<name>
-  * [VARIANT=<v>]`.
+  * The environment variable `MUTANT` names a bug to inject (`PipelineConfig.mutants`, or one of
+  * `MutantEmit.names`: `mtip-bit5` in the CSR file, `no-flush` in the flush unit; see [[MutantEmit]]),
+  * on the variant that `VARIANT` names (Forward by default); the spec must then fail (VER-04):
+  * `make test-riscv-tests MUTANT=<name> [VARIANT=<v>]`.
   */
 class RiscvTestsSpec extends AnyFlatSpec with ChiselSim {
   private val mutant   = sys.env.get("MUTANT").filter(_.nonEmpty)

@@ -26,7 +26,8 @@ class WaitBox(waits: WaitSpec, accessAtAccept: Boolean, depth: Int) extends Modu
 
 /** T4-06's RAM wrapper: with `w` fixed wait states every response comes exactly `w` cycles after
   * its request was accepted, in order, with the word at its address (read when it was accepted, or
-  * when it is answered), and a stream of requests is accepted at one per cycle as long as the
+  * when it is answered: a word written while its request waits is answered old in the first
+  * case, new in the second), and a stream of requests is accepted at one per cycle as long as the
   * buffer has room, also in the cycle in which it answers its last entry.
   */
 class WaitStatesSpec extends AnyFlatSpec with ChiselSim {
@@ -63,6 +64,40 @@ class WaitStatesSpec extends AnyFlatSpec with ChiselSim {
           assert(when == at + w, s"the request of cycle $at was answered in cycle $when")
           assert(data == 0x1000 + index, s"request $index answered with 0x${data.toHexString}")
         }
+      }
+    }
+  }
+
+  // when the RAM is read: a word that changes while its request waits is answered old, or new
+  for (accessAtAccept <- Seq(true, false)) {
+    val (reads, word) = if (accessAtAccept) ("at acceptance", "old") else ("at the answer", "new")
+    s"Wait states (3, depth 4, the RAM read $reads)" should s"answer with the $word word after a write while the request waits" in {
+      simulate(new WaitBox(WaitSpec.Fixed(3), accessAtAccept, 4)) { c =>
+        def write(data: Int): Unit = {
+          c.io.load.valid.poke(true.B)
+          c.io.load.bits.addr.poke(riscv.Ram.base.U)
+          c.io.load.bits.data.poke(data.U)
+        }
+        c.reset.poke(true.B)
+        write(0x1000)
+        c.clock.step()
+        c.io.load.valid.poke(false.B)
+        c.reset.poke(false.B)
+        c.io.port.req.bits.wdata.poke(0.U)
+        c.io.port.req.bits.wstrb.poke(0.U)
+        c.io.port.req.bits.addr.poke(riscv.Ram.base.U)
+        c.io.port.req.valid.poke(true.B)
+        c.io.port.req.ready.expect(true.B, "the empty buffer takes the request")
+        c.clock.step()
+        c.io.port.req.valid.poke(false.B)
+        write(0x2000) // in the cycle after the acceptance
+        for (k <- 1 to 2) {
+          c.io.port.resp.valid.expect(false.B, s"no answer $k cycles after the acceptance")
+          c.clock.step()
+          c.io.load.valid.poke(false.B)
+        }
+        c.io.port.resp.valid.expect(true.B, "the answer 3 cycles after the acceptance")
+        c.io.port.resp.bits.rdata.expect((if (accessAtAccept) 0x1000 else 0x2000).U, s"the $word word")
       }
     }
   }

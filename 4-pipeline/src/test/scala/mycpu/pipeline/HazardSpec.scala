@@ -39,7 +39,7 @@ class HazardSpec extends AnyFlatSpec with ChiselSim {
             )
           }
           assert(run.gap(symbols("c"), symbols("n")) == flushes, s"$what: cycles between the consumer and the next")
-          assert(counts(HpmEvents.FlushBubble) == flushes, s"$what: flush bubbles (hpm event 5)")
+          assert(counts(HpmEvents.FlushBubble) == flushes, s"$what: flush bubbles (hpm event ${HpmEvents.FlushBubble})")
           assert(T4.reg(run.result, "a0") == 0)
         }
         info(s"${sequences.size} sequences, stalls ${sequences

@@ -79,7 +79,7 @@ in WB has committed.
 - **Side effects only from the oldest instruction.** The data port is used from MEM only, so a
   store or a load of a device register with a read side effect (UART `RXDATA`, `STATUS`) is never
   made for an instruction that an older one's trap cancels; a request on the port is held until
-  it is accepted, and every accepted access completes and commits.
+  it is accepted, and every accepted access completes: it commits, or takes its access fault.
 - **Serialization.** Every CSR instruction (counters included), `mret`, `wfi` and `fence.i` waits
   in ID until EX and MEM are empty, and nothing younger leaves ID until it has committed. Two
   back-to-back `csrr minstret` read values exactly one apart on every variant.
@@ -198,6 +198,7 @@ other (8). So `mcycle - minstret = hpm1 + hpm4 + hpm5 + hpm6 + hpm7 + hpm8` exac
 | `Fetch.scala` | the fetch unit for any latency (4.10) |
 | `CPU.scala` | the pipeline: forwarding into ID (4.3), flushes (4.4), serialization (4.5), commit (4.6), interrupts (4.7), the divider (4.8), `fence.i` (4.9) |
 | `WaitStates.scala` | wait states on a RAM port |
+| `Probes.scala` | the `pipe` and `csr` probe groups of the observation interface |
 | `Top.scala` | the system (`SimTop`) and the model emitter |
 
 ## CA26: Exercises
@@ -223,11 +224,14 @@ Ten exercises, each marked `[CA26: Exercise 4.<n>]` in the source.
 
 A blank does not compile, and sbt compiles a task as a whole, so no spec of this task runs while
 a blank of it, or of a task before it, is left. Fill them all; then run the specs in this order,
-which follows the dependencies, so that the first failure points at its exercise:
+from the narrowest to the widest:
 
 1. 4.1: `sbt "pipeline/testOnly mycpu.pipeline.StageSpec"`.
-2. 4.2 to 4.4 and 4.10 make programs run: `make test-programs VARIANT=<v>` for each variant, then
-   `sbt "pipeline/testOnly mycpu.pipeline.HazardSpec"` (the exact counts above).
+2. Programs: `make test-programs VARIANT=<v>` for each variant, then
+   `sbt "pipeline/testOnly mycpu.pipeline.HazardSpec"` (the exact counts above). Every exercise
+   takes part in these: the programs use CSRs, traps, interrupts, the divider and `fence.i`, and
+   nothing commits without 4.6. A failure here points at 4.2 to 4.4 or 4.10 only when the specs of
+   step 3 pass.
 3. 4.5 to 4.9: `sbt "pipeline/testOnly mycpu.pipeline.PreciseTrapSpec mycpu.pipeline.CounterSpec
    mycpu.pipeline.LatencySpec"`.
 4. `make test`, the programs, then `make act4` for each variant.
@@ -279,7 +283,7 @@ model directory of its own (`build/t4-forward`, `build/t4-stall-i2-d1`, ...).
 | `LatencySpec` | 6 systems (each port with 0, 1, 2 and random wait states, all variants): a directed program whose branches, traps and `fence.i` happen with fetches in flight and a `fence.i` that waits for a late store (seen through a probe), `jit`, the short C programs and 40 random programs against the golden model |
 | `CoSimSpec` | per variant: the short C programs (`jit`, `ecall`, `irqtrap` among them), one built without M, and 500 random programs with M and CSR instructions |
 | `RiscvTestsSpec` | per variant: 40 `rv32ui`, 8 `rv32um` and 9 `t3mi` tests |
-| `MutantSpec` | every mutant on every variant it applies to fails a riscv-test |
+| `MutantSpec` | every mutant fails a riscv-test on the variants listed for it (`sra` and `mtip-bit5` on `Forward`, the other two on two variants each) |
 | `PipeProbesSpec` | per variant: the `pipe` probes of the observation interface on the `hazards` program give `HazardSpec`'s stall and flush cycles for each of its 21 sequences; the `stall`, `flush` and `bubble` bits of ID, EX and MEM say what each stage holds next; IF, ID, EX and MEM show the program's words; MEM holds each instruction in the cycle of its record; the same on `Forward` with wait states on both ports |
 
 ## Expected Results

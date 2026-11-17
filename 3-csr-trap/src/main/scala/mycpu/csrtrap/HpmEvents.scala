@@ -6,9 +6,10 @@ package mycpu.csrtrap
 
 import chisel3._
 
-/** The events that the programmable counters of `mycpu.common.Counters` (`mhpmcounter3..10`) can count (T3-04). A counter counts
-  * the event whose ID software writes to its `mhpmevent` register; ID 0 means "no event", and so
-  * do the IDs 9 to 15, which the 4-bit register holds but no event has.
+/** The events that the programmable counters of `mycpu.common.Counters` (`mhpmcounter3..10`) can
+  * count (T3-04). A counter counts the event whose ID software writes to its `mhpmevent`
+  * register; ID 0 means "no event", and so do the IDs 9 to 15, which the 4-bit register holds but
+  * no event has.
   *
   * Six of the events are a '''partition''' of the cycles in which no instruction retires: each
   * such cycle is counted by exactly one of them, so with one counter per event the six counts and
@@ -44,13 +45,15 @@ object HpmEvents {
   /** A cycle in which the retiring stage holds a bubble made by a flush (T4). */
   val FlushBubble: Int = id("flush_bubble")
 
-  /** A cycle in which the core waits for the instruction memory (T5). */
+  /** A cycle in which the core waits for the instruction memory (T4, T5). */
   val InstructionWait: Int = id("instruction_wait")
 
-  /** A cycle in which the core waits for the data memory or a device (T5). */
+  /** A cycle in which the core waits for the data memory or a device (T4, T5). */
   val DataWait: Int = id("data_wait")
 
-  /** Any other cycle without a retired instruction: the pipeline filling after reset, a WFI. */
+  /** Any other cycle without a retired instruction: a WFI that waits, the cycle of a trap; in T3 a
+    * device wait; in the pipelines the filling after reset and a serialization.
+    */
   val Other: Int = id("other")
 
   /** The number of events; event `id` is element `id - 1` of an event vector. */

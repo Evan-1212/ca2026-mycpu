@@ -436,7 +436,7 @@ object IssLockstep {
       * counters), without a clock edge: each is read as by a `csrrs` with `x0`. The ports must be
       * idle.
       */
-    def compareCsrs(addrs: Iterable[Int], when: String): Unit = {
+    def compareCsrs(addrs: Iterable[Int], when: => String): Unit = {
       c.io.csr.cmd.bits.op.poke(CsrOp.Rs)
       c.io.csr.cmd.valid.poke(true.B)
       for (addr <- addrs) {
@@ -451,7 +451,7 @@ object IssLockstep {
       }
       c.io.csr.cmd.valid.poke(false.B)
     }
-    def compareAll(when: String): Unit = {
+    def compareAll(when: => String): Unit = {
       compareCsrs(CsrFile.implemented, when)
       val registers = Seq(
         "msip"        -> (Clint.Msip, if (clint.msip) 1L else 0L),
@@ -479,7 +479,7 @@ object IssLockstep {
     /** Presents the interrupt of step `r`, and with it what the file must ignore: the instruction
       * that the interrupt precedes, which does not execute, or an exception a core reports for it.
       */
-    def presentInterrupt(r: IssRetire, regs: IndexedSeq[Long], what: String): Unit = {
+    def presentInterrupt(r: IssRetire, regs: IndexedSeq[Long], what: => String): Unit = {
       val cause = c.io.irq.cause.peek().litValue
       check(cause == r.trap.get.code, s"$what\n  the hardware requests interrupt $cause")
       c.io.trap.interrupt.poke(true.B)
@@ -504,7 +504,7 @@ object IssLockstep {
     /** Presents the instruction of step `r`: an exception, a CSR instruction, an `mret`, a CLINT
       * access.
       */
-    def presentInstruction(r: IssRetire, regs: IndexedSeq[Long], what: String): Unit = {
+    def presentInstruction(r: IssRetire, regs: IndexedSeq[Long], what: => String): Unit = {
       for (t <- r.trap) {
         c.io.trap.exception.poke(true.B)
         c.io.trap.cause.poke(t.code.U)
@@ -559,7 +559,10 @@ object IssLockstep {
         if (running && iss.pc != pc) iss.load(MemImage(pc, IndexedSeq.empty))
       }
       while (running) {
-        val where = s"seed $seed, step $step"
+        // the messages are built only for a mismatch (a record prints with its disassembly), from
+        // the step number of this iteration
+        val at         = step
+        lazy val where = s"seed $seed, step $at"
         // a source outside the model's devices; with handlers, only what a handler can silence
         if (!handlers && rng.nextInt(100) < 3) iss.mipHw ^= 1L << CsrFile.Mei
         val regs     = iss.regs
@@ -580,8 +583,8 @@ object IssLockstep {
             stats.wfiSkipped += 1
             goOn(pc + 4)
           case Some(wait) =>
-            val r    = iss.step()
-            val what = s"$where: $r"
+            val r         = iss.step()
+            lazy val what = s"$where: $r"
             for (cycle <- 0L until wait) {
               check(!c.io.irq.wake.peek().litToBoolean, s"$what\n  the hardware wakes $cycle cycles into $wait")
               val flags = CycleFlags.stalls(rng)
@@ -643,8 +646,8 @@ object IssLockstep {
             // instruction, or at the one an interrupt preceded
             goOn(if (handlers) iss.pc else if (interrupt) r.pc else r.pc + 4)
 
-            val after  = s"$where, after $r"
-            val others = Seq.fill(3) {
+            lazy val after = s"$where, after $r"
+            val others     = Seq.fill(3) {
               if (rng.nextBoolean()) CsrFile.implemented(rng.nextInt(CsrFile.implemented.size)) else rng.nextInt(4096)
             }
             compareCsrs(Csr.Mstatus +: others, after)

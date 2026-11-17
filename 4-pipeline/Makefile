@@ -64,8 +64,13 @@ endif
 
 I_WAIT ?= $(or $(STUDENT_MEM_WAIT),0)
 D_WAIT ?= $(or $(STUDENT_MEM_WAIT),0)
-$(foreach w,I_WAIT D_WAIT,$(if $(shell printf '%s\n' $(call sq,$($(w))) | grep -Ex '[0-9]+|rand[0-9]+:[0-9]+'),,\
-    $(error $(w) must be <n> or rand<max>:<seed>, not '$($(w))')))
+# WaitSpec's ranges: 0 to 63 fixed; random up to 1 to 63, with a seed of 1 to 65535
+wait_n    := [0-9]|[1-5][0-9]|6[0-3]
+wait_max  := [1-9]|[1-5][0-9]|6[0-3]
+wait_seed := [1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5]
+$(foreach w,I_WAIT D_WAIT,$(if $(shell printf '%s\n' $(call sq,$($(w))) | \
+    grep -Ex '($(wait_n))|rand($(wait_max)):($(wait_seed))'),,\
+    $(error $(w) must be <n> (0 to 63) or rand<max>:<seed> (max 1 to 63, seed 1 to 65535), not '$($(w))')))
 # a part of a model's directory name: -i2, -drand3s7
 wait_suffix = $(if $(filter-out 0,$(2)),-$(1)$(subst :,s,$(2)))
 
@@ -77,7 +82,8 @@ TASK_SOURCE_DIRS  := $(CURDIR)/src/main/scala/mycpu/pipeline \
                      $(abspath ../2-rv32im/src/main/scala/mycpu/rv32im) \
                      $(abspath ../1-single-cycle/src/main/scala/mycpu/singlecycle)
 TASK_VARIANT      := $(VARIANT)$(if $(filter-out 34,$(DIV_LATENCY)),+div$(DIV_LATENCY))$(if \
-                     $(filter-out 0,$(I_WAIT)),+i$(I_WAIT))$(if $(filter-out 0,$(D_WAIT)),+d$(D_WAIT))
+                     $(filter-out 0,$(I_WAIT)),+i$(I_WAIT))$(if $(filter-out 0,$(D_WAIT)),+d$(D_WAIT))$(if \
+                     $(filter-out 1,$(TICK_DIVISOR)),+tick$(TICK_DIVISOR))
 TASK_MODEL_SUFFIX := -$(call variant_name,$(VARIANT))$(if $(filter-out 34,$(DIV_LATENCY)),-div$(DIV_LATENCY))$(call \
                      wait_suffix,i,$(I_WAIT))$(call wait_suffix,d,$(D_WAIT))$(if \
                      $(filter-out 1,$(TICK_DIVISOR)),-tick$(TICK_DIVISOR))
@@ -87,7 +93,13 @@ TASK_EMIT_PARAMS  := variant=$(VARIANT) divLatency=$(DIV_LATENCY) tickDivisor=$(
 # the mutants of the CSR file (T3's CsrMutants) and of the flush unit are test code: MutantEmit
 # takes every mutant
 TASK_EMIT_MAIN    := $(if $(MUTANT),pipeline/Test/runMain mycpu.pipeline.MutantEmit)
+# (mtip-bit5 is T3's CsrMutants, which T3's MutantEmit names)
+TASK_MUTANT_SOURCES := $(CURDIR)/src/test/scala/mycpu/pipeline/Mutants.scala \
+                       $(abspath ../3-csr-trap/src/test/scala/mycpu/csrtrap/CsrMutants.scala) \
+                       $(abspath ../3-csr-trap/src/test/scala/mycpu/csrtrap/RetireLogCheck.scala)
 TASK_ELF          := jit
+# T3's checker and golden model (the ISA is T3's), with this system's tick divisor
+TASK_COSIM_CHECK  := pipeline/Test/runMain mycpu.csrtrap.RetireLogCheck --tick=$(TICK_DIVISOR)
 
 MUTANTS := sra no-forward-mem no-flush mtip-bit5
 
@@ -101,32 +113,15 @@ COSIM_PROGRAMS       ?=
 
 # make bench: one model per variant and build (<variant>/<arch>)
 BENCH_CONFIGS ?= $(foreach v,$(VARIANTS),$(v)/rv32i_zicsr $(v)/rv32im_zicsr)
+TASK_BENCH_KNOB := VARIANT
 bench_part     = $(BENCH_DIR)/t4-parts/$(subst /,-,$(1))$(if $(MUTANT),+$(MUTANT)).csv
 BENCH_OUT      = $(call bench_part,$(VARIANT)/$(ARCH))
 TASK_CLEAN     = $(BENCH_DIR)/t4-parts $(wildcard $(BUILD)/t4-*)
 
 include ../sim/task.mk
 
-# a mutant model is made from test code too: the file of the mutants
-ifneq ($(MUTANT),)
-$(GEN)/SimTop.sv $(GEN)/sim_config.h: $(CURDIR)/src/test/scala/mycpu/pipeline/Mutants.scala
-endif
-
-# T3's checker and golden model (the ISA is T3's), with this system's tick divisor.
-COSIM_CHECK := pipeline/Test/runMain mycpu.csrtrap.RetireLogCheck --tick=$(TICK_DIVISOR)
-
 # The specs that run on one variant (RiscvTestsSpec with a mutant) take it from the environment.
 test-riscv-tests: export VARIANT := $(VARIANT)
-
-.PHONY: bench
-bench:
-	@for config in $(BENCH_CONFIGS); do \
-	    $(MAKE) --no-print-directory bench-one VARIANT=$${config%/*} ARCH=$${config#*/} || exit 1; \
-	done
-	@{ head -n 1 $(call bench_part,$(firstword $(BENCH_CONFIGS))) && \
-	   for part in $(foreach c,$(BENCH_CONFIGS),$(call bench_part,$(c))); do tail -n +2 $$part || exit 1; done; \
-	 } > $(BENCH_CSV).new && mv $(BENCH_CSV).new $(BENCH_CSV)
-	@echo "bench: wrote $(BENCH_CSV) ($(words $(BENCH_CONFIGS)) configurations)"
 
 # ACT4 (VER-03): the ELFs of T3's configuration (tests/act4 maps TASK=4 to cores/mycpu-t3: the ISA,
 # the memory map and the macros are T3's), run on this model; the results go to

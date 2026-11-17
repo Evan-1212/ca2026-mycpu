@@ -6,6 +6,7 @@ package mycpu.csrtrap
 
 import chisel3._
 import chisel3.simulator.scalatest.ChiselSim
+import mycpu.common.Trap
 import org.scalatest.flatspec.AnyFlatSpec
 
 /** Trap entry and return on [[CsrFile]] (T3-02): the state transitions, where the handler is in
@@ -27,7 +28,7 @@ class TrapSpec extends AnyFlatSpec with ChiselSim {
     (7, "store access fault", BigInt(0x40000004L)),
     (11, "ecall from M-mode", BigInt(0))
   )
-  private val interrupts = Seq(3 -> "software", 7 -> "timer", 11 -> "external")
+  private val interrupts = Seq(Trap.Msi -> "software", Trap.Mti -> "timer", Trap.Mei -> "external")
 
   /** Raises one interrupt line and enables it, with `mstatus.MIE` set. */
   private def request(c: CsrFile, b: CsrBench, code: Int): Unit = {
@@ -78,7 +79,7 @@ class TrapSpec extends AnyFlatSpec with ChiselSim {
         c.io.trap.cause.poke(2.U)
         val handler = b.interrupt(epc = 0x80000300L, tval = mask32)
         assert(handler == 0x80002000L + (if (vectored) 4 * code else 0), s"$name interrupt, vectored=$vectored")
-        assert(b.peek(Mcause) == (BigInt(1) << 31) + code, s"mcause of the $name interrupt")
+        assert(b.peek(Mcause) == Trap.interruptCause(code), s"mcause of the $name interrupt")
         assert(b.peek(Mepc) == 0x80000300L, "mepc is the instruction that did not execute")
         assert(b.peek(Mtval) == 0, "mtval is 0 for an interrupt")
         assert(b.peek(Mstatus) == 0x1880)
@@ -102,12 +103,12 @@ class TrapSpec extends AnyFlatSpec with ChiselSim {
     simulate(new CsrFile()) { c =>
       val b = CsrBench(c)
       b.write(Mtvec, 0x80002001L)
-      request(c, b, 7)
+      request(c, b, Trap.Mti)
       c.io.trap.exception.poke(true.B)
       c.io.trap.cause.poke(2.U)
       val handler = b.interrupt(epc = 0x80000400L, tval = 0x1234)
       assert(handler == 0x8000201cL)
-      assert(b.peek(Mcause) == 0x80000007L && b.peek(Mtval) == 0)
+      assert(b.peek(Mcause) == Trap.interruptCause(Trap.Mti) && b.peek(Mtval) == 0)
     }
   }
 

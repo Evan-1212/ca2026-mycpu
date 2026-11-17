@@ -96,6 +96,12 @@ class InterruptRequest extends Bundle {
   val valid = Output(Bool())
   val cause = Output(UInt(4.W))
   val wake  = Output(Bool())
+
+  /** The `mcause` value of the requested interrupt: bit 31 set, `cause` in the low bits. The cores
+    * put it in the retire record of the interrupt (`mycpu.common.Trap.interruptCause` is the same
+    * value for the golden model).
+    */
+  def mcause: UInt = Cat(true.B, cause.pad(31))
 }
 
 /** The machine-mode CSR file (T3-01 to T3-04): the CSRs of an M-mode-only RV32IM hart with Zicsr,
@@ -138,7 +144,8 @@ class InterruptRequest extends Bundle {
   *     this hart raises) leaves it as it was;
   *   - `mcountinhibit`: bit 0 stops `mcycle`, bit 2 `minstret`, bits 3 to 10 `mhpmcounter3..10`;
   *     the others read 0 ([[CsrFile.inhibitMask]]);
-  *   - `mcycle[h]`, `minstret[h]` and the programmable counters of `Counters` (`mhpmcounter3..10[h]`): 64-bit counters, each half writable;
+  *   - `mcycle[h]`, `minstret[h]` and the programmable counters of `Counters`
+  *     (`mhpmcounter3..10[h]`): 64-bit counters, each half writable;
   *     `mhpmevent3..10`: 4 bits, an event ID (0 and the IDs 9 to 15, which no event has, select
   *     no event); `mhpmcounter11..31[h]` and `mhpmevent11..31`: 0, writes ignored;
   *   - `cycle[h]`, `time[h]`, `instret[h]`, `hpmcounter3..31[h]`: the read-only user shadows of
@@ -188,7 +195,8 @@ class CsrFile(mtvecReset: Long = 0x80000000L) extends Module {
   val mcountinhibit    = RegInit(0.U(32.W))
   val mcycle           = RegInit(0.U(64.W))
   val minstret         = RegInit(0.U(64.W))
-  // the programmable counters and their events (`Counters`: mhpmcounter3..10, mhpmevent3..10) are elements 0 to programmable - 1
+  // the programmable counters and their events (`Counters`: mhpmcounter3..10, mhpmevent3..10)
+  // are elements 0 to programmable - 1
   val hpm_counters = RegInit(VecInit(Seq.fill(programmable)(0.U(64.W))))
   val hpm_events   = RegInit(VecInit(Seq.fill(programmable)(0.U(Counters.eventBits.W))))
 

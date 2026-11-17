@@ -35,7 +35,7 @@ class HazardProducer extends Bundle {
 
 /** The data-hazard interlock of each variant (T4-02): `stall` holds the instruction in ID for this
   * cycle because an operand it needs is not available where it needs it, and EX gets a bubble
-  * (counted as a load-use stall, hpm event 4).
+  * (counted as a load-use stall, `HpmEvents.LoadUseStall`).
   *
   * Where values are produced and consumed:
   *   - the register file is written in WB and read in ID in the same cycle (write-through), in

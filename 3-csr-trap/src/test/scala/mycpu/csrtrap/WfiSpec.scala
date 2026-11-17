@@ -8,6 +8,8 @@ import chisel3.simulator.scalatest.ChiselSim
 import mycpu.common._
 import org.scalatest.flatspec.AnyFlatSpec
 
+import scala.collection.mutable
+
 /** WFI on the T3 core (Privileged spec §3.3.3): it does not wait if an enabled interrupt is
   * pending; otherwise it stalls, retiring nothing, until one is, and then retires. An interrupt
   * that is due when the WFI is reached is taken before it (`mepc` = the WFI), one that arrives
@@ -60,11 +62,24 @@ $body
   }
 
   private def run(c: Top, image: MemImage): (Seq[CoSimCycle], CoSimResult) = {
-    val cycles = T3.capture(c, image)(())
+    val (cycles, result, _) = runProbed(c, image, probe = false)
+    (cycles, result)
+  }
+
+  /** The cycles of `image` on `c`, compared with the golden model, and the `csr.wfi` probe of
+    * every cycle (if `probe`; else empty).
+    */
+  private def runProbed(
+      c: Top,
+      image: MemImage,
+      probe: Boolean = true
+  ): (Seq[CoSimCycle], CoSimResult, Seq[Boolean]) = {
+    val wfi    = mutable.ArrayBuffer[Boolean]()
+    val cycles = T3.capture(c, image) { if (probe) wfi += c.io.obs.csr.get.wfi.peek().litToBoolean; () }
     val result = CoSim2.replay(cycles.iterator, image, T3.defaultModel)
     result.mismatch.foreach(m => fail(m))
     assert(result.exit.contains(0))
-    (cycles, result)
+    (cycles, result, wfi.toVector)
   }
 
   "WFI" should "wait for an enabled interrupt with MIE = 0, then continue at pc + 4" in {
@@ -79,17 +94,22 @@ $body
         """,
         delay = 200
       )
-      val (cycles, result) = run(c, image)
-      val wait             = waited(cycles, s("w"))
+      val (cycles, result, wfiProbe) = runProbed(c, image)
+      val wait                       = waited(cycles, s("w"))
       assert(wait > 150 && wait < 210, s"the WFI waited $wait cycles for a timer 200 cycles away")
       assert(T3.traps(result).isEmpty && T3.reg(result.trace, "a1") == 0x80)
       val wfi = result.trace.find(_.pc == s("w")).get
       assert(wfi.nextPc == s("next"))
+      // the csr.wfi probe, a register: from the second cycle of the wait through the WFI's record
+      val retired = cycles.indexWhere(_.retire.exists(_.pc == s("w")))
+      val high    = wfiProbe.indices.filter(wfiProbe(_))
+      assert(high == (retired - wait + 1 to retired), s"csr.wfi high in cycles $high, the WFI's record in $retired")
       info(s"the WFI waited $wait cycles")
     }
   }
 
-  it should "not wait when an enabled interrupt is pending, whatever MIE is" in {
+  // with MIE set, the pending interrupt is taken before the WFI instead: the next test
+  it should "not wait when an enabled interrupt is pending and MIE is clear, but retire at once" in {
     simulate(new Top) { c =>
       val (image, s) = program(
         f"""

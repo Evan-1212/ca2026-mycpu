@@ -7,7 +7,7 @@ package mycpu.csrtrap
 import chisel3._
 import chisel3.simulator.PeekPokeAPI._
 
-/** Checks of [[TrapSpec]] that [[CsrMutantSpec]] runs on a mutant too: each returns what it found
+/** Checks of [[TrapSpec]] that the held-back `CsrMutantSpec` runs on a mutant too: each returns what it found
   * wrong, one line per finding.
   */
 object TrapChecks {
@@ -40,7 +40,7 @@ object TrapChecks {
   }
 }
 
-/** Checks of [[InterruptSpec]] that [[CsrMutantSpec]] runs on a mutant too: each returns what it
+/** Checks of [[InterruptSpec]] that the held-back `CsrMutantSpec` runs on a mutant too: each returns what it
   * found wrong, one line per finding.
   */
 object InterruptChecks {

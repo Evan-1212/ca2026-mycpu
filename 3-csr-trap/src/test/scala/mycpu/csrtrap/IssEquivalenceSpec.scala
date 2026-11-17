@@ -9,10 +9,14 @@ import mycpu.common.Trap
 import org.scalatest.flatspec.AnyFlatSpec
 
 /** [[CsrFile]] and [[Clint]] against the golden model on random programs ([[IssLockstep]] says
-  * what is compared and why the model is used through its public API).
+  * what is compared and why the model is used through its public API). The environment variable
+  * `MYCPU_T3_SEEDS` sets the number of programs without handlers (40 by default, at least 2), and
+  * half as many more run under their own handlers; below 40 the coverage of what the programs
+  * reach is not asked for.
   */
 class IssEquivalenceSpec extends AnyFlatSpec with ChiselSim {
   private val seeds = sys.env.get("MYCPU_T3_SEEDS").fold(40)(_.toInt)
+  require(seeds >= 2, s"MYCPU_T3_SEEDS=$seeds: at least 2, or a test of no program would pass")
   private val items = 1500
 
   /** Whether the run is long enough to ask for what it must reach. */

@@ -5,8 +5,8 @@
 package mycpu.pipeline
 
 import chisel3.simulator.scalatest.ChiselSim
-import mycpu.common.{CoSimCycle, TestTools}
-import mycpu.csrtrap.{ProbeValues, T3}
+import mycpu.common.{CoSimCycle, ProbeValues, TestTools}
+import mycpu.csrtrap.T3
 import org.scalatest.flatspec.AnyFlatSpec
 
 import java.nio.file.{Files, Path}
@@ -20,8 +20,9 @@ import scala.collection.mutable
   * consumer's last cycle in EX and the next instruction's first) must be HazardSpec's numbers:
   * the 63 stall counts and 63 flush counts of the three variants, which the browser test of the
   * pipeline view counts in the same program's bundles. In every cycle with a record of an
-  * instruction, MEM (the commit stage) must hold that instruction, and WB its write of a register
-  * other than x0 in the cycle after; in every cycle, each of IF, ID,
+  * instruction, MEM (the commit stage) must hold that instruction, and WB must hold a write
+  * exactly in the cycles after one with a record of an instruction that writes a register other
+  * than x0 (never after a trap, a bubble or no write); in every cycle, each of IF, ID,
   * EX and MEM that holds an instruction must show the program's word at its `pc` (the program
   * does not modify its code). The fields that the schema fixes must be as it says in every cycle:
   * `fetch.stall`, `decode.bubble`, `writeback.stall` and `writeback.flush` 0, `decode.flush`
@@ -94,7 +95,7 @@ object PipeProbesSpec {
     T3.clear(c)
     val run = T4.timed(c, elf.image) { seen += ProbeValues.peek(c.io.obs.pipe.get, "pipe"); () }
     assert(run.result.exit.contains(0), s"hazards: exit ${run.result.exit}")
-    (seen.toSeq, run.cycles)
+    (seen.toVector, run.cycles)
   }
 
   /** The words of the `hazards` build, by address. */
@@ -212,20 +213,33 @@ object PipeProbesSpec {
           s"execute.stall ${p("pipe.execute.stall")}"
       )
 
-  /** In every cycle with a record of an instruction that retires, MEM holds it; if it writes a
-    * register other than x0, WB holds that write in the next cycle.
+  /** In every cycle with a record of an instruction that retires, MEM holds it. WB holds a write
+    * exactly in the cycles after one with a record of an instruction that retires and writes a
+    * register other than x0: not after a trap, a bubble or an instruction without such a write.
     */
   def checkCommit(cycles: Seq[CoSimCycle], seen: Seq[Map[String, BigInt]], what: String): Unit = {
     assert(cycles.size == seen.size)
-    for ((now, k) <- cycles.zipWithIndex; r <- now.retire if r.trap.isEmpty) {
-      val p = seen(k)
-      assert(
-        holds(p, "memory", r.pc) && p("pipe.memory.inst") == r.inst,
-        f"$what, cycle $k: MEM holds pc 0x${p("pipe.memory.pc")}%08x inst 0x${p("pipe.memory.inst")}%08x " +
-          f"(valid ${p("pipe.memory.valid")}), the record ${r.pc}%08x ${r.inst}%08x"
-      )
-      if (r.rd != 0 && k + 1 < seen.size)
-        assert(seen(k + 1)("pipe.writeback.valid") == 1, f"$what, cycle ${k + 1}: WB holds no write of x${r.rd} for $r")
+    for (p <- seen.headOption)
+      assert(p("pipe.writeback.valid") == 0, s"$what, cycle 0: WB holds a write before any record")
+    for ((now, k) <- cycles.zipWithIndex) {
+      val retired = now.retire.filter(_.retired)
+      retired.foreach { r =>
+        val p = seen(k)
+        assert(
+          holds(p, "memory", r.pc) && p("pipe.memory.inst") == r.inst,
+          f"$what, cycle $k: MEM holds pc 0x${p("pipe.memory.pc")}%08x inst 0x${p("pipe.memory.inst")}%08x " +
+            f"(valid ${p("pipe.memory.valid")}), the record ${r.pc}%08x ${r.inst}%08x"
+        )
+      }
+      if (k + 1 < seen.size) {
+        val write = retired.filter(_.rd != 0)
+        val wb    = seen(k + 1)("pipe.writeback.valid")
+        assert(
+          wb == (if (write.isDefined) 1 else 0),
+          s"$what, cycle ${k + 1}: WB valid $wb, after " +
+            write.fold("a cycle without a register write")(r => s"the write of x${r.rd} by $r")
+        )
+      }
     }
   }
 }

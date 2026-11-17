@@ -60,7 +60,7 @@ class LatencySpec extends AnyFlatSpec with ChiselSim {
           // With fixed data wait states the store before the fence.i is always still in flight; a
           // random draw may give it too few to outlast the instruction between them. A trap never has
           // a data access in flight: the instruction that traps is the oldest, and an access that was
-          // sent finishes (and commits) before anything younger reaches MEM.
+          // sent finishes (it commits, or takes its access fault) before anything younger reaches MEM.
           if (dWait.isInstanceOf[WaitSpec.Fixed] && dWait.max > 0) {
             assert(seen("fence.i after a store") > 0, s"the fence.i did not wait for a store: $seen")
             assert(seen("branch, with a data access in flight") > 0, s"no branch behind a late store: $seen")

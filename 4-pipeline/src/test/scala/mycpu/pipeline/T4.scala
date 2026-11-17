@@ -5,7 +5,6 @@
 package mycpu.pipeline
 
 import chisel3.{assert => _, _}
-import chisel3.simulator.PeekPokeAPI._
 import chisel3.util.experimental.BoringUtils
 import mycpu.common._
 import mycpu.csrtrap.T3
