@@ -7,7 +7,7 @@ package mycpu.soc
 import chisel3._
 import chisel3.simulator.scalatest.ChiselSim
 import mycpu.common._
-import mycpu.csrtrap.{ProbeValues, T3}
+import mycpu.csrtrap.T3
 import mycpu.pipeline.{PipelineConfig, Variant}
 import org.scalatest.flatspec.AnyFlatSpec
 

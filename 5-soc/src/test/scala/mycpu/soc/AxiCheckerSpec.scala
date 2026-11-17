@@ -149,10 +149,17 @@ class AxiCheckerSpec extends AnyFlatSpec with ChiselSim {
     }
     // a bound of 2 allows a read and a write together, and no third transaction
     assert(failures(2) { s => s.transfer("AR", "AW"); s.transfer("W"); s.transfer("R", "B") }.isEmpty)
-    assert(failures(2) { s => s.transfer("AR"); s.transfer("AR"); s.transfer("R"); s.transfer("R") }.isEmpty)
-    val two = "more than 2 transaction(s) outstanding"
-    illegal(two, 2) { s => s.transfer("AR", "AW"); s.transfer("AR") }
-    illegal(two, 2) { s => s.transfer("AW"); s.transfer("W", "AW"); s.transfer("AW") }
+    assert(failures(2) { s =>
+      s.transfer("AR"); s.transfer("AW", "R"); s.transfer("AR", "W"); s.transfer("R", "B")
+    }.isEmpty)
+    // ... which are never two of one direction: the shared port's arbiter passes one of each
+    val reads  = "more than one read outstanding"
+    val writes = "more than one write outstanding"
+    illegal(reads, 2) { s => s.transfer("AR"); s.transfer("AR") }
+    illegal(reads, 2) { s => s.transfer("AR", "AW"); s.transfer("AR") }
+    illegal(writes, 2) { s => s.transfer("AW"); s.transfer("AW") }
+    illegal(writes, 2) { s => s.transfer("AW", "W"); s.transfer("W") }
+    illegal(writes, 2) { s => s.transfer("AR", "AW"); s.transfer("W", "AW") }
   }
 
   it should "stay silent on an idle interface and during a long legal run" in {

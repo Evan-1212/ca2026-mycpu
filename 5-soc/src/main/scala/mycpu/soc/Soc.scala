@@ -89,10 +89,10 @@ case class SocConfig(
   *
   * '''Checkers''' (T5-02). Every master interface and every slave port of the crossbar has an
   * [[Axi4LiteChecker]]: one transaction outstanding on a master's interface and on a slave port
-  * that belongs to one master, two on a port that both masters share. An assertion that fires
-  * stops the simulation (the harness exits with 3), so a program that runs to its end on this
-  * system has broken no rule of the bus. The assertions are verification-layer code, which a
-  * synthesis build leaves out (`mycpu.common.TopGen`).
+  * that belongs to one master, one read and one write on a port that both masters share. An
+  * assertion that fires stops the simulation (the harness exits with 3), so a program that runs to
+  * its end on this system has broken no rule of the bus. The assertions are verification-layer
+  * code, which a synthesis build leaves out (`mycpu.common.TopGen`).
   */
 class Soc(val config: SocConfig) extends SimTop {
 
@@ -310,8 +310,11 @@ object Emit {
     */
   def config(params: Map[String, String]): SocConfig = {
     val base = SocConfig(Soc.readBootRom(params.get("bootRom").map(Paths.get(_)).getOrElse(Soc.defaultBootRom)))
-    def int(name: String, default: Int) = params.get(name).map(Integer.decode(_).toInt).getOrElse(default)
-    val (waits, seed)                   = params.get("ramWait").map(ramWait).getOrElse((base.ramWait, base.ramSeed))
+    def int(name: String, default: Int) = params.get(name).fold(default) { v =>
+      try Integer.decode(v).toInt
+      catch { case e: NumberFormatException => throw new IllegalArgumentException(s"$name=$v: not a number", e) }
+    }
+    val (waits, seed) = params.get("ramWait").map(ramWait).getOrElse((base.ramWait, base.ramSeed))
     base
       .copy(
         core = base.core.copy(

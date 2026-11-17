@@ -90,8 +90,11 @@ object Vga {
   * from the top, is in word `20 * y + x / 8` of that buffer, in bits `[4 * (x % 8) + 3 :
   * 4 * (x % 8)]`: the leftmost of the 8 pixels of a word is in its lowest 4 bits. As bytes in
   * little-endian order that is byte `80 * y + x / 2`, an even x in the low half of the byte. The
-  * buffers are write-only, and only as whole words, so the memory needs one write port and one
-  * read port (a block RAM); software that wants to change single pixels keeps its own copy.
+  * buffers are write-only, and only as whole words, so the memory needs one write port (the bus)
+  * and one read port (the scan); software that wants to change single pixels keeps its own copy.
+  * The memory is a `Mem`, read combinationally and registered at once (`pixel_word`), as in
+  * [[Axi4LiteRam]] with `syncRead = false`: on an FPGA that is distributed RAM or flip-flops, not
+  * a block RAM, whose synchronous read port would need the address one cycle earlier.
   *
   * '''Swap.''' A swap that was asked for takes effect where vblank begins (after the last
   * visible line), never while a picture is being scanned out: `front` flips, `SWAPS` counts, and
@@ -133,10 +136,10 @@ class Vga(pixelDiv: Int = 2, pixelShift: Int = 0) extends Module {
   val swap_count   = RegInit(0.U(32.W))
   val palette      = RegInit(VecInit(Seq.fill(PaletteEntries)(0.U(24.W))))
 
-  // Both buffers in one memory, each in a half of `BufferSpan` words, of which it uses the first
-  // 2,400: an address is the buffer number followed by the word number. The scan also reads
-  // during blanking, at word numbers up to 20 * 131 + 24, which the span covers; those words are
-  // never shown.
+  // Both buffers in one memory of 2 x `BufferSpan` words, each in a span of its own, of which it
+  // uses the first 2,400: an address is the buffer number followed by the word number. The scan
+  // also reads during blanking, at word numbers up to 20 * 131 + 24, which the span covers; those
+  // words are never shown.
   val BufferSpan                                  = 4096
   val framebuffer                                 = Mem(2 * BufferSpan, UInt(32.W))
   def buffer_addr(second: Bool, word: UInt): UInt =

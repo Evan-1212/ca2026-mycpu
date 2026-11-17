@@ -106,6 +106,6 @@ object RetireLogCheck {
     val rom  = Soc.readBootRom(option("boot").map(java.nio.file.Paths.get(_)).getOrElse(Soc.defaultBootRom))
     val ram  = option("ram").map(Integer.decode(_).toInt).getOrElse(MemMap.ramBytes)
     val rest = args.filterNot(a => names.exists(n => a.startsWith(s"--$n=")))
-    mycpu.common.RetireLogCheck.run(rest, T5.model(divisor, rom, ram))
+    mycpu.common.RetireLogCheck.run(rest, T5.model(divisor, rom, ram), ram)
   }
 }

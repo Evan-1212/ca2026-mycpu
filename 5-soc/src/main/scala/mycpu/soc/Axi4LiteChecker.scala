@@ -22,11 +22,11 @@ import chisel3.util._
   *   1. No B without a complete write: `BVALID` is high only when more AW transfers and more W
   *      transfers than B transfers happened in earlier cycles (the k-th B follows both the k-th AW
   *      and the k-th W).
-  *   1. At most `maxOutstanding` transactions are outstanding at the end of any cycle: reads that
-  *      had their AR transfer and not their R transfer, plus writes that had an AW or a W transfer
-  *      and not their B transfer. A request transfer in the cycle of a response transfer replaces
-  *      it, so a master that starts a transaction in the cycle the previous one ends has one
-  *      outstanding.
+  *   1. At most `maxOutstanding` transactions are outstanding at the end of any cycle, and at most
+  *      one read and one write: reads that had their AR transfer and not their R transfer, plus
+  *      writes that had an AW or a W transfer and not their B transfer. A request transfer in the
+  *      cycle of a response transfer replaces it, so a master that starts a transaction in the
+  *      cycle the previous one ends has one outstanding.
   *
   * "Earlier cycles" means a response in the cycle of its own request is a violation: a slave's
   * outputs do not depend combinationally on its inputs. Responses in order need no rule of their
@@ -35,11 +35,12 @@ import chisel3.util._
   * response carries the k-th request's data is checked against a memory model by the specs.
   *
   * @param maxOutstanding
-  *   the bound of rule 5: 1 on the interface of an [[Axi4LiteMaster]], 2 on a slave port that both
-  *   masters reach (a read of one and a write of the other)
+  *   the bound of rule 5, 1 or 2: 1 on the interface of an [[Axi4LiteMaster]], 2 on a slave port
+  *   that both masters reach (a read of one and a write of the other; never two reads or two
+  *   writes, since the arbiter passes one transaction per direction)
   */
 class Axi4LiteChecker(maxOutstanding: Int = 1) extends Module {
-  require(maxOutstanding >= 1, "at least one transaction must be allowed")
+  require(maxOutstanding == 1 || maxOutstanding == 2, "one transaction, or one read and one write")
   val io = IO(new Bundle {
     val axi = Input(new Axi4LiteIO)
   })
@@ -85,10 +86,14 @@ class Axi4LiteChecker(maxOutstanding: Int = 1) extends Module {
   addresses := addresses_next
   datas     := datas_next
   val writes_next = Mux(addresses_next > datas_next, addresses_next, datas_next)
-  assert(
-    reads_next +& writes_next <= maxOutstanding.U,
-    s"AXI4-Lite: more than $maxOutstanding transaction(s) outstanding"
-  )
+  // A bound of 1 is one transaction of either kind; a bound of 2 is one read and one write, which
+  // is the total of 2 as well.
+  if (maxOutstanding == 1) {
+    assert(reads_next +& writes_next <= 1.U, "AXI4-Lite: more than 1 transaction(s) outstanding")
+  } else {
+    assert(reads_next <= 1.U, "AXI4-Lite: more than one read outstanding")
+    assert(writes_next <= 1.U, "AXI4-Lite: more than one write outstanding")
+  }
 }
 
 /** Builds checkers. */
@@ -103,10 +108,10 @@ object Axi4LiteChecker {
     checker
   }
 
-  /** A checker on every slave port `slaves` of the crossbar of `regions`: two transactions on a
-    * shared port (a read of one master and a write of the other), `own` on a port that belongs to
-    * one master (1 behind an [[Axi4LiteMaster]], 2 behind a raw master that may hold a read and a
-    * write at once).
+  /** A checker on every slave port `slaves` of the crossbar of `regions`: a bound of 2 on a shared
+    * port (one read and one write, which may belong to different masters), `own` on a port that
+    * belongs to one master (1 behind an [[Axi4LiteMaster]], 2 behind a raw master that may hold a
+    * read and a write at once).
     */
   def onSlaves(regions: Seq[Region], slaves: Vec[Axi4LiteIO], own: Int = 1): Unit =
     for ((region, k) <- regions.zipWithIndex) {

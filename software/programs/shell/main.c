@@ -17,8 +17,10 @@
 //   hold [frames]           the display frames each QR picture stays
 //   exit [code]             ends the run with code (default 0)
 //
-// Numbers are decimal or, with 0x, hexadecimal. Lines with the counters start
-// with "perf:", the convention by which checks leave them out.
+// Numbers are decimal or, with 0x, hexadecimal. A line holds at most 120
+// characters; a longer one is refused whole, and so is a command given more
+// words than it takes (qr's text may have any number). Lines with the counters
+// start with "perf:", the convention by which checks leave them out.
 //
 // A trap in a command (a peek of an address that no device holds, a poke of the
 // ROM) is reported and the shell goes on: its trap vector starts the prompt
@@ -61,13 +63,16 @@ static int getc_uart(void)
 
 // Reads a line into `line`, echoing it, until CR or LF; a backspace (BS or DEL)
 // takes back one character. An LF right after a CR ends nothing, so both line
-// ends work.
+// ends work. A line longer than LINE_MAX is reported and dropped whole (`line`
+// is then empty), so that no command runs on a part of what was typed. The
+// characters past LINE_MAX are counted, not kept or echoed, and a backspace
+// takes back one of them first.
 //
 // Returns its length.
 static int read_line(void)
 {
     static int after_cr;
-    int len = 0;
+    int len = 0, dropped = 0;
 
     for (;;) {
         int c = getc_uart();
@@ -79,24 +84,35 @@ static int read_line(void)
         after_cr = c == '\r';
         if (c == '\r' || c == '\n') {
             putchar('\n');
+            if (dropped) {
+                printf("line too long (at most %d characters)\n", LINE_MAX);
+                len = 0;
+            }
             line[len] = '\0';
             return len;
         }
         if (c == '\b' || c == 0x7f) {
-            if (len > 0) {
+            if (dropped) {
+                dropped--;
+            } else if (len > 0) {
                 len--;
                 printf("\b \b");
             }
-        } else if (c >= ' ' && c < 0x7f && len < LINE_MAX) {
-            line[len++] = (char) c;
-            putchar(c);
+        } else if (c >= ' ' && c < 0x7f) {
+            if (len < LINE_MAX) {
+                line[len++] = (char) c;
+                putchar(c);
+            } else {
+                dropped++;
+            }
         }
     }
 }
 
-// Splits `line` at spaces into at most ARGS_MAX words (the rest of a longer
-// line is in no word). `*rest` is the line from its third word on, as it was
-// typed but for trailing spaces: the text of qr, which may have spaces.
+// Splits `line` at spaces into words, of which the first ARGS_MAX are in argv,
+// and returns the number of words, so that run() can refuse too many. `*rest`
+// is the line from its third word on, as it was typed but for trailing spaces:
+// the text of qr, which may have spaces.
 static int split(char *argv[], const char **rest)
 {
     static char text[LINE_MAX + 1];
@@ -107,14 +123,16 @@ static int split(char *argv[], const char **rest)
     for (int end = (int) strlen(text); end > 0 && text[end - 1] == ' '; end--)
         text[end - 1] = '\0';
     *rest = "";
-    while (argc < ARGS_MAX) {
+    for (;;) {
         while (*p == ' ')
             p++;
         if (!*p)
             break;
         if (argc == 2)
             *rest = text + (p - line);
-        argv[argc++] = p;
+        if (argc < ARGS_MAX)
+            argv[argc] = p;
+        argc++;
         while (*p && *p != ' ')
             p++;
         if (*p)
@@ -317,14 +335,14 @@ static void cmd_csr(int argc, char *argv[], const char *rest)
 {
     (void) rest;
     for (int id = 0; id < CSR_COUNT; id++) {
-        if (argc >= 2 && strcmp(argv[1], csr_names[id]))
+        if (argc == 2 && strcmp(argv[1], csr_names[id]))
             continue;
         printf("%-14s 0x%08lx\n", csr_names[id],
                (unsigned long) csr_read((enum csr_id) id));
-        if (argc >= 2)
+        if (argc == 2)
             return;
     }
-    if (argc >= 2)
+    if (argc == 2)
         printf("csr: no CSR %s (csr lists them)\n", argv[1]);
 }
 
@@ -371,7 +389,7 @@ static void cmd_vga(int argc, char *argv[], const char *rest)
     uint32_t frames = 12;
 
     (void) rest;
-    if (argc > 2 || (argc == 2 && (number(argv[1], &frames) || frames == 0))) {
+    if (argc == 2 && (number(argv[1], &frames) || frames == 0)) {
         usage("vga [frames, at least 1]");
         return;
     }
@@ -455,30 +473,32 @@ static void cmd_exit(int argc, char *argv[], const char *rest)
     uint32_t code = 0;
 
     (void) rest;
-    if (argc > 2 || (argc == 2 && (number(argv[1], &code) || code > 62))) {
+    if (argc == 2 && (number(argv[1], &code) || code > 62)) {
         usage("exit [code, 0 to 62]");
         return;
     }
     exit((int) code);
 }
 
+// `words` is the most a command takes, its name included (0: any number, for
+// qr's text); run() refuses more, so a command checks only the words it reads.
+// `form` is the usage line and, with `what`, the command's line in help.
 static const struct command {
     const char *name;
     void (*run)(int argc, char *argv[], const char *rest);
-    const char *help;
+    int words;
+    const char *form, *what;
 } commands[] = {
-    {"help", cmd_help, "help                   this list"},
-    {"peek", cmd_peek, "peek <addr> [n]        n words from addr"},
-    {"poke", cmd_poke, "poke <addr> <value>    one word to addr"},
-    {"csr", cmd_csr, "csr [name]             one CSR, or all of them"},
-    {"perf", cmd_perf,
-     "perf [reset]           mcycle, minstret, hpm events 1-8"},
-    {"bench", cmd_bench,
-     "bench <name>           dhrystone, duremark or qrcode"},
-    {"vga", cmd_vga, "vga [frames]           nyancat on the VGA"},
-    {"qr", cmd_qr, "qr [style|all] [text]  a QR code on the VGA"},
-    {"hold", cmd_hold, "hold [frames]          frames each QR picture stays"},
-    {"exit", cmd_exit, "exit [code]            end the run"},
+    {"help", cmd_help, 1, "help", "this list"},
+    {"peek", cmd_peek, 3, "peek <addr> [n]", "n words from addr"},
+    {"poke", cmd_poke, 3, "poke <addr> <value>", "one word to addr"},
+    {"csr", cmd_csr, 2, "csr [name]", "one CSR, or all of them"},
+    {"perf", cmd_perf, 2, "perf [reset]", "mcycle, minstret, hpm events 1-8"},
+    {"bench", cmd_bench, 2, "bench <name>", "dhrystone, duremark or qrcode"},
+    {"vga", cmd_vga, 2, "vga [frames]", "nyancat on the VGA"},
+    {"qr", cmd_qr, 0, "qr [style|all] [text]", "a QR code on the VGA"},
+    {"hold", cmd_hold, 2, "hold [frames]", "frames each QR picture stays"},
+    {"exit", cmd_exit, 2, "exit [code]", "end the run"},
 };
 #define COMMANDS (sizeof(commands) / sizeof(commands[0]))
 
@@ -488,7 +508,7 @@ static void cmd_help(int argc, char *argv[], const char *rest)
     (void) argv;
     (void) rest;
     for (unsigned k = 0; k < COMMANDS; k++)
-        printf("  %s\n", commands[k].help);
+        printf("  %-22s %s\n", commands[k].form, commands[k].what);
 }
 
 static void run(void)
@@ -501,7 +521,10 @@ static void run(void)
         return;
     for (unsigned k = 0; k < COMMANDS; k++) {
         if (!strcmp(argv[0], commands[k].name)) {
-            commands[k].run(argc, argv, rest);
+            if (commands[k].words && argc > commands[k].words)
+                usage(commands[k].form);
+            else
+                commands[k].run(argc, argv, rest);
             return;
         }
     }

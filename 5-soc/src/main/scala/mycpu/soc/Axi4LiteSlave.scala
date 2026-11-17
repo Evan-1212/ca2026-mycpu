@@ -141,7 +141,12 @@ class Axi4LiteWriteChannel(refuse: Boolean = false) extends Module {
   io.b.bits.resp := Axi4Lite.resp(failed)
 }
 
-/** How long a slave makes its master wait (T4-06 asks the core to be correct for any latency). */
+/** How long a slave makes its master wait (T4-06 asks the core to be correct for any latency).
+  *
+  * A configuration of the AXI4-Lite RAM, not hardware: T4's `mycpu.pipeline.WaitStates` is a
+  * different thing of the same name, the module that delays a `MemPort` (configured by T4's
+  * `WaitSpec`). The two never meet: this package does not import that one.
+  */
 sealed trait WaitStates
 
 /** The kinds of [[WaitStates]], and the hardware that draws them. */

@@ -124,11 +124,19 @@ session)
 demo)
     [ $# -eq 4 ] || usage
     sim=$1 elf=$2 tests=$3 out=$4
-    [ -x "$sim" ] && [ -f "$elf" ] && [ -f "$tests/demo.txt" ] ||
-        { echo "check-shell: $sim, $elf or $tests/demo.txt not found" >&2; exit 1; }
+    if [ ! -x "$sim" ] || [ ! -f "$elf" ] || [ ! -f "$tests/demo.txt" ]; then
+        echo "check-shell: $sim, $elf or $tests/demo.txt not found" >&2
+        exit 1
+    fi
     mkdir -p "$out"
     sed "s/@HOLD@/${DEMO_HOLD:-1}/" "$tests/demo.txt" > "$out/session.txt"
     nyan=$(sed -n 's/^vga \([0-9]*\)$/\1/p' "$tests/demo.txt")
+    case $nyan in
+    '' | *[!0-9]*)
+        echo "check-shell: $tests/demo.txt needs exactly one 'vga <frames>' line" >&2
+        exit 1
+        ;;
+    esac
     args=()
     if [ "${SDL:-0}" = 1 ]; then
         args+=(+vga-window)

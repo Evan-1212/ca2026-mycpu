@@ -102,20 +102,24 @@ class RomBench(contents: Seq[Long], bytes: Int = 0x1000) extends Module {
 
 /** A [[MemPortSlave]] with its AXI port brought out and a checker on it. `takes` counts the
   * requests the device took, modulo 2^16, and `request` shows the request side of the device's port.
+  * `checked` is false for a case in which the master pipelines two writes: the arbiter in front of
+  * the shell passes one transaction per direction, so the SoC never does that, and the checker's
+  * bound (one read and one write) is the SoC's, not the shell's. The shell answers in order all the
+  * same, which that case tests.
   */
-abstract class ShellBench extends Module {
+abstract class ShellBench(checked: Boolean = true) extends Module {
   val axi     = IO(Flipped(new Axi4LiteIO))
   val takes   = IO(Output(UInt(16.W)))
   val request = IO(Output(Decoupled(new riscv.MemReq))) // what the shell shows the device, and its `ready`
   val shell   = Module(new MemPortSlave)
   shell.io.axi <> axi
-  Axi4LiteChecker(axi, 2)
+  if (checked) Axi4LiteChecker(axi, 2)
   takes := Counter(shell.io.device.req.fire, 1 << 16)._1
   request :#= shell.io.device.req
 }
 
 /** `SimCtrl` on the bus. */
-class SimCtrlBench extends ShellBench {
+class SimCtrlBench extends ShellBench() {
   val io = IO(new Bundle {
     val exit = Output(Valid(UInt(8.W)))
     val putc = Output(Valid(UInt(8.W)))
@@ -130,7 +134,7 @@ class SimCtrlBench extends ShellBench {
 }
 
 /** The UART on the bus; nothing is received. */
-class UartBench(divider: Int) extends ShellBench {
+class UartBench(divider: Int) extends ShellBench() {
   val io = IO(new Bundle {
     val txd = Output(Bool())
   })
@@ -171,7 +175,7 @@ class SlowDevice(period: Int, delay: Int) extends Module {
 }
 
 /** [[SlowDevice]] on the bus. */
-class SlowDeviceBench(period: Int, delay: Int) extends ShellBench {
+class SlowDeviceBench(period: Int, delay: Int, checked: Boolean = true) extends ShellBench(checked) {
   val io = IO(new Bundle {
     val writes = Output(UInt(8.W))
   })

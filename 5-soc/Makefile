@@ -84,7 +84,8 @@ TASK_SOURCE_DIRS  := $(CURDIR)/src/main/scala/mycpu/soc \
                      $(abspath ../2-rv32im/src/main/scala/mycpu/rv32im) \
                      $(abspath ../1-single-cycle/src/main/scala/mycpu/singlecycle)
 TASK_VARIANT      := $(VARIANT)$(if $(filter-out 34,$(DIV_LATENCY)),+div$(DIV_LATENCY))$(if \
-                     $(filter 0,$(SYNC_READ)),+async)$(if $(filter-out 0,$(RAM_WAIT)),+w$(RAM_WAIT))
+                     $(filter 0,$(SYNC_READ)),+async)$(if $(filter-out 0,$(RAM_WAIT)),+w$(RAM_WAIT))$(if \
+                     $(filter-out 1,$(TICK_DIVISOR)),+tick$(TICK_DIVISOR))
 TASK_MODEL_SUFFIX := -$(call variant_name,$(VARIANT))$(if $(filter-out 34,$(DIV_LATENCY)),-div$(DIV_LATENCY))$(if \
                      $(filter 0,$(SYNC_READ)),-async)$(if $(filter-out 0,$(RAM_WAIT)),-w$(subst :,s,$(RAM_WAIT)))$(if \
                      $(filter-out 1,$(TICK_DIVISOR)),-tick$(TICK_DIVISOR))
@@ -107,6 +108,9 @@ override BUILD := $(abspath $(if $(filter /%,$(BUILD)),,$(ROOT)/)$(BUILD))
 BOOT_BIN := $(BUILD)/sw/boot/boot.bin
 TASK_EMIT_PARAMS := variant=$(VARIANT) divLatency=$(DIV_LATENCY) tickDivisor=$(TICK_DIVISOR) \
                     syncRead=$(SYNC_READ) ramWait=$(RAM_WAIT) bootRom=$(BOOT_BIN)
+# T3's checker and golden model (the ISA is T3's) with the boot ROM, the VGA and this system's tick divisor
+TASK_COSIM_CHECK  = soc/Test/runMain mycpu.soc.RetireLogCheck --tick=$(TICK_DIVISOR) --boot=$(BOOT_BIN) \
+                    $(if $(RAM_BYTES),--ram=$(RAM_BYTES))
 
 # Every program stalls on the pipeline and the bus, whatever the build.
 TASK_STALL_ARCHS     := $(ARCHS)
@@ -116,6 +120,7 @@ COSIM_PROGRAMS       ?=
 
 # make bench: one model per variant and build (<variant>/<arch>), with this RAM and its wait states
 BENCH_CONFIGS ?= $(foreach v,$(VARIANTS),$(v)/rv32i_zicsr $(v)/rv32im_zicsr)
+TASK_BENCH_KNOB := VARIANT
 bench_part     = $(BENCH_DIR)/t5-parts/$(subst /,-,$(1))$(if $(MUTANT),+$(MUTANT)).csv
 BENCH_OUT      = $(call bench_part,$(VARIANT)/$(ARCH))
 TASK_CLEAN     = $(BENCH_DIR)/t5-parts $(wildcard $(BUILD)/t5-*)
@@ -142,20 +147,6 @@ boot: $(BOOT_BIN)
 
 # The specs read the boot ROM image too.
 test test-riscv-tests cosim-random: $(BOOT_BIN)
-
-# T3's checker and golden model (the ISA is T3's) with the boot ROM, the VGA and this system's tick divisor.
-COSIM_CHECK := soc/Test/runMain mycpu.soc.RetireLogCheck --tick=$(TICK_DIVISOR) --boot=$(BOOT_BIN) \
-               $(if $(RAM_BYTES),--ram=$(RAM_BYTES))
-
-.PHONY: bench
-bench:
-	@for config in $(BENCH_CONFIGS); do \
-	    $(MAKE) --no-print-directory bench-one VARIANT=$${config%/*} ARCH=$${config#*/} || exit 1; \
-	done
-	@{ head -n 1 $(call bench_part,$(firstword $(BENCH_CONFIGS))) && \
-	   for part in $(foreach c,$(BENCH_CONFIGS),$(call bench_part,$(c))); do tail -n +2 $$part || exit 1; done; \
-	 } > $(BENCH_CSV).new && mv $(BENCH_CSV).new $(BENCH_CSV)
-	@echo "bench: wrote $(BENCH_CSV) ($(words $(BENCH_CONFIGS)) configurations)"
 
 # ACT4 (VER-03): the ELFs of T3's configuration (tests/act4 maps TASK=5 to cores/mycpu-t3: the ISA, the
 # memory map and the macros are T3's; the tests start at 0x8000_0000 through the boot ROM), run on this

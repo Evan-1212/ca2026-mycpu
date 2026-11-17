@@ -269,7 +269,8 @@ class MemPortSlaveSpec extends AnyFlatSpec with ChiselSim {
     }
   }
   it should "answer a write without strobes after the write before it, which the device has not answered yet" in {
-    simulate(new SlowDeviceBench(period = 1, delay = 6)) { c =>
+    // two writes in flight at once: without the checker, whose bound is that of the SoC's arbiter
+    simulate(new SlowDeviceBench(period = 1, delay = 6, checked = false)) { c =>
       val watch = new DeviceWatch(c)
       val m     = new RawMaster(c.axi, () => watch.step())
       m.idle()
