@@ -55,6 +55,9 @@ class CPU(
   val write_back = Module(new WriteBack)
   val d          = decode.io.decoded
 
+  // as in T1: the core is running and the instruction port has answered
+  val has_inst = active && fetch.io.inst_valid
+
   fetch.io.imem <> io.imem
   fetch.io.active   := active
   fetch.io.redirect := execute.io.redirect
@@ -64,7 +67,7 @@ class CPU(
   regs.io.rs2     := d.rs2
   regs.io.dbgAddr := 0.U
 
-  execute.io.valid    := active && fetch.io.inst_valid
+  execute.io.valid    := has_inst
   execute.io.kill     := false.B // nothing abandons an instruction once it has started
   execute.io.pc       := fetch.io.pc
   execute.io.decoded  := d
@@ -72,7 +75,7 @@ class CPU(
   execute.io.rs1_data := regs.io.rs1Data
   execute.io.rs2_data := regs.io.rs2Data
 
-  memory.io.enable     := active && fetch.io.inst_valid
+  memory.io.enable     := has_inst
   memory.io.load       := d.load
   memory.io.store      := d.store
   memory.io.funct3     := d.funct3
@@ -85,7 +88,7 @@ class CPU(
   val halts = cause =/= HaltCause.Running
 
   // T1's condition: the instruction was fetched, and its data access, if any, was answered
-  val served = active && fetch.io.inst_valid && memory.io.done
+  val served = has_inst && memory.io.done
 
   // [CA26: Exercise 2.6] The stall: an instruction that takes more than one cycle
   // Contract: `completes` is high in the one cycle in which the instruction at the PC is over:

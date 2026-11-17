@@ -163,7 +163,7 @@ class CoSimSpec extends AnyFlatSpec with ChiselSim {
       val result = CoSim2.check(c, fib, T1.model, maxCycles = prefix)
       // the only acceptable report is that the program has not ended yet, after `prefix` equal records
       assert(result.trace.size == prefix, result.mismatch)
-      assert(result.mismatch.forall(_.startsWith("the program did not end within")), result.mismatch)
+      assert(result.mismatch.exists(_.startsWith("the program did not end within")), result.mismatch)
       info(s"fibonacci: the first $prefix instructions")
     }
   }

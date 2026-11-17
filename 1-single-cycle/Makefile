@@ -40,6 +40,3 @@ ARCHS   := rv32i
 COSIM_PROGRAMS ?= fibonacci quicksort sb strings jit
 
 include ../sim/task.mk
-
-# BEN-03: one CSV row per benchmark workload.
-bench: bench-one

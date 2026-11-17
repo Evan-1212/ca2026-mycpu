@@ -45,10 +45,10 @@ object RiscvTests {
   val expectedCount = 40
 
   /** Every `rv32ui` test that is not excluded, by name, as assembly source. */
-  def sources: Seq[(String, String)] = TestTools.sources(dir.resolve("rv32ui")).filterNot(t => excluded(t._1))
+  lazy val sources: Seq[(String, String)] = TestTools.sources(dir.resolve("rv32ui")).filterNot(t => excluded(t._1))
 
   /** The same tests, assembled at the reset vector. */
-  def rv32ui: Seq[(String, MemImage)] = sources.map { case (name, source) => name -> T1.asm(source) }
+  lazy val rv32ui: Seq[(String, MemImage)] = sources.map { case (name, source) => name -> T1.asm(source) }
 
   /** Runs one test against the golden model: None if it passed, else why it failed. */
   def run(c: Top, image: MemImage): Option[String] = {

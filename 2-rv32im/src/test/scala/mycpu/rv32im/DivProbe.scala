@@ -81,7 +81,7 @@ case class Division(name: String, a: Int, b: Int) {
   val op: DivOp.Type = DivCheck.ops(name)
 
   /** The result. */
-  val expected: BigInt = MModel.div(name, a, b)
+  lazy val expected: BigInt = MModel.div(name, a, b)
 
   /** Division by zero, or the signed overflow: answered without iterating. */
   val special: Boolean = MModel.isSpecial(name, a, b)

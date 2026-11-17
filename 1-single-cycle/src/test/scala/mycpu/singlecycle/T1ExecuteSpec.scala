@@ -7,7 +7,7 @@ package mycpu.singlecycle
 import chisel3._
 import chisel3.simulator.scalatest.ChiselSim
 import chisel3.util.Valid
-import mycpu.common.AsmX
+import mycpu.common.{AsmX, TestTools}
 import org.scalatest.flatspec.AnyFlatSpec
 import riscv.IsaSim
 
@@ -175,6 +175,7 @@ class T1ExecuteSpec extends AnyFlatSpec with ChiselSim {
       drive(c, "add a0, a1, a2", -16, 2)
       c.io.alu_result.expect("hfffffff2".U)
     }
-    intercept[Exception](simulate(new DecodeExecute(Some("no-such-mutant")))(_ => ()))
+    val refused = intercept[Exception](simulate(new DecodeExecute(Some("no-such-mutant")))(_ => ()))
+    assert(TestTools.causedBy(refused, "unknown mutant no-such-mutant"), refused)
   }
 }

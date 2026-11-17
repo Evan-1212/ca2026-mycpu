@@ -15,8 +15,9 @@ import riscv.{ASel, AluOp, BSel}
   * arithmetic instruction, the address of a load or store, and the sum that the target of a
   * branch or jump is made from, so one adder serves all of them.
   *
-  *   - `redirect`: valid when the instruction passes control to another instruction than the one
-  *     at pc + 4, with the address of that instruction.
+  *   - `redirect`: valid when the instruction transfers control (a taken branch or a jump) to a
+  *     target that is an instruction address, with that address, which may be pc + 4. A transfer
+  *     to a misaligned target raises `target_misaligned` instead.
   *   - `target_misaligned`: the instruction raises the ISA's instruction-address-misaligned
   *     exception (there is no C extension). This core halts on it; from T3 on it is a trap.
   *

@@ -14,6 +14,9 @@ import org.scalatest.flatspec.AnyFlatSpec
   */
 class MutantSpec extends AnyFlatSpec with ChiselSim {
   private val shifts = Set("sra", "srai")
+
+  /** The mnemonic of the core's record in a mismatch report of `CoSim2`. */
+  private val coreRecord = """core:\s+[0-9a-f]{8}\s+[0-9a-f]{8}\s+(\S+)""".r
   // the tests that execute an arithmetic right shift at all (`lui` checks its result with one)
   private val usingSra = RiscvTests.sources.collect { case (name, source) if source.contains("sra") => name }.toSet
 
@@ -27,7 +30,7 @@ class MutantSpec extends AnyFlatSpec with ChiselSim {
         RiscvTests.verdict(CoSim2.run(c).trace).map(name -> _)
       }
       val failed = selfChecked.map(_._1).toSet
-      assert(shifts.subsetOf(failed) && failed.subsetOf(usingSra), selfChecked)
+      assert(failed == shifts + "lui" && failed.subsetOf(usingSra), selfChecked)
       assert(selfChecked.forall(_._2.contains("a0 =")), "each fails a numbered case and reports it in a0")
 
       // and by co-simulation: the first wrong record is an arithmetic shift
@@ -35,7 +38,11 @@ class MutantSpec extends AnyFlatSpec with ChiselSim {
         CoSim2.check(c, image, T1.model).mismatch.map(name -> _)
       }
       assert(coSimulated.map(_._1).toSet == failed, coSimulated.map(_._1))
-      assert(coSimulated.forall { case (_, report) => report.contains("sra") }, coSimulated)
+      // the core's record, not one of the records before it that the report also shows
+      assert(
+        coSimulated.forall { case (_, report) => coreRecord.findFirstMatchIn(report).exists(m => shifts(m.group(1))) },
+        coSimulated
+      )
       info(s"the mutant fails ${failed.toSeq.sorted.mkString(", ")}")
     }
   }

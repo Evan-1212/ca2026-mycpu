@@ -13,7 +13,6 @@ import riscv.{Halt, Reg}
   * v1.3. The model without M is specified in `common` (`IssSpec`); this is where it gains M.
   */
 class IssMSpec extends AnyFlatSpec {
-  private val base         = MemMap.ramBase
   private def a0(iss: Iss) = iss.reg(Reg("a0"))
 
   "IssM.mulDiv" should "give the results of the specification for every M instruction" in {
@@ -50,7 +49,7 @@ class IssMSpec extends AnyFlatSpec {
   // the programs with CSR instructions too need the rules of T3: 3-csr-trap's IssCsrSpec runs them
   it should "end random programs with M instructions as they are built to" in {
     for (seed <- 0L until 100L) {
-      val m = Iss(MemImage(AsmX(RandomProgramX(seed, m = true)), base), IssM.T2, size = riscv.Ram.bytes)
+      val m = Iss(mycpu.singlecycle.T1.asm(RandomProgramX(seed, m = true)), IssM.T2, size = riscv.Ram.bytes)
       m.run(20000)
       assert(m.halted.contains(Halt.Ecall), s"seed $seed (M)")
     }

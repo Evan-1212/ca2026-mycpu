@@ -117,8 +117,8 @@ too. Nothing from T1 is copied into this directory.
 | `Top.scala` | the system (`SimTop`) and the model emitter (`divLatency=<34\|66>`) |
 | `IssM.scala` | the M extension of the golden model |
 
-T1's `InstructionDecode` and `Top` are not used: the first is replaced by the table, the second
-by a `Top` with this core.
+T1's `InstructionDecode` and `Top` modules are not used: the first is replaced by the table, the
+second by a `Top` with this core (which takes T1's default UART divider).
 
 ### The golden model
 
@@ -154,9 +154,10 @@ A workable order:
 1. 2.1, 2.2 and 2.8 first (tables and arithmetic). Then 2.3 to 2.5; a first version of the
    divider may answer in the wrong cycle and still let everything compile. Then 2.6 and 2.7, so
    that the project compiles.
-2. Run the unit specs: `sbt "rv32im/testOnly mycpu.rv32im.MulSpec mycpu.rv32im.DivSpec
-   mycpu.rv32im.IssMSpec"`. The specs that check the table of 2.1 on its own are held back (see
-   the Test Suite); a wrong row of it shows from step 3 on, in the specs that run programs.
+2. Run the unit specs, at the top of the repository as in T1:
+   `sbt "rv32im/testOnly mycpu.rv32im.MulSpec mycpu.rv32im.DivSpec mycpu.rv32im.IssMSpec"`.
+   The specs that check the table of 2.1 on its own are held back (see the Test Suite); a wrong
+   row of it shows from step 3 on, in the specs that run programs.
 3. Then the specs of 2.6 and 2.7: `sbt "rv32im/testOnly mycpu.rv32im.T2ExecuteSpec mycpu.rv32im.T2CpuSpec
    mycpu.rv32im.StallSpec"`. `T2CpuSpec` names the cycle and the signal that is wrong.
 4. `make test`, then the programs. Look at a division in a waveform:
@@ -169,6 +170,7 @@ Run these in `2-rv32im/`.
 ```shell
 make test                 # every ChiselSim spec (builds the C programs for rv32i and rv32im first)
 make test SEEDS=50        # the same with 50 random programs instead of 500
+make cosim-random         # the random programs alone (SEEDS=<n>, from seed SEED_FIRST=<first>)
 make test-riscv-tests     # riscv-tests rv32ui and rv32um only
 make verilator            # emit SimTop.sv and build build/t2/Vsim
 make sim ELF=../build/sw/mycpu/rv32im/muldiv.elf
@@ -188,7 +190,7 @@ Parameters:
 | Variable | Default | Meaning |
 |----------|---------|---------|
 | `ARCH` | `rv32im` | the build of the C programs: `rv32im` (hardware multiply and divide) or `rv32i` (libgcc) |
-| `DIV_LATENCY` | 34 | the divider: 34, or 66 (two cycles per bit); each has its own model directory |
+| `DIV_LATENCY` | 34, or the `div_latency` of your `student.json` | the divider: 34, or 66 (two cycles per bit); each has its own model directory |
 | `ELF` | `muldiv.elf` | program for `make sim` |
 | `SIM_ARGS` | empty | extra harness arguments (`+retire-log=`, `+uart-log=`, `+trace=`, `+trace-start=`, `+uart-stdin`) |
 | `MAX_CYCLES` | 500000000 | the harness stops with exit code 124 after this many cycles |

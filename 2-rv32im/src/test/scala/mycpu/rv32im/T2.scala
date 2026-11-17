@@ -35,7 +35,7 @@ object T2 {
       val wait = AsmX
         .decodeExt(record.inst)
         .filter(i => MModel.divNames.contains(i.name))
-        .fold(0)(i => if (MModel.isSpecial(i.name, x(i.rs1), x(i.rs2))) Divider.EARLY_OUT_LATENCY else latency)
+        .fold(0)(i => Division(i.name, x(i.rs1), x(i.rs2)).latency(latency))
       if (record.rd != 0) x(record.rd) = record.rdValue.toInt
       wait
     }
@@ -45,7 +45,7 @@ object T2 {
     * from the first cycle after reset).
     */
   def gaps(cycles: Seq[CoSimCycle]): Seq[Int] = {
-    val at = cycles.indices.filter(cycles(_).retire.isDefined)
+    val at = cycles.iterator.zipWithIndex.collect { case (now, i) if now.retire.isDefined => i }.toSeq
     (-1 +: at).sliding(2).map { case Seq(a, b) => b - a - 1 }.toSeq
   }
 
@@ -75,6 +75,6 @@ object T2 {
       each
       c.clock.step()
     }
-    cycles.toSeq
+    cycles.toVector
   }
 }

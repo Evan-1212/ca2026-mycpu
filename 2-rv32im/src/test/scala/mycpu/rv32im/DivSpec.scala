@@ -246,8 +246,11 @@ class DivSpec extends AnyFlatSpec with ChiselSim {
 
   it should "refuse a latency that is not one of the two options, and an unknown mutant" in {
     assert(Divider.latencies == Seq(34, 66) && Divider.DIV_LATENCY == 34)
-    for (latency <- Seq(0, 1, 33, 35, 65, 67))
-      intercept[Exception](circt.stage.ChiselStage.emitCHIRRTL(new Divider(latency)))
-    intercept[Exception](circt.stage.ChiselStage.emitCHIRRTL(new Divider(mutant = Some("no-such-bug"))))
+    for (latency <- Seq(0, 1, 33, 35, 65, 67)) {
+      val refused = intercept[Exception](circt.stage.ChiselStage.emitCHIRRTL(new Divider(latency)))
+      assert(mycpu.common.TestTools.causedBy(refused, s"latency $latency: the options are"), refused)
+    }
+    val refused = intercept[Exception](circt.stage.ChiselStage.emitCHIRRTL(new Divider(mutant = Some("no-such-bug"))))
+    assert(mycpu.common.TestTools.causedBy(refused, "unknown mutant no-such-bug"), refused)
   }
 }

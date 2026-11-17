@@ -7,7 +7,7 @@ package mycpu.rv32im
 import chisel3._
 import chisel3.simulator.scalatest.ChiselSim
 import chisel3.util.Valid
-import mycpu.common.AsmX
+import mycpu.common.{AsmX, TestTools}
 import org.scalatest.flatspec.AnyFlatSpec
 import riscv.Instructions
 
@@ -165,9 +165,7 @@ class T2ExecuteSpec extends AnyFlatSpec with ChiselSim {
   "The mutants" should "be T1's sra and the divider's no-sign-fix, each in its own unit" in {
     assert(Execute.mutants == Set("sra", "no-sign-fix"))
     val refused = intercept[Exception](simulate(new DecodeExecute(mutant = Some("no-such-bug")))(_ => ()))
-    assert(Iterator.iterate[Throwable](refused)(_.getCause).takeWhile(_ != null).exists { e =>
-      Option(e.getMessage).exists(_.contains("unknown mutant no-such-bug"))
-    })
+    assert(TestTools.causedBy(refused, "unknown mutant no-such-bug"), refused)
     simulate(new DecodeExecute(mutant = Some("sra"))) { c =>
       drive(c, AsmX("sra a0, a1, a2").head, -16, 2)
       c.io.result.expect("h3ffffffc".U, "sra shifts in zeros")

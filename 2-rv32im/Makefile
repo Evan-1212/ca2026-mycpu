@@ -33,14 +33,16 @@
 # meet the bug fail too.
 #
 # The targets are those of every task and come from sim/task.mk, which the settings below
-# parameterize; `bench` is this task's own.
+# parameterize.
 
 # The student's configuration (EX-08): the defaults below come from student.json when it exists.
 include ../sim/student.mk
 
 # The divider's latency in clock cycles: the two options of mycpu.rv32im.Divider.
-DIV_LATENCIES := 34 66
-DIV_LATENCY   ?= $(or $(STUDENT_DIV_LATENCY),34)
+# The first is the default, the one the model of `t2` (no suffix) is built with.
+DIV_LATENCIES       := 34 66
+DIV_LATENCY_DEFAULT := $(firstword $(DIV_LATENCIES))
+DIV_LATENCY         ?= $(or $(STUDENT_DIV_LATENCY),$(DIV_LATENCY_DEFAULT))
 ifneq ($(words $(DIV_LATENCY))$(filter-out $(DIV_LATENCIES),$(DIV_LATENCY)),1)
 $(error DIV_LATENCY must be one of: $(DIV_LATENCIES); not '$(DIV_LATENCY)')
 endif
@@ -52,8 +54,8 @@ TASK_PACKAGE := mycpu.rv32im
 TASK_SOURCE_DIRS  := $(CURDIR)/src/main/scala/mycpu/rv32im \
                      $(abspath ../1-single-cycle/src/main/scala/mycpu/singlecycle)
 TASK_VARIANT      := div$(DIV_LATENCY)
-TASK_MODEL_SUFFIX := $(if $(filter-out 34,$(DIV_LATENCY)),-div$(DIV_LATENCY))
-TASK_MODELS       := t2 $(patsubst %,t2-div%,$(filter-out 34,$(DIV_LATENCIES)))
+TASK_MODEL_SUFFIX := $(if $(filter-out $(DIV_LATENCY_DEFAULT),$(DIV_LATENCY)),-div$(DIV_LATENCY))
+TASK_MODELS       := t2 $(patsubst %,t2-div%,$(filter-out $(DIV_LATENCY_DEFAULT),$(DIV_LATENCIES)))
 TASK_EMIT_PARAMS  := divLatency=$(DIV_LATENCY)
 TASK_ELF          := muldiv
 # IssMSpec compares the golden model's M with rv32emu v1.3
@@ -68,7 +70,7 @@ ARCH  ?= rv32im
 # T2-04 for whole C programs. The programs of COSIM_STALL_PROGRAMS divide when they are built
 # with M, so their logs must have cycles without a record (--stalls); the others have no
 # division. Built without M (ARCH=rv32i) no program divides, and every cycle of every log has a
-# record. Together the lists are every `user` program of software/programs/MANIFEST.
+# record. Together the lists are every C `user` program of software/programs/MANIFEST.
 TASK_STALL_ARCHS     := rv32im
 COSIM_STALL_PROGRAMS ?= quicksort sb strings muldiv qrcode dhrystone duremark
 COSIM_PROGRAMS       ?= fibonacci jit
@@ -81,18 +83,10 @@ COSIM_PROGRAMS       ?= fibonacci jit
 # configuration is enough. Each configuration is a run of bench-one, whose file is a part of
 # $(BENCH_CSV); a part that fails leaves $(BENCH_CSV) as it was.
 BENCH_CONFIGS ?= 34/rv32i 34/rv32im 66/rv32im
+TASK_BENCH_KNOB := DIV_LATENCY
 # the part of configuration $(1); bench-one writes the one of its own DIV_LATENCY and ARCH
 bench_part     = $(BENCH_DIR)/t2-parts/div$(firstword $(subst /, ,$(1)))$(if $(MUTANT),+$(MUTANT))-$(lastword $(subst /, ,$(1))).csv
 BENCH_OUT      = $(call bench_part,$(DIV_LATENCY)/$(ARCH))
 TASK_CLEAN     = $(BENCH_DIR)/t2-parts
 
 include ../sim/task.mk
-
-bench:
-	@for config in $(BENCH_CONFIGS); do \
-	    $(MAKE) --no-print-directory bench-one DIV_LATENCY=$${config%/*} ARCH=$${config#*/} || exit 1; \
-	done
-	@{ head -n 1 $(call bench_part,$(firstword $(BENCH_CONFIGS))) && \
-	   for part in $(foreach c,$(BENCH_CONFIGS),$(call bench_part,$(c))); do tail -n +2 $$part || exit 1; done; \
-	 } > $(BENCH_CSV).new && mv $(BENCH_CSV).new $(BENCH_CSV)
-	@echo "bench: wrote $(BENCH_CSV) ($(words $(BENCH_CONFIGS)) configurations)"

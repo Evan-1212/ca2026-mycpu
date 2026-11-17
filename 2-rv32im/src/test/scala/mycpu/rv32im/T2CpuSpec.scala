@@ -127,7 +127,7 @@ class T2CpuSpec extends AnyFlatSpec with ChiselSim {
     connectMemory(c)
     var cycle = 0
     for (step <- program) {
-      val text  = s"${step.name} at index ${step.index}"
+      val text  = s"${step.name} at index ${step.index} (DIV_LATENCY = $latency)"
       val total = step.stall + (if (step.access) dataWait else 0)
       for (waited <- 0 to total) {
         val at   = s"$text, cycle $waited of $total (cycle $cycle of the run)"
@@ -177,7 +177,7 @@ class T2CpuSpec extends AnyFlatSpec with ChiselSim {
         }
       }
 
-  it should "do so next to a data port that makes loads and stores wait" in {
+  "The T2 core (both latencies)" should "stall the same way next to a data port that makes loads and stores wait" in {
     for (latency <- Divider.latencies)
       simulate(new CpuProbe(latency)) { c =>
         val cycles = check(c, latency, dataWait = 3)

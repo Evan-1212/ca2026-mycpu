@@ -112,7 +112,7 @@ object ObsCheck {
   import org.scalatest.Assertions.{assert, fail}
 
   private def peekAll(groups: Seq[(String, Data)]): Map[String, BigInt] =
-    groups.flatMap { case (g, d) => ObsFields.leaves(d, g) }.map { case (n, e: Bits) => n -> e.peek().litValue }.toMap
+    groups.flatMap { case (g, d) => ProbeValues.peek(d, g) }.toMap
 
   /** Runs `image` on `c` until the core has halted and `drain` more cycles have passed, and
     * checks in every cycle that each probe of `probes` equals the reference signal of `refs` with

@@ -50,6 +50,9 @@ class CPU(resetPc: Long = MemMap.ramBase, mutant: Option[String] = None) extends
   val write_back = Module(new WriteBack)
   val d          = decode.io.decoded
 
+  // the core is running and the instruction port has answered: there is an instruction at the PC
+  val has_inst = active && fetch.io.inst_valid
+
   fetch.io.imem <> io.imem
   fetch.io.active   := active
   fetch.io.redirect := execute.io.redirect
@@ -64,7 +67,7 @@ class CPU(resetPc: Long = MemMap.ramBase, mutant: Option[String] = None) extends
   execute.io.rs1_data := regs.io.rs1Data
   execute.io.rs2_data := regs.io.rs2Data
 
-  memory.io.enable     := active && fetch.io.inst_valid
+  memory.io.enable     := has_inst
   memory.io.load       := d.load
   memory.io.store      := d.store
   memory.io.funct3     := d.funct3
@@ -76,7 +79,7 @@ class CPU(resetPc: Long = MemMap.ramBase, mutant: Option[String] = None) extends
   val halts = cause =/= HaltCause.Running
 
   // the instruction is over in this cycle: it was fetched, and its data access, if any, was answered
-  val completes = active && fetch.io.inst_valid && memory.io.done
+  val completes = has_inst && memory.io.done
   val commit    = completes && !halts
   when(completes && halts) {
     halted := true.B

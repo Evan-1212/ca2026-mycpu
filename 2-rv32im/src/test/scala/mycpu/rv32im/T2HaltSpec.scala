@@ -56,7 +56,8 @@ class T2HaltSpec extends AnyFlatSpec with ChiselSim {
           ("a store to an unmapped address", "sb a1, 3(s0)", Halt.BadAddress),
           ("a fetch from an unmapped address", "jr s0", Halt.BadAddress)
         )
-        for ((name, halting, cause) <- cases) {
+        for ((halt, halting, cause) <- cases) {
+          val name  = s"$halt (DIV_LATENCY = $latency)" // the test covers both latencies
           val trace = expectHalt(c, name, s"$setup; $halting; li a0, 77", cause)
           assert(T1.regAfter(trace, "a0") != 77, s"$name: nothing after the halt ran")
           assert(trace.exists(r => AsmX.decodeExt(r.inst).exists(_.name == "div")), name)

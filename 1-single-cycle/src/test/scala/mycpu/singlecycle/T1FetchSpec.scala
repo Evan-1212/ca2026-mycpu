@@ -113,10 +113,7 @@ class T1FetchSpec extends AnyFlatSpec with ChiselSim {
     // the memory ignores the low two bits of a fetch address, so such a PC would run the wrong words
     for (pc <- Seq(0x80000002L, 0x80000001L, 0x1003L)) {
       val e = intercept[Exception](simulate(new InstructionFetch(pc))(_ => ()))
-      assert(
-        Iterator.iterate[Throwable](e)(_.getCause).takeWhile(_ != null).exists(_.getMessage.contains("reset PC")),
-        e
-      )
+      assert(mycpu.common.TestTools.causedBy(e, "reset PC"), e)
     }
   }
 }

@@ -169,7 +169,8 @@ handout section that explains the idea. It does not state the answer.
 1. Read the contract and the module's header comment. Open the cited notebook.
 2. Fill the blanks. A blank does not compile, and sbt compiles a task as a whole, so no spec runs
    while one is left. Then run each module's own spec, for example
-   `sbt "singleCycle/testOnly mycpu.singlecycle.T1FetchSpec"`.
+   `sbt "singleCycle/testOnly mycpu.singlecycle.T1FetchSpec"` (sbt runs at the top of the
+   repository, where `build.sbt` is, not in this directory).
 3. When the module specs pass, run `make test`. A co-simulation failure prints the first
    instruction where your core and the golden model differ, with both records and the
    instructions before it.
@@ -182,6 +183,7 @@ Run these in `1-single-cycle/`.
 ```shell
 make test                 # every ChiselSim spec (builds the C programs first)
 make test SEEDS=50        # the same with 50 random programs instead of 500
+make cosim-random         # the random programs alone (SEEDS=<n>, from seed SEED_FIRST=<first>)
 make test-riscv-tests     # riscv-tests rv32ui only
 make verilator            # emit SimTop.sv and build build/t1/Vsim
 make sim ELF=../build/sw/mycpu/rv32i/fibonacci.elf
@@ -210,9 +212,10 @@ Parameters:
 | `MUTANT` | empty | `sra` builds the core with a known bug (in `build/t1-sra/` for the Verilator model); `test-riscv-tests` must then fail |
 | `BOOTCAMP_DIR` | `externals/chisel-bootcamp` | your bootcamp clone; a relative path is relative to the repository's root |
 
-The model is emitted again when one of these parameters, a source of this task, of `common/` or of
-your bootcamp clone, or the build definition changes. The bootcamp gate (`make check-bootcamp`)
-runs again when a file of the clone's `riscv` project changes.
+The model is emitted again when one of its parameters (`UART_DIVIDER`, `RAM_BYTES`, `MUTANT`),
+a source of this task, of `common/` or of your bootcamp clone, or the build definition changes.
+The bootcamp gate (`make check-bootcamp`) runs again when a file of the clone's `riscv` project
+changes.
 
 Harness exit codes: the program's own code (0 to 63), 64 + cause when the core halts (65 `ecall`,
 66 `ebreak`, 67 illegal instruction, 68 misaligned, 69 bad address), 124 on a timeout, 2 for a
@@ -321,7 +324,7 @@ PASS jit: 932 records in 932 cycles (0 without a record) agree with the golden m
 ```
 
 `COSIM_PROGRAMS="muldiv dhrystone duremark qrcode"` checks the other four the same way (the
-logs need about 100 bytes per instruction while the check runs). A cycle in which nothing
+logs need about 110 bytes per instruction while the check runs). A cycle in which nothing
 retires is in the log too (the `idle` lines, see below), so the replay follows a core that waits:
 this one behind a full UART, and the core of T2, whose divider takes 34 cycles
 (`2-rv32im/README.md`).
