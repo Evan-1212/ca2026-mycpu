@@ -23,6 +23,12 @@ fail() {
     fails=$((fails + 1))
 }
 
+# the SHA-256 of the standard input, as sha256sum prints it (macOS has shasum
+# instead)
+sha256() {
+    if command -v sha256sum > /dev/null; then sha256sum; else shasum -a 256; fi
+}
+
 # run <name> <expected exit code> <harness> <args...>
 run() {
     local name=$1 expect=$2 sim=$3
@@ -108,7 +114,7 @@ run never-shown-obs 2 "$SIM" +elf="$ELF/exit.elf" +vga-dump=1:"$WORK/o1.ppm" +vg
     {
         trailer=$(tail -c 4096 "$WORK/o.obs" | tr -c '[:print:]' '\n' | grep -a '"outputs"')
         case $trailer in
-        *'"vga_dump:1":"'$(sha256sum < "$WORK/o1.ppm" | cut -c1-64)'"'*) ;;
+        *'"vga_dump:1":"'$(sha256 < "$WORK/o1.ppm" | cut -c1-64)'"'*) ;;
         *) fail "never-shown-obs: the trailer has no hash of frame 1: $trailer" ;;
         esac
         case $trailer in

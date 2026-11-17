@@ -112,7 +112,7 @@ patch_word() { # <elf> <address in hex> <word, a shell number>
     # shellcheck disable=SC2059 # the format is the four bytes
     printf "$(printf '\\x%02x\\x%02x\\x%02x\\x%02x' \
         $((word & 255)) $((word >> 8 & 255)) $((word >> 16 & 255)) $((word >> 24 & 255)))" |
-        dd of="$1" bs=1 seek="$offset" conv=notrunc status=none
+        dd of="$1" bs=1 seek="$offset" conv=notrunc 2> /dev/null # status=none is not in every dd
 }
 
 # Make the first instruction of an ELF `j <symbol>`, so that it runs nothing of
@@ -244,7 +244,8 @@ if [ -f "$elf_dir.provenance" ]; then
     provenance_copy provenance-extensions > /dev/null
     check_provenance provenance-extensions fail "^> extensions I$" EXTENSIONS=I
     copy=$(provenance_copy provenance-config)
-    sed -i -e 's/^config .*/config 0/' "${copy%/elfs}/elfs.provenance"
+    sed -e 's/^config .*/config 0/' "${copy%/elfs}/elfs.provenance" > "${copy%/elfs}/elfs.provenance.new" &&
+        mv "${copy%/elfs}/elfs.provenance.new" "${copy%/elfs}/elfs.provenance"
     check_provenance provenance-config fail "^< config 0$"
 else
     echo "selftest.sh: no $elf_dir.provenance; run 'make elfs' first" >&2

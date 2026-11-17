@@ -10,6 +10,7 @@ import riscv.{Halt, MemAccess}
 
 import scala.jdk.CollectionConverters._
 import scala.util.Try
+import scala.util.control.NonFatal
 
 /** A `+retire-log` that cannot be replayed: the message says why. */
 class RetireLogException(message: String) extends IllegalArgumentException(message)
@@ -274,18 +275,28 @@ object RetireLogCheck {
     }
   }
 
-  /** Replays the file `log`, written by a run of the executable `elf`; see [[replay]]. */
-  def check(elf: Path, log: Path, newModel: IssSample => Iss, stalls: Boolean = false): Either[String, String] = {
+  /** Replays the file `log`, written by a run of the executable `elf` on a RAM of `ramBytes`; see
+    * [[replay]].
+    */
+  def check(
+      elf: Path,
+      log: Path,
+      newModel: IssSample => Iss,
+      stalls: Boolean = false,
+      ramBytes: Long = MemMap.ramBytes
+  ): Either[String, String] = {
     val lines = Files.lines(log)
-    try replay(Elf.read(elf).image, lines.iterator().asScala, newModel, stalls)
+    try replay(Elf.read(elf, MemMap.ramBase, ramBytes).image, lines.iterator().asScala, newModel, stalls)
     finally lines.close()
   }
 
   /** The `main` of a task's checker. Arguments: `[--stalls] (<elf> <retire log>)...`. Prints a
     * `PASS` or `FAIL` line for each pair and exits nonzero unless every one passes. `--stalls`
-    * also fails a log in which every cycle has a record.
+    * also fails a log in which every cycle has a record. `ramBytes` is the RAM of the model, which
+    * the ELF must fit in. Any other exception of a pair (a model that refuses the image, say) is
+    * that pair's FAIL line too, so that the pairs after it are still checked.
     */
-  def run(args: Array[String], newModel: IssSample => Iss): Unit = {
+  def run(args: Array[String], newModel: IssSample => Iss, ramBytes: Long = MemMap.ramBytes): Unit = {
     val (flags, files) = args.partition(_.startsWith("--"))
     if (files.isEmpty || files.length % 2 != 0 || !flags.forall(_ == "--stalls")) {
       System.err.println("usage: RetireLogCheck [--stalls] (<elf> <retire log>)...")
@@ -295,12 +306,13 @@ object RetireLogCheck {
     for (Array(elf, log) <- files.grouped(2)) {
       val name    = Paths.get(elf).getFileName.toString.stripSuffix(".elf")
       val outcome =
-        try check(Paths.get(elf), Paths.get(log), newModel, flags.nonEmpty)
+        try check(Paths.get(elf), Paths.get(log), newModel, flags.nonEmpty, ramBytes)
         catch {
           case e: RetireLogException           => Left(e.getMessage)
           case e: ElfException                 => Left(e.getMessage)
           case e: java.io.IOException          => Left(s"cannot read: $e")
           case e: java.io.UncheckedIOException => Left(s"cannot read: ${e.getCause}")
+          case NonFatal(e)                     => Left(s"the check threw $e")
         }
       println(outcome.fold(why => s"FAIL $name: $why", what => s"PASS $name: $what"))
       failed ||= outcome.isLeft

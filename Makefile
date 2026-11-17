@@ -199,11 +199,7 @@ $(SAIL_DIR)/.version-$(SAIL_VERSION):
 	@echo "  FETCH   $(SAIL_URL)"
 	@$(SAFE_RM) --under $(call sq,$(EXTERNALS)) --outside refuse -- $(call sq,$(SAIL_DIR)) && mkdir -p $(SAIL_DIR)
 	@curl -fsSL -o $(SAIL_DIR)/sail.tar.gz $(SAIL_URL)
-	@if command -v sha256sum >/dev/null; then \
-	    sum=$$(sha256sum $(SAIL_DIR)/sail.tar.gz | cut -d' ' -f1); \
-	else \
-	    sum=$$(shasum -a 256 $(SAIL_DIR)/sail.tar.gz | cut -d' ' -f1); \
-	fi; \
+	@sum=$$($(SHA256) $(SAIL_DIR)/sail.tar.gz | cut -d' ' -f1); \
 	if [ "$$sum" != "$(SAIL_SHA256)" ]; then \
 	    echo "fetch-sail: checksum mismatch: got $$sum, expected $(SAIL_SHA256)" >&2; \
 	    $(SAFE_RM) --under $(call sq,$(EXTERNALS)) -- $(call sq,$(SAIL_DIR)); exit 1; \
@@ -285,8 +281,7 @@ check-bootcamp: bootcamp-source
 # lists of exercises and specs above, or any file of the bootcamp's riscv project (sources, tests,
 # programs, build definition). $(BUILD)/bootcamp.ok holds a hash of all of that.
 BOOTCAMP_STAMP := $(BUILD)/bootcamp.ok
-# (the redirection makes make run a shell: `command` is a builtin, which make 4.2 cannot run itself)
-SHA256         := $(if $(shell command -v sha256sum 2> /dev/null),sha256sum,shasum -a 256)
+# (SHA256 comes from sim/student.mk, included below)
 
 .PHONY: bootcamp-gate
 # Without BOOTCAMP_SRC an existing clone is used as it is, as before the overlay mode existed:
@@ -336,15 +331,14 @@ TASKS := 1-single-cycle 2-rv32im 3-csr-trap 4-pipeline 5-soc
 # the targets here start, so STUDENT_JSON=<file> (or empty, for D12) holds for all of them.
 include sim/student.mk
 
+# each_task <target>: the commands that make <target> in every task, in order, stopping at the
+# first that fails. A recipe calls it with `+`: make sees no $(MAKE) in a function call, and the
+# `+` keeps the jobserver and `make -n` reaching the task makes, as $(MAKE) in the recipe would.
+each_task = for t in $(TASKS); do $(MAKE) -C $$t $(1) || exit 1; done
+
 .PHONY: test-all lint-all bench-all check-obs
-test-all:
-	@for t in $(TASKS); do $(MAKE) -C $$t test || exit 1; done
-
-lint-all:
-	@for t in $(TASKS); do $(MAKE) -C $$t lint || exit 1; done
-
-bench-all:
-	@for t in $(TASKS); do $(MAKE) -C $$t bench || exit 1; done
+test-all lint-all bench-all: %-all:
+	@+$(call each_task,$*)
 
 # EX-08: `make student ID=<your student ID>` writes student.json, your configuration: the register
 # maps of SimCtrl and the UART, the hpm event IDs, the divider latency, the CLINT tick divisor and the
@@ -363,7 +357,7 @@ student-show:
 # run per task. SEEDS=<n> and SEED_FIRST=<first> choose a range of them, as in each task.
 .PHONY: cosim-random
 cosim-random:
-	@for t in $(TASKS); do $(MAKE) -C $$t cosim-random || exit 1; done
+	@+$(call each_task,cosim-random)
 
 # BEN-03: `make bench` runs every task's benchmarks (bench-all) and writes the report
 # $(BUILD)/bench/report.{csv,md}, one row per task, variant, build and workload.
@@ -409,9 +403,8 @@ bench-xcheck: rv32emu
 	    $(foreach m,$(XCHECK_MODELS),$(m)=$$($(call xcheck_make,$(m)) -s vsim-path))
 
 # OBS-03, OBS-08..OBS-10: every task drives the probes (T4 with its default variant)
-OBS_TASKS := 1-single-cycle 2-rv32im 3-csr-trap 4-pipeline 5-soc
 check-obs:
-	@for t in $(OBS_TASKS); do $(MAKE) -C $$t check-obs || exit 1; done
+	@+$(call each_task,check-obs)
 
 # OBS-04 on: the web observation interface (web/README.md)
 .PHONY: web-check

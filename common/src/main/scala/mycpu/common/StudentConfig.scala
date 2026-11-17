@@ -78,7 +78,12 @@ object StudentConfig {
     json.get(key) match {
       case None               => default
       case Some(m: Map[_, _]) =>
-        val t = m.asInstanceOf[Map[String, Any]].collect { case (k, v: BigInt) => k -> v.toInt }
+        // a number outside Int is refused here: `toInt` would wrap it into a value that passes `ok`
+        val t = m.asInstanceOf[Map[String, Any]].map {
+          case (k, v: BigInt) if v.isValidInt => k -> v.toInt
+          case (k, v)                         =>
+            throw new IllegalArgumentException(s"${file.get}: $key.$k is $v, not a 32-bit integer")
+        }
         require(
           t.keySet == default.keySet,
           s"${file.get}: $key has ${t.keySet.toSeq.sorted}, not ${default.keySet.toSeq.sorted}"

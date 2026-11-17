@@ -47,22 +47,27 @@ object TestTools {
           s"(`$target` does it)"
       )
     // EX-08: the programs use the register maps and event IDs they were built for, which must be
-    // those of this run (StudentConfig)
-    val flags = build.resolve(s"sw/mycpu/$arch/obj/runtime/flags")
-    if (Files.isRegularFile(flags)) {
-      val text = new String(Files.readAllBytes(flags), java.nio.charset.StandardCharsets.UTF_8)
-      val want = configMacros(StudentConfig.simCtrl, StudentConfig.uart, StudentConfig.hpmEvents)
-      val got  = builtFor(text)
-      if (got != want) {
-        def show(v: Option[Int]) = v.fold("-")(n => s"0x${n.toHexString}")
-        val diff                 = (want.keySet ++ got.keySet).toSeq.sorted
-          .filter(k => want.get(k) != got.get(k))
-          .map(k => s"$k ${show(got.get(k))}, not ${show(want.get(k))}")
-        throw new IllegalStateException(
-          s"$path was built for another student configuration than ${StudentConfig.describe} " +
-            s"(${diff.mkString("; ")}): build the programs again (`$target` does it)"
-        )
-      }
+    // those of this run (StudentConfig). The program's own flags file (software/Makefile) changes
+    // exactly when its ELF is built again; the runtime's changes with any program built after it.
+    // Every build writes it, so without it nothing says what the ELF was built for.
+    val flags = build.resolve(s"sw/mycpu/$arch/obj/$name/flags")
+    if (!Files.isRegularFile(flags))
+      throw new IllegalStateException(
+        s"$flags not found, so $path may be from another student configuration: build the programs " +
+          s"again (`$target` does it)"
+      )
+    val text = new String(Files.readAllBytes(flags), java.nio.charset.StandardCharsets.UTF_8)
+    val want = configMacros(StudentConfig.simCtrl, StudentConfig.uart, StudentConfig.hpmEvents)
+    val got  = builtFor(text)
+    if (got != want) {
+      def show(v: Option[Int]) = v.fold("-")(n => s"0x${n.toHexString}")
+      val diff                 = (want.keySet ++ got.keySet).toSeq.sorted
+        .filter(k => want.get(k) != got.get(k))
+        .map(k => s"$k ${show(got.get(k))}, not ${show(want.get(k))}")
+      throw new IllegalStateException(
+        s"$path was built for another student configuration than ${StudentConfig.describe} " +
+          s"(${diff.mkString("; ")}): build the programs again (`$target` does it)"
+      )
     }
     Elf.read(path)
   }
@@ -77,7 +82,7 @@ object TestTools {
 
   /** The values of those macros in a build whose `flags` file (software/Makefile) is `text`: its
     * `-D` flags of them over the defaults of D12, which `mmio.h` takes for a macro not given. So a
-    * build with a file of the D12 maps and one without a file are the same build, and every flag
+    * build with the D12 maps as flags and one without those flags are the same build, and every flag
     * counts, not only SimCtrl's `EXIT`.
     */
   def builtFor(text: String): Map[String, Int] = {
@@ -107,6 +112,12 @@ object TestTools {
       .sortBy(_.getFileName.toString)
       .map(p => (p.getFileName.toString.stripSuffix(".S"), new String(Files.readAllBytes(p), "UTF-8")))
   }
+
+  /** Whether `e`, or an exception that caused it, has a message that contains `text` (elaboration
+    * wraps the `require` of a module in exceptions of its own).
+    */
+  def causedBy(e: Throwable, text: String): Boolean =
+    Iterator.iterate(e)(_.getCause).takeWhile(_ != null).exists(t => Option(t.getMessage).exists(_.contains(text)))
 
   /** Runs `cmd`; fails with its output unless it exits 0. */
   def run(cmd: Seq[String], what: String): String = {

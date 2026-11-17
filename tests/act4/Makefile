@@ -88,7 +88,6 @@ ifneq ($(STUDENT_SIMCTRL),)
 WORKDIR      := $(BUILD)/act4-simctrl-$(STUDENT_SIMCTRL)
 CORE_SRC_DIR  = $(ACT4)/cores/$(CORE)
 CORE_DIR      = $(WORKDIR)/cores/$(CORE)
-ELF_DIR       = $(WORKDIR)/$(CORE)/elfs
 endif
 # What `elfs` built from: see `provenance` below.
 PROVENANCE = $(WORKDIR)/$(CORE)/elfs.provenance
@@ -96,7 +95,7 @@ CONFIG_INPUTS = test_config.yaml $(CORE).yaml rvmodel_macros.h link.ld sail.json
 
 EXTENSIONS ?=
 ifeq ($(origin JOBS),undefined)
-JOBS := $(shell nproc)
+JOBS := $(shell getconf _NPROCESSORS_ONLN 2> /dev/null || echo 1)
 endif
 TIMEOUT    ?= 600
 MAX_CYCLES ?= 50000000
@@ -178,23 +177,28 @@ check-pin: check-tools
 # hash of the core's configuration files, and the hash of every ELF. `elfs` records it; `run`,
 # `ref` and `expected-count` require that it still holds, so they never run or
 # count ELFs of another pin, selection or configuration, nor a set that was
-# changed by hand (an ELF added, removed, renamed or replaced).
+# changed by hand (an ELF added, removed, renamed or replaced). It fails when a
+# hash cannot be computed (a configuration file or an ELF that cannot be read),
+# so that a partial hash is never recorded or accepted.
 define provenance
 { echo "commit $(ACT_COMMIT)"; \
   echo "extensions $(or $(sort $(subst $(comma), ,$(EXTENSIONS))),-)"; \
   echo "sail $$(sail_riscv_sim --version 2>&1 | head -n 1)"; \
   echo "gcc $$(riscv-none-elf-gcc --version | head -n 1)"; \
-  echo "config $$(cd $(CORE_DIR) && sha256sum $(CONFIG_INPUTS) | sha256sum | cut -d' ' -f1)"; \
-  cd $(ELF_DIR) && find . -name '*.elf' -type f -print0 | LC_ALL=C sort -z | xargs -0 -r sha256sum; }
+  config=$$(set -o pipefail; cd $(CORE_DIR) && $(SHA256) $(CONFIG_INPUTS) | $(SHA256) | cut -d' ' -f1) && \
+  echo "config $$config" && \
+  (set -o pipefail; cd $(ELF_DIR) && find . -name '*.elf' -type f -print0 | LC_ALL=C sort -z | xargs -0 -r $(SHA256)); }
 endef
 
 .PHONY: check-elfs
 check-elfs: check-task
 	@[ -f $(PROVENANCE) ] && [ -d $(ELF_DIR) ] || { echo "act4: no ELFs of 'make elfs TASK=$(TASK)' in $(ELF_DIR)" >&2; exit 1; }
-	@diff -q $(PROVENANCE) <($(provenance)) >/dev/null || { \
+	@now=$$(mktemp) && trap 'rm -f "$$now"' EXIT && { $(provenance); } > $$now || \
+	    { echo "act4: cannot compute the provenance of $(ELF_DIR)" >&2; exit 1; }; \
+	diff -q $(PROVENANCE) $$now >/dev/null || { \
 	    echo "act4: the ELFs in $(ELF_DIR) are not those of 'make elfs TASK=$(TASK)$(if $(EXTENSIONS), EXTENSIONS=$(EXTENSIONS))'" >&2; \
 	    echo "act4: with the current pin, configuration and EXTENSIONS, or were changed since; run that again" >&2; \
-	    diff $(PROVENANCE) <($(provenance)) | grep -E '^[<>] (commit|extensions|sail|gcc|config) ' >&2; exit 1; }
+	    diff $(PROVENANCE) $$now | grep -E '^[<>] (commit|extensions|sail|gcc|config) ' >&2; exit 1; }
 
 # The ELF directory is removed first, so an ELF of an earlier selection (other
 # EXTENSIONS, another pin, an edited EXCLUDED) cannot be run by mistake.
@@ -208,7 +212,7 @@ elfs: check-task check-pin
 	    CONFIG_FILES=$(CORE_DIR)/test_config.yaml WORKDIR=$(WORKDIR) JOBS=$(JOBS) \
 	    EXTENSIONS=$(EXTENSIONS) EXCLUDE_EXTENSIONS=$(exclude_list)
 	@$(check_pin)
-	@$(provenance) > $(PROVENANCE).new && mv $(PROVENANCE).new $(PROVENANCE)
+	@$(provenance) > $(PROVENANCE).new && mv $(PROVENANCE).new $(PROVENANCE) || { rm -f $(PROVENANCE).new; exit 1; }
 	@echo "  ACT4    $(CORE): $$(find $(ELF_DIR) -name '*.elf' | wc -l) ELFs"
 
 # --- running --------------------------------------------------------------------

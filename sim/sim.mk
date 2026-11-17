@@ -22,7 +22,8 @@
 #   <out>/Vsim       the harness (main.cpp, elf.cpp, obs.cpp, uart.cpp, vga.cpp
 #                    and the model)
 #   <out>/vflags     Verilator's flags for it; rewritten, and so newer than
-#                    Vsim, only when they change (SDL=1, SIM_JOBS)
+#                    Vsim, only when they change (SDL=1; not SIM_JOBS, which
+#                    does not change the model)
 #   <out>/cxx.ok     a stamp: the harness sources compile with -Wall -Wextra
 #                    -Werror (Verilator's own build turns warnings off for its
 #                    generated code, and that would cover the harness too);
@@ -69,10 +70,12 @@ SIM_SCALA_DEPS := $(SIM_ROOT)/build.sbt \
                         $(SIM_BOOTCAMP)/riscv/src/main/scala -name '*.scala' 2>/dev/null))
 
 # The flags of INF-04. SIM_JOBS is the parallelism of Verilator and of its C++
-# build (0: one job per core); set it when several models build at once.
+# build (0: one job per core); set it when several models build at once. It is
+# given to Verilator apart from SIM_VFLAGS, so that a model built with another
+# SIM_JOBS is not built again.
 SIM_JOBS   ?= 0
 SIM_VFLAGS := --cc --exe --build --assert -O3 --x-assign fast --x-initial fast \
-              -j $(SIM_JOBS) --trace-fst --top-module SimTop --prefix Vsim -CFLAGS -std=c++17
+              --trace-fst --top-module SimTop --prefix Vsim -CFLAGS -std=c++17
 
 SIM_CXX      ?= $(CXX)
 SIM_CXXFLAGS := -std=c++17 -Wall -Wextra -Werror
@@ -105,15 +108,16 @@ endif
 define sim_topgen
 $(1)/SimTop%sv $(1)/sim_config%h: $(3) $(SIM_SCALA_DEPS) $(1)/topgen.deps
 	@echo "  TOPGEN   $(2)"
-	@cd $(SIM_ROOT) && BOOTCAMP_DIR=$(SIM_BOOTCAMP) $(SBT) -batch "$(2)" > $(1)/topgen.log 2>&1 || \
-	    { cat $(1)/topgen.log >&2; exit 1; }
+	@log=$$$$(mktemp $(1)/topgen.log.XXXXXX) || exit 1; \
+	(cd $(SIM_ROOT) && BOOTCAMP_DIR=$(SIM_BOOTCAMP) $(SBT) -batch "$(2)") > $$$$log 2>&1 && mv $$$$log $(1)/topgen.log || \
+	    { cat $$$$log >&2; mv -f $$$$log $(1)/topgen.log; exit 1; }
 	@test -f $(1)/SimTop.sv && test -f $(1)/sim_config.h || \
 	    { echo "sim.mk: '$(2)' did not write SimTop.sv and sim_config.h into $(1)" >&2; exit 1; }
 
 $(1)/topgen.deps: SIM_FORCE
 	@mkdir -p $(1)
-	@printf '%s\n' "$(2)" $(3) $(SIM_SCALA_DEPS) > $$@.new
-	@cmp -s $$@.new $$@ && rm $$@.new || mv $$@.new $$@
+	@tmp=$$$$(mktemp $$@.XXXXXX) && printf '%s\n' "$(2)" $(3) $(SIM_SCALA_DEPS) > $$$$tmp && \
+	{ cmp -s $$$$tmp $$@ && rm $$$$tmp || mv $$$$tmp $$@; }
 endef
 
 .PHONY: SIM_FORCE
@@ -132,13 +136,13 @@ SIM_FORCE:
 define sim_model
 $(1)/vflags: SIM_FORCE
 	@mkdir -p $(1)
-	@printf '%s\n' "$(SIM_VFLAGS)" > $$@.new
-	@cmp -s $$@.new $$@ && rm $$@.new || { mv $$@.new $$@ && rm -rf $(1)/obj; }
+	@tmp=$$$$(mktemp $$@.XXXXXX) && printf '%s\n' "$(SIM_VFLAGS)" > $$$$tmp && \
+	{ cmp -s $$$$tmp $$@ && rm $$$$tmp || { mv $$$$tmp $$@ && rm -rf $(1)/obj; }; }
 
 $(1)/Vsim: $(2)/SimTop.sv $(2)/sim_config.h $(SIM_SRCS) $(SIM_HDRS) $(SIM_DIR)/sim.mk $(1)/vflags
 	@mkdir -p $(1)
 	@echo "  VERILATE $$@"
-	@OBJCACHE= $(VERILATOR) $(SIM_VFLAGS) -CFLAGS -I$(abspath $(2)) -CFLAGS -I$(SIM_DIR) \
+	@OBJCACHE= $(VERILATOR) $(SIM_VFLAGS) -j $(SIM_JOBS) -CFLAGS -I$(abspath $(2)) -CFLAGS -I$(SIM_DIR) \
 	    --Mdir $(abspath $(1))/obj -o $(abspath $(1))/Vsim \
 	    $(abspath $(2))/SimTop.sv $(SIM_SRCS) > $(1)/verilate.log 2>&1 || \
 	    { cat $(1)/verilate.log >&2; exit 1; }

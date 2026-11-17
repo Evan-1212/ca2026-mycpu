@@ -227,10 +227,13 @@ run bad-missing 2 '' +elf="$WORK/missing.elf"
 expect bad-missing err 'cannot open'
 
 # The size is checked before the file is read: RAM + 64 MiB at most. Sparse
-# files, so neither takes room on the disk. Trailing bytes are no segment's.
-cp "$ELF/exit.elf" "$WORK/padded.elf" && truncate -s 1M "$WORK/padded.elf"
+# files, so neither takes room on the disk. Trailing bytes are no segment's. (dd
+# extends a file to its seek offset; truncate is not in every system)
+cp "$ELF/exit.elf" "$WORK/padded.elf" && dd if=/dev/null of="$WORK/padded.elf" bs=1048576 seek=1 2> /dev/null ||
+    fail "cannot make padded.elf"
 run padded 42 '' +elf="$WORK/padded.elf"
-cp "$ELF/exit.elf" "$WORK/huge.elf" && truncate -s 1G "$WORK/huge.elf"
+cp "$ELF/exit.elf" "$WORK/huge.elf" && dd if=/dev/null of="$WORK/huge.elf" bs=1048576 seek=1024 2> /dev/null ||
+    fail "cannot make huge.elf"
 run bad-huge 2 '' +elf="$WORK/huge.elf"
 expect bad-huge err 'file of 1073741824 bytes is larger than the limit of [0-9]+ bytes'
 mkdir -p "$WORK/dir.elf"

@@ -99,14 +99,17 @@ $(patsubst %,$(ELFDIR)/%.elf,$(ELF_BUILT)): $(ELFDIR)/%.elf: tests/data.S tests/
 	@echo "  ELF      $@"
 	@$(CROSS)gcc $(ELF_CFLAGS) $(ELF_FLAGS_$*) -o $@ $<
 
+# A test file whose recipe fails is not left behind as if it were made.
+.DELETE_ON_ERROR:
+
 # $(1).elf is $(2).elf with the bytes $(4) (printf octal escapes) at file
-# offset $(3).
+# offset $(3). (dd's statistics go to /dev/null: status=none is not in every dd.)
 define elf_patch
 ELFS += $(ELFDIR)/$(1).elf
 $(ELFDIR)/$(1).elf: $(ELFDIR)/$(2).elf Makefile
 	@echo "  ELF      $$@"
 	@cp $$< $$@
-	@printf '$(4)' | dd of=$$@ bs=1 seek=$(3) conv=notrunc status=none
+	@printf '$(4)' | dd of=$$@ bs=1 seek=$(3) conv=notrunc 2> /dev/null
 endef
 
 # The ELF header is 52 bytes, and the program headers follow it, 32 bytes each
@@ -132,7 +135,7 @@ $(ELFDIR)/truncated.elf: $(ELFDIR)/exit.elf
 	@head -c 60 $< > $@
 $(ELFDIR)/elf64.elf:
 	@mkdir -p $(ELFDIR)
-	@cp "$$(type -P true)" $@  # a host executable: ELF64 on Linux
+	@{ printf '\177ELF\002\001\001' && head -c 57 /dev/zero; } > $@  # the 64 bytes of an ELF64 header
 
 .PHONY: check lint clean
 check: $(OUT)/unit $(CASES)/cases.txt $(OUT)/Vsim $(OUT)/cxx.ok $(OUT)/lint.ok $(FAST)/Vsim $(FAST)/lint.ok $(ELFS) \

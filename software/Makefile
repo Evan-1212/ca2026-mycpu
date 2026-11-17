@@ -182,20 +182,23 @@ all: $(PROGRAMS)
 # objects of that group (a program, or `runtime`) are built with, and those
 # objects depend on it. Its rule always runs, but replaces the file only when
 # the content differs, so an unchanged configuration rebuilds nothing.
-replace_if_changed = cmp -s $@.new $@ && rm -f $@.new || mv -f $@.new $@
+# The new content goes to $(NEW) first, a name of the recipe's own shell, so that two makes
+# writing the same file do not mix their content.
+NEW                = $@.new.$$$$
+replace_if_changed = cmp -s $(NEW) $@ && rm -f $(NEW) || mv -f $(NEW) $@
 FLAGS_runtime := $(CC) $(CFLAGS) | libc: $(RT_CFLAGS_libc) | \
                  platform: $(RT_CFLAGS_platform_$(PLATFORM)) | link: $(LDFLAGS)
 
 $(patsubst %,$(OBJ)/%/flags,runtime $(PROGRAMS)): $(OBJ)/%/flags: FORCE
 	@mkdir -p $(@D)
-	@printf '%s\n' $(call sq,$(FLAGS_$*)) > $@.new; $(replace_if_changed)
+	@printf '%s\n' $(call sq,$(FLAGS_$*)) > $(NEW); $(replace_if_changed)
 
 # QR_TEXT as a C string literal of octal escapes, one per byte.
 $(QR_TEXT_H): FORCE
 	@mkdir -p $(@D)
 	@{ printf '#define QR_TEXT "'; \
 	    printf '%s' $(call sq,$(QR_TEXT)) | od -An -v -to1 | tr -d '\n' | sed 's/ /\\/g'; \
-	    printf '"\n'; } > $@.new; $(replace_if_changed)
+	    printf '"\n'; } > $(NEW); $(replace_if_changed)
 
 define PROGRAM_RULES
 FLAGS_$(1) := $$(CC) $$(CFLAGS) $$(CFLAGS_$(1)) $$(foreach d,$$(sort $$(foreach s,$$(SHARED_SRCS_$(1)),\
@@ -253,7 +256,7 @@ boot: $(BOOT_OUT)/boot.bin $(BOOT_OUT)/boot.dis
 # the boot ROM's build identity: its flags (EX-08 moves SimCtrl EXIT)
 $(BOOT_OUT)/flags: FORCE
 	@mkdir -p $(@D)
-	@printf '%s\n' $(call sq,$(CC) $(STUDENT_CFLAGS)) > $@.new; $(replace_if_changed)
+	@printf '%s\n' $(call sq,$(CC) $(STUDENT_CFLAGS)) > $(NEW); $(replace_if_changed)
 
 $(BOOT_OUT)/boot.elf: $(BOOT_SRC)/boot.S $(BOOT_SRC)/boot.ld $(BOOT_OUT)/flags
 	@mkdir -p $(@D)

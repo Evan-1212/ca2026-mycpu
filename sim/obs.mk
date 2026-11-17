@@ -62,13 +62,13 @@ define obs_run
 d="$(2)"; rm -rf "$$d" && mkdir -p "$$d" || exit 1; \
 test -f $(OBS_SW)/$(1).elf || { echo "obs: $(OBS_SW)/$(1).elf not found" >&2; exit 1; }; \
 elf=$$d/$(1).elf; cp $(OBS_SW)/$(1).elf $$elf || exit 1; \
-if [ -n "$(OBS_INPUT)" ]; then input="$(OBS_INPUT)"; \
+if [ -n $(call sq,$(OBS_INPUT)) ]; then input=$(call sq,$(OBS_INPUT)); \
 elif [ "$(1)" = uart ]; then printf '$(OBS_UART_TEXT)' > $$d/input; input=$$d/input; \
 else input=/dev/null; fi; \
 echo "  OBS      $(1) on $(OBS_VSIM) (cycles $(3) +$(4))"; \
 code=0; $(OBS_VSIM) +elf=$$elf +max-cycles=$(MAX_CYCLES) +retire-log=$$d/run.log +uart-log=$$d/run.uart \
     +obs-trace=$$d/run.obs +obs-task=$(TASK) +obs-variant=$(OBS_VARIANT) +obs-start=$(3) +obs-cycles=$(4) \
-    $$([ "$(1)" = uart ] || [ -n "$(OBS_INPUT)" ] && echo +uart-stdin) $(OBS_SIM_ARGS) \
+    $$([ "$(1)" = uart ] || [ -n $(call sq,$(OBS_INPUT)) ] && echo +uart-stdin) $(OBS_SIM_ARGS) \
     $(foreach n,$(OBS_VGA),+vga-dump=$(n):$$d/frame-$(n).ppm) $(if $(filter 1,$(OBS_VGA_EXIT)),+vga-exit-after-dump) \
     < $$input > $$d/run.out 2> $$d/run.err || code=$$?; \
 src=$(ROOT)/software/programs/$(1); [ -d $$src ] || src=$(ROOT)/software/benchmarks/$(1); \
@@ -79,9 +79,9 @@ if [ -f $$src/expected.txt ]; then \
     results="$$results"',{"name":"expected-output","result":"'$$(cmp -s $$d/out.txt $$d/want.txt && echo pass || echo fail)'"}'; \
 fi; \
 $(if $(OBS_CHECKS),more=$$($(OBS_CHECKS) $$d) || exit 1; [ -z "$$more" ] || results="$$results$(obs_comma)$$more";) \
-commit=$$(head -n 1 $$d/run.obs | $(PYTHON) -c 'import json, sys; print(json.load(sys.stdin)["commit"])'); \
+commit=$$(head -n 1 $$d/run.obs | $(PYTHON) -c 'import json, sys; print(json.load(sys.stdin)["commit"])') || exit 1; \
 printf '{"commit":"%s","program":"%s","retire_log_sha256":"%s","results":[%s]}\n' "$$commit" "$(1)" \
-    "$$(sha256sum < $$d/run.log | cut -c1-64)" "$$results" > $$d/tests.json; \
+    "$$($(SHA256) < $$d/run.log | cut -c1-64)" "$$results" > $$d/tests.json; \
 $(PYTHON) $(OBS_PACK) --trace $$d/run.obs --retire-log $$d/run.log --uart-log $$d/run.uart --tests $$d/tests.json \
     $(foreach n,$(OBS_VGA),--vga $(n):$$d/frame-$(n).ppm) $(if $(OBS_STORES),--stores $(OBS_STORES)) \
     --elf $$elf --chunk-cycles $(OBS_CHUNK) $$d/bundle && \
@@ -126,7 +126,8 @@ check-obs: verilator software
 	    echo "PASS obs $$p"; \
 	done
 	@$(PYTHON) $(OBS_TESTS) $(OBS_DIR)/add $(OBS_DIR)/uart
-	@bytes=$$(find $(OBS_DIR)/dhrystone/bundle -type f -printf '%s\n' | awk '{ n += $$1 } END { print n }'); \
+	@bytes=$$(set -o pipefail; find $(OBS_DIR)/dhrystone/bundle -type f -exec cat {} + | wc -c | tr -d ' ') && \
+	    [ -n "$$bytes" ] || { echo "FAIL obs dhrystone: cannot read $(OBS_DIR)/dhrystone/bundle" >&2; exit 1; }; \
 	if [ $$bytes -le $(OBS_BUDGET_BYTES) ]; then \
 	    echo "PASS obs dhrystone: $(OBS_BUDGET_CYCLES) cycles in $$bytes bytes (budget $(OBS_BUDGET_BYTES))"; \
 	else echo "FAIL obs dhrystone: $(OBS_BUDGET_CYCLES) cycles in $$bytes bytes, over the budget of $(OBS_BUDGET_BYTES)"; exit 1; fi

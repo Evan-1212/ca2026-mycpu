@@ -43,7 +43,7 @@ run_dir=$2
 expected=$3
 command=$4
 : "${ACT_DIR:?run_all.sh: set ACT_DIR to the riscv-arch-test clone}"
-JOBS=${JOBS:-$(nproc)}
+JOBS=${JOBS:-$(getconf _NPROCESSORS_ONLN 2> /dev/null || echo 1)}
 TIMEOUT=${TIMEOUT:-600}
 SUITES=${SUITES:-}
 

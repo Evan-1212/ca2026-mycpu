@@ -180,8 +180,13 @@ private[common] object CounterBound {
   * WFI, for a read of `mip`), its MSIP must be bit 0 of the CLINT's `msip` as the program left it,
   * and its MEIP must be set if SimCtrl `MEIP` is. A WFI that retires although `mip & mie` was 0
   * has waited, and may end its wait only when `mip & mie` is not 0 (T3-02): the record after it
-  * must show a `mip` with an enabled bit set. Everything else is the model's own value, compared through the record:
-  * `minstret` and SimCtrl `INSTRET` (exact), a `mip` read, and every register a program writes.
+  * must show a `mip` with an enabled bit set. That record is enough: every interrupt line is a
+  * level that only the program lowers (a store to the CLINT, to SimCtrl or to the UART's `CTRL`,
+  * a load of the UART's `RXDATA`), and a record's `mip` is the one of its instruction's interrupt
+  * decision, made before that instruction's own access (T4: `mem_mip`), so nothing can have
+  * lowered a line between the WFI's wake and that `mip`. Everything else is the model's
+  * own value, compared through the record: `minstret` and SimCtrl `INSTRET` (exact), a `mip` read,
+  * and every register a program writes.
   */
 final class HardwareSample extends IssSample {
   private var record       = Option.empty[IssRetire]

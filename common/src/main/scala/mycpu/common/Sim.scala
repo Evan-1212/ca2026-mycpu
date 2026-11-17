@@ -8,7 +8,7 @@ import chisel3._
 import chisel3.util._
 
 /** The memory map shared by every task, the linker script and the C runtime
-  * (`software/runtime/mmio.h` must agree with these numbers).
+  * (`software/runtime/include/mmio.h` must agree with these numbers).
   */
 object MemMap {
   val bootRomBase: Long = 0x00001000L // T5 only

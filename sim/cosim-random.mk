@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: MIT
 # The random co-simulation programs of VER-05 and the model's path, for every task Makefile:
-# sim/task.mk includes this file, and so does 3-csr-trap/Makefile, which does not use task.mk.
-# The includer sets ROOT, BUILD, SBT, OUT, TASK_NUM, TASK_PROJECT (its sbt project), TASK_PACKAGE
+# sim/task.mk includes this file. The includer sets ROOT, BUILD, SBT, OUT, TASK_NUM, TASK_PROJECT (its sbt project), TASK_PACKAGE
 # (the package of its CoSimSpec), ARCHS, and VARIANTS when the task has variants (T4, T5).
 #
 #   SEEDS        the number of random programs (`make test`: empty is the spec's default, the 500 of

@@ -27,6 +27,13 @@
 # recipes; every Makefile that includes this file uses it).
 sq = '$(subst ','\'',$(1))'
 
+# SHA256: a command that prints the SHA-256 of its files (or of its input) as sha256sum does; macOS
+# has shasum instead. (The redirection makes make run a shell: `command` is a builtin, which make
+# 4.2 cannot run itself.)
+ifndef SHA256
+SHA256 := $(if $(shell command -v sha256sum 2> /dev/null),sha256sum,shasum -a 256)
+endif
+
 ifndef STUDENT_MK_ROOT
 STUDENT_MK_ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST)))..)
 STUDENT_JSON ?= $(wildcard $(STUDENT_MK_ROOT)/student.json)

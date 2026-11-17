@@ -7,8 +7,8 @@ package mycpu.common
 import org.scalatest.flatspec.AnyFlatSpec
 
 /** `TestTools.builtFor`, the guard of `TestTools.elf` against programs built for another student
-  * configuration (EX-08): every macro of the build's flags counts, and a file with D12's maps is
-  * the same build as no file. The flags are those `scripts/student.py cflags` gives.
+  * configuration (EX-08): every macro of the build's flags counts, and a build with D12's maps as
+  * flags is the same build as one without them. The flags are those `scripts/student.py cflags` gives.
   */
 class TestToolsSpec extends AnyFlatSpec {
   private val d12 =

@@ -63,12 +63,12 @@ compare() {
     fi
     local offset=$((16#$start - 16#$base))
     local size
-    size=$(stat -c %s "$tmp/a.bin")
+    size=$(wc -c < "$tmp/a.bin" | tr -d ' ')
     if [ "$offset" -le 0 ] || [ "$size" -lt $((offset + slot)) ]; then
         echo "the platform slot is not inside the image"
         return
     fi
-    if [ "$size" -ne "$(stat -c %s "$tmp/b.bin")" ]; then
+    if [ "$size" -ne "$(wc -c < "$tmp/b.bin" | tr -d ' ')" ]; then
         echo "the images differ in size"
         return
     fi

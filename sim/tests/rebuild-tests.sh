@@ -84,7 +84,7 @@ step 0 "nothing changed after the changes"
 # The command and the set of sources
 step 1 "the sbt command changed" VARIANT=b
 step 0 "the same command again" VARIANT=b
-touch -d 2000-01-01 "$WORK/src/Old.scala" # older than the outputs
+touch -t 200001010000 "$WORK/src/Old.scala" # older than the outputs
 step 1 "a source file added" VARIANT=b
 rm "$WORK/src/Old.scala"
 step 1 "a source file removed" VARIANT=b

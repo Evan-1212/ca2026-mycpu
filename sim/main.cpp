@@ -512,6 +512,13 @@ bool Harness::close_outputs()
         }
         file = nullptr;
     }
+    // the console (put_byte), which a check compares with its expected output
+    if (std::fflush(stdout) != 0 || std::ferror(stdout) != 0) {
+        std::fprintf(stderr,
+                     "sim: cannot write the console output to its end\n");
+        written = false;
+        std::clearerr(stdout);  // said once: the destructor calls this again
+    }
 
     // Outputs that open_outputs() did not finish opening belong to no run: no
     // frame is missing, and a trace opened by then gets no trailer (its reader

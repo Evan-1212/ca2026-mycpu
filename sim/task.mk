@@ -30,26 +30,37 @@
 #                       arguments (default: $(TASK_PROJECT)/runMain
 #                       $(TASK_PACKAGE).Emit; T4 names a test-side main when a
 #                       mutant of the CSR file is asked for)
+#   TASK_MUTANT_SOURCES test-side Scala files a model with a mutant is made of
+#                       too (the mutants, and TASK_EMIT_MAIN's main)
 #   TASK_ELF            the default program of `make sim` (default: fibonacci)
 #   TASK_TEST_RV32EMU   non-empty: `make test` needs rv32emu built and gives
 #                       its path to the specs
+#   TASK_COSIM_CHECK    the sbt command of the checker of `make cosim-programs`
+#                       (default: $(TASK_PROJECT)/Test/runMain
+#                       $(TASK_PACKAGE).RetireLogCheck)
 #   TASK_STALL_ARCHS    the builds whose COSIM_STALL_PROGRAMS make the core
 #                       stall: with such an ARCH those programs are replayed
 #                       with --stalls (a log in which every cycle has a record
-#                       fails); with another they join COSIM_PROGRAMS
+#                       fails); with another they join COSIM_PROGRAMS, except
+#                       those of TASK_STALL_ALWAYS (T3: irqtrap waits in WFI)
 #   COSIM_STALL_PROGRAMS  see TASK_STALL_ARCHS
 #   BENCH_OUT           the file `make bench-one` writes (default: the task's
 #                       benchmark file, $(BENCH_CSV))
+#   TASK_BENCH_KNOB     with BENCH_CONFIGS (<value>/<arch> ...): `make bench`
+#                       runs bench-one once per configuration, with
+#                       <knob>=<value> ARCH=<arch>, and joins the files
+#                       $(call bench_part,<value>/<arch>) into $(BENCH_CSV);
+#                       bench_part is the task's, and BENCH_OUT names the part
+#                       of the current model. Without it `bench` is bench-one.
 #   TASK_CLEAN          more files and directories for `make clean`
 #
-# Targets: test test-riscv-tests cosim-random verilator sim lint test-programs check-rv32emu
-# check-uart cosim-programs bench-one obs check-obs (sim/obs.mk) indent clean
+# Targets: test test-riscv-tests cosim-random vsim-path verilator sim lint test-programs
+# check-rv32emu check-uart cosim-programs bench bench-one obs check-obs (sim/obs.mk) indent clean
 # list-mutants, and their prerequisites
 # check-bootcamp software software-<arch> software-rv32emu software-qr-bitwise
-# software-uart-console. `bench` is the task's own: one run of bench-one, or
-# several with different models and builds.
+# software-uart-console.
 #
-# What the user sets is documented in each task's Makefile and README: BUILD,
+# What the user may set (the task's Makefile header and README document the common ones): BUILD,
 # MUTANT, ARCH, SBT, RV32EMU, UART_DIVIDER, RAM_BYTES, ELF, SIM_ARGS,
 # MAX_CYCLES, SEEDS, SEED_FIRST, COSIM_VARIANTS, UART_ARGS, COSIM_PROGRAMS, KEEP_LOGS, BOOTCAMP_DIR,
 # BOOTCAMP_SRC.
@@ -115,6 +126,17 @@ ELF        ?= $(SW_MYCPU)/$(or $(TASK_ELF),fibonacci).elf
 SIM_ARGS   ?=
 MAX_CYCLES ?= 500000000
 
+# The numbers above are decimal everywhere they go (Emit, the harness, the shell's $((...)), which
+# would read 010 as 8): a positive number without a leading zero, RAM_BYTES empty or one, and
+# MAX_CYCLES one or 0 (the harness's "no limit").
+task_nondigits = $(subst 0,,$(subst 1,,$(subst 2,,$(subst 3,,$(subst 4,,$(subst 5,,$(subst 6,,$(subst \
+                 7,,$(subst 8,,$(subst 9,,$(1)))))))))))
+task_positive  = $(and $(filter 1,$(words $(1))),$(filter-out 0%,$(1)),$(if $(call task_nondigits,$(1)),,yes))
+$(foreach v,UART_DIVIDER $(if $(RAM_BYTES),RAM_BYTES),$(if $(call task_positive,$($(v))),,\
+    $(error $(v) must be a positive decimal number without a leading zero, not '$($(v))')))
+$(if $(or $(filter 0,$(MAX_CYCLES)),$(call task_positive,$(MAX_CYCLES))),,\
+    $(error MAX_CYCLES must be 0 (no limit) or a positive decimal number without a leading zero, not '$(MAX_CYCLES)'))
+
 # `make test` and `make cosim-random`: SEEDS and SEED_FIRST (sim/cosim-random.mk, included below).
 
 # ---------------------------------------------------------------------------
@@ -133,7 +155,7 @@ include $(ROOT)/sim/sim.mk
 override BOOTCAMP_DIR := $(SIM_BOOTCAMP)
 export BOOTCAMP_DIR
 
-TASK_SOURCES := $(sort $(wildcard $(addsuffix /*.scala,$(TASK_SOURCE_DIRS))))
+TASK_SOURCES := $(sort $(wildcard $(addsuffix /*.scala,$(TASK_SOURCE_DIRS))) $(if $(MUTANT),$(TASK_MUTANT_SOURCES)))
 $(eval $(call sim_topgen,$(GEN),$(EMIT),$(TASK_SOURCES)))
 $(eval $(call sim_model,$(OUT),$(GEN)))
 
@@ -141,7 +163,7 @@ $(eval $(call sim_model,$(OUT),$(GEN)))
 verilator: $(OUT)/Vsim $(OUT)/cxx.ok
 
 sim: verilator
-	@test -f "$(ELF)" || { echo "sim: $(ELF) not found (make -C ../software all PLATFORM=mycpu ARCH=$(ARCH))" >&2; exit 1; }
+	@test -f "$(ELF)" || { echo "sim: $(ELF) not found (make software-$(ARCH) builds the programs into $(BUILD))" >&2; exit 1; }
 	$(OUT)/Vsim +elf=$(ELF) +max-cycles=$(MAX_CYCLES) $(SIM_ARGS)
 
 # INF-05: zero warnings, with sim/lint.vlt as the only waivers.
@@ -249,15 +271,15 @@ check-uart: verilator software software-uart-console
 # one program only, set both: `make cosim-programs COSIM_STALL_PROGRAMS=muldiv COSIM_PROGRAMS=`.
 # The two lists are two runs of the checker; the second starts only if the first passed, and
 # $(OUT)/cosim/check.log is the log of the last one.
-COSIM_CHECK          := $(TASK_PROJECT)/Test/runMain $(TASK_PACKAGE).RetireLogCheck
+COSIM_CHECK          := $(or $(TASK_COSIM_CHECK),$(TASK_PROJECT)/Test/runMain $(TASK_PACKAGE).RetireLogCheck)
 COSIM_STALL_PROGRAMS ?=
 COSIM_PROGRAMS       ?=
 ifneq ($(filter $(ARCH),$(TASK_STALL_ARCHS)),)
 COSIM_STALLING := $(COSIM_STALL_PROGRAMS)
 COSIM_STEADY   := $(COSIM_PROGRAMS)
 else
-COSIM_STALLING :=
-COSIM_STEADY   := $(COSIM_PROGRAMS) $(COSIM_STALL_PROGRAMS)
+COSIM_STALLING := $(filter $(TASK_STALL_ALWAYS),$(COSIM_STALL_PROGRAMS))
+COSIM_STEADY   := $(COSIM_PROGRAMS) $(filter-out $(TASK_STALL_ALWAYS),$(COSIM_STALL_PROGRAMS))
 endif
 cosim-programs: verilator software
 	@test -n "$(strip $(COSIM_STALLING) $(COSIM_STEADY))" || { echo "cosim-programs: no program to replay" >&2; exit 1; }
@@ -276,6 +298,25 @@ BENCH_OUT ?= $(BENCH_CSV)
 bench-one: verilator software software-qr-bitwise
 	@$(ROOT)/scripts/bench-run.sh $(OUT)/Vsim $(SW_MYCPU) $(SW_QR_BITWISE)/sw/mycpu/$(ARCH) $(TASK) $(BENCH_VARIANT) $(ARCH) \
 	    $(BENCH_OUT)
+
+# With TASK_BENCH_KNOB, one model and build per configuration; a part that fails leaves
+# $(BENCH_CSV) as it was (the joined file is written under a name of this shell's own first).
+ifneq ($(TASK_BENCH_KNOB),)
+ifeq ($(strip $(BENCH_CONFIGS)),)
+$(error sim/task.mk: TASK_BENCH_KNOB needs BENCH_CONFIGS)
+endif
+bench:
+	@for config in $(BENCH_CONFIGS); do \
+	    $(MAKE) --no-print-directory bench-one $(TASK_BENCH_KNOB)=$${config%/*} ARCH=$${config#*/} || exit 1; \
+	done
+	@tmp=$(BENCH_CSV).new.$$$$; \
+	( head -n 1 $(call bench_part,$(firstword $(BENCH_CONFIGS))) && \
+	  for part in $(foreach c,$(BENCH_CONFIGS),$(call bench_part,$(c))); do tail -n +2 $$part || exit 1; done \
+	) > $$tmp && mv $$tmp $(BENCH_CSV) || { rm -f $$tmp; exit 1; }
+	@echo "bench: wrote $(BENCH_CSV) ($(words $(BENCH_CONFIGS)) configurations)"
+else
+bench: bench-one
+endif
 
 # ---------------------------------------------------------------------------
 # Observation bundles (OBS-03): obs, check-obs

@@ -213,7 +213,9 @@ if [ $fail != 0 ]; then
     echo "bench-run: FAIL: no $csv (an earlier one was removed; see the messages above)" >&2
     exit 1
 fi
-mkdir -p "$(dirname "$csv")"
-cp "$tmp/csv" "$csv"
+mkdir -p "$(dirname "$csv")" && cp "$tmp/csv" "$csv" || {
+    echo "bench-run: FAIL: cannot write $csv" >&2
+    exit 1
+}
 column -s, -t "$csv" 2> /dev/null || cat "$csv"
 echo "bench-run: wrote $csv"

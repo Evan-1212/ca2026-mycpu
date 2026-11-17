@@ -35,7 +35,7 @@
 # first two modes, UART_MAX_CYCLES (default 2000000) each of the third.
 
 set -u
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/.." || exit 1
 
 usage() {
     echo "usage: check-model.sh expected <Vsim> <elf dir> T<n>" >&2
@@ -189,7 +189,8 @@ for d in programs/*/ benchmarks/*/; do
     fi
 done
 
-while read -r name class first; do
+# (a last line without its newline is read too)
+while read -r name class first || [ -n "$name" ]; do
     case $name in '' | \#*) continue ;; esac
 
     # rv32emu runs user programs only (D13); the model runs the classes asked
