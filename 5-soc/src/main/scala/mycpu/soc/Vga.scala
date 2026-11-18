@@ -11,6 +11,9 @@ import mycpu.common.{MemMap, VgaIO}
 /** The numbers of the VGA that the device, its specs and the test tops share. */
 object Vga {
 
+  /** The mutants `Vga` can be built with (negative tests only). */
+  val mutants: Set[String] = Set("vga-no-id")
+
   /** VESA 640x480@60 Hz, in pixels: visible, front porch, sync pulse, back porch. */
   val HVisible = 640
   val HFront   = 16
@@ -114,10 +117,14 @@ object Vga {
   *   for negative tests only: the picture is this many pixel periods late against the syncs,
   *   `active`, `x` and `y` (the pipeline misalignment that the golden-frame check must catch,
   *   T5-07). 0 in every real build.
+  * @param mutant
+  *   a known bug, for negative tests only ([[Vga.mutants]]): `vga-no-id` reads 0 from the ID
+  *   register. `None` in every real build.
   */
-class Vga(pixelDiv: Int = 2, pixelShift: Int = 0) extends Module {
+class Vga(pixelDiv: Int = 2, pixelShift: Int = 0, mutant: Option[String] = None) extends Module {
   require(pixelDiv >= 1, "a pixel takes at least one clock cycle")
   require(pixelShift >= 0, "the picture can only be late")
+  require(mutant.forall(Vga.mutants.contains), s"unknown mutant $mutant")
   import Vga._
 
   val io = IO(new Bundle {
@@ -212,7 +219,7 @@ class Vga(pixelDiv: Int = 2, pixelShift: Int = 0) extends Module {
   when(in_regs) {
     io.port.resp.bits.rdata := MuxLookup(offset, 0.U)(
       Seq(
-        MemMap.Vga.Id.U     -> Id.U(32.W),
+        MemMap.Vga.Id.U     -> (if (mutant.contains("vga-no-id")) 0.U(32.W) else Id.U(32.W)),
         MemMap.Vga.Status.U -> status,
         MemMap.Vga.Ctrl.U   -> ctrl,
         MemMap.Vga.Frame.U  -> frame_count,

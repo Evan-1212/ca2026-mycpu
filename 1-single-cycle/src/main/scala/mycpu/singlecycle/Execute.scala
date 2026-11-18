@@ -21,8 +21,11 @@ import riscv.{ASel, AluOp, BSel}
   *   - `target_misaligned`: the instruction raises the ISA's instruction-address-misaligned
   *     exception (there is no C extension). This core halts on it; from T3 on it is a trap.
   *
-  * `mutant` injects a known bug for the negative checks (VER-04): with `Some("sra")`, an
-  * arithmetic right shift is carried out as a logical one. It is `None` in every real build.
+  * `mutant` injects a known bug for the negative checks (VER-04), one of [[Execute.mutants]]:
+  *   - `sra`: an arithmetic right shift is carried out as a logical one;
+  *   - `unsigned-cmp`: `slt`, `slti`, `blt` and `bge` compare as their unsigned forms do.
+  *
+  * It is `None` in every real build.
   */
 class Execute(mutant: Option[String] = None) extends Module {
   require(mutant.forall(Execute.mutants.contains), s"unknown mutant ${mutant.getOrElse("")}")
@@ -38,7 +41,11 @@ class Execute(mutant: Option[String] = None) extends Module {
   val d = io.decoded
 
   val alu = Module(new riscv.Alu)
-  alu.io.op     := (if (mutant.contains("sra")) Mux(d.alu_op === AluOp.Sra, AluOp.Srl, d.alu_op) else d.alu_op)
+  alu.io.op := (mutant match {
+    case Some("sra")          => Mux(d.alu_op === AluOp.Sra, AluOp.Srl, d.alu_op)
+    case Some("unsigned-cmp") => Mux(d.alu_op === AluOp.Slt, AluOp.Sltu, d.alu_op)
+    case _                    => d.alu_op
+  })
   alu.io.a      := MuxLookup(d.op_a_sel, io.rs1_data)(Seq(ASel.Pc -> io.pc, ASel.Zero -> 0.U))
   alu.io.b      := Mux(d.op_b_sel === BSel.Imm, d.imm, io.rs2_data)
   io.alu_result := alu.io.out
@@ -46,7 +53,9 @@ class Execute(mutant: Option[String] = None) extends Module {
   // the comparator decides a conditional branch from the two source registers, while the ALU is
   // busy with the sum
   val branch_unit = Module(new riscv.BranchUnit)
-  branch_unit.io.funct3 := d.funct3
+  // branch_funct3 is d.funct3, which `unsigned-cmp` changes (blt, bge: 100, 101 -> bltu, bgeu: bit 1 set)
+  val branch_funct3 = if (mutant.contains("unsigned-cmp")) d.funct3 | Cat(d.funct3(2), 0.U(1.W)) else d.funct3
+  branch_unit.io.funct3 := branch_funct3
   branch_unit.io.a      := io.rs1_data
   branch_unit.io.b      := io.rs2_data
   val transfers = Wire(Bool()) // the ISA says control goes to the target, if the target allows it
@@ -63,5 +72,5 @@ class Execute(mutant: Option[String] = None) extends Module {
 object Execute {
 
   /** The bugs `mutant` can inject (VER-04). */
-  val mutants: Set[String] = Set("sra")
+  val mutants: Set[String] = Set("sra", "unsigned-cmp")
 }

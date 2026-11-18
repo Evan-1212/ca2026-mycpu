@@ -213,7 +213,7 @@ make lint
 | `ARCH` | `rv32im_zicsr` | `rv32im_zicsr` or `rv32i_zicsr` |
 | `DIV_LATENCY` | 34 | the divider: 34 or 66 |
 | `TICK_DIVISOR` | 1 | clock cycles per tick of the CLINT's `mtime` |
-| `MUTANT` | empty | `no-decerr` (the crossbar answers an unmapped address `OKAY`) or `sra` (T2's shifts) |
+| `MUTANT` | empty | `no-decerr` (the crossbar answers an unmapped address `OKAY`), `ram-wstrb-reversed` (the RAM applies byte strobes in reverse), `vga-no-id` (the VGA's ID reads 0), `uart-no-hold` (the UART loses a byte written while its transmit FIFO is full) or `sra` (T2's shifts) |
 | `SDL`, `DEMO_HOLD` | 0, 1 (120 with `SDL=1`) | the demo's window, and the frames each QR picture stays |
 
 Each combination of `VARIANT`, `DIV_LATENCY`, `SYNC_READ`, `RAM_WAIT`, `TICK_DIVISOR` and `MUTANT`
@@ -265,7 +265,7 @@ printf 'peek 0x20000000\nqr\nexit\n' | ../build/t5-forward/Vsim +elf=../build/sw
 | `SocLintSpec` | each bus unit under `verilator --lint-only -Wall` |
 | `BootSpec` | the ROM is the assembled `boot.S`; the boot records; exit 63 on an early trap; ROM loads and refused stores |
 | `SocSpec` | per variant and per RAM (both read modes, fixed and random wait states): the short C programs and random programs from the boot ROM against the golden model; 128 straight-line instructions in 128 cycles; 9 checkers in the model; `DECERR` and its mutant |
-| `RiscvTestsSpec` | per variant: 40 `rv32ui`, 8 `rv32um`, 9 `t3mi` and 3 `t5bus` tests |
+| `RiscvTestsSpec` | per variant: 40 `rv32ui`, 8 `rv32um`, 9 `t3mi` and 4 `t5bus` tests |
 | `BusProbeSpec` | the `bus` probes of the observation interface equal the data master's interface (where its checker sits) in every cycle, with and without RAM wait states; the AW, W and B of two stores and the AR and R of two loads (OKAY, DECERR) |
 
 One more spec, `VgaSpec`, is held back: it restates exercises 5.7 and 5.8, so it is not in your

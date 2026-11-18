@@ -35,7 +35,7 @@ object MutantEmit {
       Emit.top(params - "mutant", csrFile = mycpu.csrtrap.MutantEmit.csrMutants("mtip-bit5"))
     case Some("no-flush") =>
       val variant = params.get("variant").map(Variant(_)).getOrElse(Variant.Forward)
-      require(variant != Variant.EarlyBranch, "no-flush: EarlyBranch resolves branches in ID, without this flush")
+      PipelineConfig.requireApplies("no-flush", variant)
       Emit.top(params - "mutant", flushUnit = () => new Mutants.NoFlush)
     case _ => Emit.top(params)
   }

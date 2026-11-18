@@ -19,10 +19,12 @@
 #   make indent             scalafmt on this task's sources
 #   make clean
 #
-# MUTANT=sra injects a known bug into the core (VER-04): arithmetic right shifts shift in zeros.
-# `make test-riscv-tests MUTANT=sra` builds the spec's core with the bug and must fail. The targets
-# that run the Verilator model build a model of their own with it, in build/t1-sra/, and those
-# whose programs shift negative numbers fail too (test-programs, check-rv32emu, cosim-programs).
+# MUTANT=<name> injects a known bug into the core (VER-04): sra (arithmetic right shifts shift in
+# zeros), unsigned-cmp (slt, slti, blt and bge compare unsigned), lui-bit31 (lui loses bit 31 of its
+# immediate), load-unsigned (lb and lh zero-extend) or store-word (sb and sh store a word).
+# `make test-riscv-tests MUTANT=<name>` builds the spec's core with the bug and must fail. The
+# targets that run the Verilator model build a model of their own with it, in build/t1-<name>/,
+# and those whose programs meet the bug fail too (test-programs, check-rv32emu, cosim-programs).
 #
 # The targets are those of every task and come from sim/task.mk, which the settings below
 # parameterize.
@@ -33,7 +35,7 @@ TASK_PACKAGE     := mycpu.singlecycle
 TASK_SOURCE_DIRS := $(CURDIR)/src/main/scala/mycpu/singlecycle
 TASK_VARIANT     := single-cycle
 
-MUTANTS := sra
+MUTANTS := sra unsigned-cmp lui-bit31 load-unsigned store-word
 ARCHS   := rv32i
 
 # T1-04 for whole C programs: every cycle of this core has a retire record.

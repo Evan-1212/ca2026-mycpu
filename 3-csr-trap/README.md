@@ -79,9 +79,9 @@ divider's `kill` abandons the division; after `mret` it starts again from the be
 device. `wfi` does not wait if an enabled interrupt is pending; then the interrupt is taken before
 it (MIE = 1, `mepc` = the WFI) or execution continues at pc + 4 (MIE = 0). Otherwise it waits, and
 in the cycle that one becomes pending it retires, and an interrupt that is due follows in the next
-cycle with `mepc` = pc + 4. Measured: a timer or software interrupt is taken in the very cycle in
-which its `mip` bit is set (latency 0 cycles), and a trap costs one cycle in which nothing
-retires (`ecall` built for `rv32i_zicsr`: 5307 cycles, 5299 instructions, 8 traps).
+cycle with `mepc` = pc + 4. Measured: the latency of an enabled interrupt is 0 cycles (see "Trap and interrupt latency" below),
+and a trap costs one cycle in which nothing retires (`ecall` built for `rv32i_zicsr`: 5307 cycles,
+5299 instructions, 8 traps).
 
 ### Counters (T3-04, `docs/hpm-events.md`)
 
@@ -191,13 +191,13 @@ make clean
 | `ARCH` | `rv32im_zicsr` | the build of the C programs: `rv32im_zicsr` or `rv32i_zicsr` (libgcc) |
 | `DIV_LATENCY` | 34 | the divider: 34 or 66 |
 | `TICK_DIVISOR` | 1 | clock cycles per tick of the CLINT's `mtime` |
-| `MUTANT` | empty | `sra`, `no-sign-fix`, `mtip-bit5` or `mret-no-mpie`: a model with a known bug |
+| `MUTANT` | empty | `sra`, `no-sign-fix`, `mtip-bit5`, `mret-no-mpie`, `no-illegal-csr`, `csr-always-writes` or `mtval-zero`: a model with a known bug |
 | `BENCH_CONFIGS` | `34/rv32i_zicsr 34/rv32im_zicsr 66/rv32im_zicsr` | what `make bench` runs |
 | `SEEDS`, `ELF`, `SIM_ARGS`, `MAX_CYCLES`, `UART_DIVIDER`, `RAM_BYTES`, `BOOTCAMP_DIR` | | as in T2 |
 
 ## Test Suite
 
-`make test` runs 19 specs with 136 tests:
+`make test` runs 19 specs with 140 tests:
 
 | Spec | Tests | What it checks |
 |------|-------|----------------|
@@ -218,7 +218,7 @@ make clean
 | `PreciseTrapSpec` | 2 | the timer interrupt moved over 71 cycles: no store, `PUTC` or division twice or lost; exceptions write nothing |
 | `CoSimSpec` | 3 | the short C programs (with `ecall` and `irqtrap`), a build without M, 500 random programs with M and CSRs |
 | `RiscvTestsSpec` | 1 | 40 `rv32ui`, 8 `rv32um` and 9 `t3mi` tests |
-| `MutantSpec` | 5 | each mutant fails exactly its tests; the reference passes them |
+| `MutantSpec` | 9 | each mutant fails exactly its tests; the reference passes them |
 | `CsrProbesSpec` | 1 | the `csr` probes of the observation interface through a timer interrupt, an `ecall` and their `mret`s: `mepc`, `mcause`, `mstatus`, `mie`, `mtvec` as the golden model has them in every cycle, the trap and access fields as each record says |
 
 One more spec, `CsrMutantSpec` (5 tests: the two CSR-file mutants fail the directed checks and the
@@ -226,7 +226,7 @@ lockstep), is held back: it is not in your tree, and the TAs run it on your subm
 
 ```shell
 make test
-# [info] Tests: succeeded 136, failed 0, canceled 0, ignored 0, pending 0
+# [info] Tests: succeeded 140, failed 0, canceled 0, ignored 0, pending 0
 # [info] All tests passed.
 ```
 
@@ -263,7 +263,7 @@ Every mutant model fails it: `sra` 2 tests of `I` (`I-sra-00`, `I-srai-00`), `no
 
 40 of 40 `rv32ui`, 8 of 8 `rv32um` and 9 of 9 `t3mi`. With `MUTANT=`: `sra` fails `lui`, `sra`,
 `srai`; `no-sign-fix` fails `div`, `rem`; `mtip-bit5` fails `t3mi-mtip`, `t3mi-wfi`;
-`mret-no-mpie` fails `t3mi-mret`, `t3mi-vectored`. Each of these runs exits nonzero.
+`mret-no-mpie` fails `t3mi-mret`, `t3mi-vectored`; the other three (`no-illegal-csr`, `csr-always-writes`, `mtval-zero`) are caught by a riscv-test or a `t3mi` program too. Each of the seven runs exits nonzero (`make list-mutants` names them).
 
 ### Programs (`make test-programs`, `make check-rv32emu`)
 
@@ -351,9 +351,9 @@ byte-identical CSV files.
 
 ### Trap and interrupt latency
 
-- An interrupt is taken in the cycle in which its `mip` bit is set: `mip` is a function of
-  registers (the CLINT's `msip`, `mtime >= mtimecmp`, SimCtrl `MEIP`), and the decision is made
-  in every cycle, also during a divider stall. ACT4's `RVMODEL_INTERRUPT_LATENCY` (10) and
+- An enabled interrupt (its `mie` bit and `mstatus.MIE` set) is taken in the cycle in which its `mip` bit is set
+  (one that wakes a `wfi` follows in the next cycle): `mip` is a function of registers (the CLINT's `msip` and its timer
+  comparison, SimCtrl `MEIP`), and the decision is made in every cycle, also during a divider stall. ACT4's `RVMODEL_INTERRUPT_LATENCY` (10) and
   `RVMODEL_TIMER_INT_SOON_DELAY` (1000) are bounds that the run above meets.
 - A trap costs one cycle without a retired instruction: `ecall` built without M has 8 traps and
   5307 - 5299 = 8 such cycles; `perf` built with M has `mcycle - minstret` = 3552 - 1410 = 2142 =

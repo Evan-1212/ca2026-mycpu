@@ -197,7 +197,7 @@ Parameters:
 | `UART_DIVIDER` | 16 | UART clock cycles per bit (an elaboration parameter of the model) |
 | `RAM_BYTES` | 4 MiB | RAM size, a power of two (an elaboration parameter of the model) |
 | `SEEDS` | 500 | random programs in `CoSimSpec` (a positive number) |
-| `MUTANT` | empty | `sra` or `no-sign-fix` builds the core with a known bug; `test-riscv-tests` must then fail |
+| `MUTANT` | empty | `sra`, `no-sign-fix`, `mulh-unsigned` or `no-div-stall` builds the core with a known bug; `test-riscv-tests` must then fail |
 | `BENCH_CONFIGS` | `34/rv32i 34/rv32im 66/rv32im` | the `<DIV_LATENCY>/<ARCH>` pairs that `make bench` runs |
 | `BOOTCAMP_DIR` | `externals/chisel-bootcamp` | your bootcamp clone; a relative path is relative to the repository's root |
 
@@ -224,7 +224,7 @@ RV32IM core.
 | `T2HaltSpec` | 2 | T1's halt causes right after a division; M instructions are legal |
 | `CoSimSpec` | 4 | assembly and C programs (with and without M) and 500 random programs with M against the golden model |
 | `RiscvTestsSpec` | 1 | 40 `rv32ui` and 8 `rv32um` tests against the golden model, `a0` = 0 |
-| `MutantSpec` | 3 | `sra` fails 3 `rv32ui` tests, `no-sign-fix` fails 2 `rv32um` tests, the reference passes them |
+| `MutantSpec` | 5 | each mutant (`make list-mutants`) fails at least one `rv32ui` or `rv32um` test, the reference passes them |
 | `T2ObsSpec` | 3 | each probe of the observation interface equals the signal it names, the divider included ([docs/observation.md](../docs/observation.md)) |
 
 Two more specs check the table of exercise 2.1 directly: `DecodeMSpec` (10 tests: every

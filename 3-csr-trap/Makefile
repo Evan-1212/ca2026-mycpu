@@ -32,9 +32,10 @@
 # cycles per tick of the CLINT's mtime (EX-08); each combination has a model of its own
 # (build/t3/, build/t3-div66/, build/t3-tick<n>/).
 #
-# MUTANT=sra, no-sign-fix, mtip-bit5 or mret-no-mpie injects a known bug (VER-04): arithmetic right
-# shifts shift in zeros, the divider leaves out the sign of its result, mip shows MTIP at bit 5, or
-# mret leaves mstatus.MPIE as it is. `make test-riscv-tests MUTANT=<name>` builds the spec's system
+# MUTANT=sra, no-sign-fix, mtip-bit5, mret-no-mpie, no-illegal-csr, csr-always-writes or mtval-zero
+# injects a known bug (VER-04): arithmetic right shifts shift in zeros, the divider leaves out the
+# sign of its result, mip shows MTIP at bit 5, mret leaves mstatus.MPIE as it is, no CSR instruction
+# is illegal, every CSR instruction writes, or a trap writes 0 to mtval. `make test-riscv-tests MUTANT=<name>` builds the spec's system
 # with the bug and must fail. The targets that run the Verilator model build a model of their own
 # with it (build/t3-<name>/), and those whose programs meet the bug fail too.
 #
@@ -76,8 +77,8 @@ TASK_ELF          := irqtrap
 # this task's checker, with this system's tick divisor
 TASK_COSIM_CHECK  := csrTrap/Test/runMain mycpu.csrtrap.RetireLogCheck --tick=$(TICK_DIVISOR)
 
-# The first two are in the core, the other two in the CSR file.
-MUTANTS := sra no-sign-fix mtip-bit5 mret-no-mpie
+# The first two are in the core, the others in the CSR file.
+MUTANTS := sra no-sign-fix mtip-bit5 mret-no-mpie no-illegal-csr csr-always-writes mtval-zero
 
 # The build of the C programs: with hardware M, or with libgcc's multiply and divide.
 ARCHS := rv32i_zicsr rv32im_zicsr

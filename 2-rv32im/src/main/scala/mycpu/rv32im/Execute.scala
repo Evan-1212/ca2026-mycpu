@@ -41,8 +41,10 @@ import mycpu.singlecycle.DecodedInst
   * @param divLatency
   *   the divider's latency, one of `Divider.latencies`
   * @param mutant
-  *   a bug to inject for negative tests (VER-04), one of [[Execute.mutants]]: `sra` goes to T1's
-  *   `Execute`, `no-sign-fix` to the divider. `None` in every real build.
+  *   a bug to inject for negative tests (VER-04), one of [[Execute.mutants]]: T1's (`sra`, ...)
+  *   go to T1's `Execute`, `no-sign-fix` to the divider; `mulh-unsigned` makes `mulh` multiply
+  *   unsigned (as `mulhu`), and `no-div-stall` makes a division done at once, before the divider
+  *   answers. `None` in every real build.
   */
 class Execute(divLatency: Int = Divider.DIV_LATENCY, mutant: Option[String] = None) extends Module {
   require(mutant.forall(Execute.mutants.contains), s"unknown mutant ${mutant.getOrElse("")}")
@@ -73,9 +75,11 @@ class Execute(divLatency: Int = Divider.DIV_LATENCY, mutant: Option[String] = No
 
   // the operands of an M instruction are the two source registers, whatever the ALU's selects say
   val multiplier = Module(new Multiplier)
-  multiplier.io.op := io.m.mul_op
-  multiplier.io.a  := io.rs1_data
-  multiplier.io.b  := io.rs2_data
+  multiplier.io.op := (if (mutant.contains(Execute.MulhUnsigned))
+                         Mux(io.m.mul_op === MulOp.Mulh, MulOp.Mulhu, io.m.mul_op)
+                       else io.m.mul_op)
+  multiplier.io.a := io.rs1_data
+  multiplier.io.b := io.rs2_data
 
   val divider = Module(new Divider(divLatency, mutant.filter(Divider.mutants)))
   divider.io.req.bits.op       := io.m.div_op
@@ -91,6 +95,7 @@ class Execute(divLatency: Int = Divider.DIV_LATENCY, mutant: Option[String] = No
   // operands until then, and a division whose result nobody reads (rd is x0) is carried out like
   // any other. Mind `valid` (bootcamp 2.6 for `Decoupled` and `Valid`; handout §T2.5).
   ?
+  if (mutant.contains(Execute.NoDivStall)) io.done := true.B
 
   // [CA26: Exercise 2.7] The result of the execute stage
   // Contract: `result` is what the instruction computes for `rd` when the decode table names the
@@ -102,6 +107,12 @@ class Execute(divLatency: Int = Divider.DIV_LATENCY, mutant: Option[String] = No
 
 object Execute {
 
-  /** The bugs `mutant` can inject (VER-04): T1's (`sra`) and the divider's (`no-sign-fix`). */
-  val mutants: Set[String] = mycpu.singlecycle.Execute.mutants ++ Divider.mutants
+  val MulhUnsigned = "mulh-unsigned"
+  val NoDivStall   = "no-div-stall"
+
+  /** The bugs `mutant` can inject (VER-04): T1's (`sra`, ...), the divider's (`no-sign-fix`) and
+    * this stage's (`mulh-unsigned`, `no-div-stall`).
+    */
+  val mutants: Set[String] =
+    mycpu.singlecycle.Execute.mutants ++ Divider.mutants ++ Set(MulhUnsigned, NoDivStall)
 }

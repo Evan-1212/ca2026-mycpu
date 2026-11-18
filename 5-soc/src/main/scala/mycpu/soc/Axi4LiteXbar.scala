@@ -271,7 +271,7 @@ class Axi4LiteXbar(regions: Seq[Region], mutant: Option[String] = None) extends 
 object Axi4LiteXbar {
 
   /** The mutants `Axi4LiteXbar` can be built with (negative tests only). */
-  val mutants: Seq[String] = Seq("no-decerr")
+  val mutants: Set[String] = Set("no-decerr")
 
   /** The masters, as the `master` argument of [[port]]. */
   val I = 0

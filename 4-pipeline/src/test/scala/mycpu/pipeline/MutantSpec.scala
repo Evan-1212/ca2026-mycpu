@@ -15,17 +15,16 @@ import org.scalatest.flatspec.AnyFlatSpec
   */
 class MutantSpec extends AnyFlatSpec with ChiselSim {
 
-  /** The mutants and the variants each applies to (`no-forward-mem` needs a forwarding path, and
-    * `no-flush` a branch resolved in EX).
+  /** The mutants that need no particular variant, run on `Forward` only, and those that apply to
+    * some ([[PipelineConfig.applies]]: `no-forward-mem` needs a forwarding path, `no-flush` a
+    * branch resolved in EX), run on each of those.
     */
-  private val cases: Seq[(String, Variant)] = Seq(
-    "sra"            -> Variant.Forward,
-    "no-forward-mem" -> Variant.Forward,
-    "no-forward-mem" -> Variant.EarlyBranch,
-    "no-flush"       -> Variant.Stall,
-    "no-flush"       -> Variant.Forward,
-    "mtip-bit5"      -> Variant.Forward
-  )
+  private val cases: Seq[(String, Variant)] =
+    Seq("sra", "mtip-bit5").map(_ -> Variant.Forward) ++
+      (for {
+        mutant  <- Seq("no-forward-mem", "no-flush")
+        variant <- Variant.all if PipelineConfig.applies(mutant, variant)
+      } yield mutant -> variant)
 
   for ((mutant, variant) <- cases) {
     s"The $variant pipeline with mutant $mutant" should "fail a riscv-test" in {

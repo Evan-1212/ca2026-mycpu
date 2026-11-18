@@ -13,7 +13,7 @@ import mycpu.common.{MemMap, ObsGroups, SimCtrl, SimTop, TopGen, Uart}
   *
   *   - `uartDivider`: UART clock cycles per bit (small by default, to keep simulations short).
   *   - `ramBytes`: the RAM size, a power of two (4 MiB by default, as the linker script assumes).
-  *   - `mutant`: a bug to inject for negative tests (see [[Execute]]); `None` in real builds.
+  *   - `mutant`: a bug to inject for negative tests (`CPU.mutants`); `None` in real builds.
   *   - `obs`: drive the probe groups `core` and `uart` of the observation interface (OBS-02,
   *     [[Probes]]); without them the model has no probe port.
   */

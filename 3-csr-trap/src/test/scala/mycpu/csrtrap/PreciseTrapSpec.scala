@@ -37,7 +37,8 @@ class PreciseTrapSpec extends AnyFlatSpec with ChiselSim {
         val taken = trace.filter(_.trap.exists(_.interrupt))
         assert(taken.size <= 1 && T3.reg(trace, "s4") == taken.size, s"delay $delay: one interrupt at most")
         val at = taken.headOption.fold(-1L)(_.pc)
-        for ((label, pc) <- s if Seq("store", "putc", "divide", "after").contains(label) && pc == at) landed += label
+        for ((label, pc) <- s if labels.contains(label) && pc == at)
+          landed += label
         // an interrupt during the division: the divider had started (cycles without a record before it)
         val index = cycles.indexWhere(_.retire.exists(_.trap.exists(_.interrupt)))
         if (at == s("divide") && cycles(index - 1).retire.isEmpty) {
@@ -47,7 +48,7 @@ class PreciseTrapSpec extends AnyFlatSpec with ChiselSim {
           assert(cycles.slice(again - Divider.DIV_LATENCY, again).forall(_.retire.isEmpty), s"delay $delay")
         }
       }
-      assert(landed == Set("store", "putc", "divide", "after"), s"the interrupt landed on $landed")
+      assert(landed == labels, s"the interrupt landed on $landed")
       assert(killed > 20, s"$killed runs took the interrupt while the divider was busy")
       info(s"the interrupt landed on ${landed.toSeq.sorted.mkString(", ")}; $killed times during the division")
     }
@@ -68,6 +69,9 @@ class PreciseTrapSpec extends AnyFlatSpec with ChiselSim {
 object PreciseTrapSpec {
   import T3.{exitAddr, mtimecmpAddr, putcAddr}
 
+  /** The labels of [[program]] that an interrupt may land on. */
+  val labels = Set("load", "store", "putc", "divide", "after")
+
   /** The timer is due `delay` cycles after the program reads `mtime`. The handler silences the
     * timer and counts in `s4`; the stretch increments a word in RAM, prints a byte through SimCtrl
     * `PUTC`, divides, and loads the word back. It exits with 0.
@@ -85,7 +89,7 @@ object PreciseTrapSpec {
         csrw  mie, t1
         csrsi mstatus, 8
 ${T3.armTimer(delay)}
-    stretch:
+    load:
         lw    t3, 0(s9)
         addi  t3, t3, 1
     store:

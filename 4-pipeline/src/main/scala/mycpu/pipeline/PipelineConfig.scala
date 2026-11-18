@@ -101,11 +101,11 @@ case class PipelineConfig(
 ) {
   require(Divider.latencies.contains(divLatency), s"divider latency $divLatency")
   require(fetchDepth >= 1 && fetchDepth <= 16, s"fetch depth $fetchDepth: 1 to 16")
-  require(mutant.forall(PipelineConfig.mutants.contains), s"unknown mutant ${mutant.getOrElse("")}")
   require(
-    !(mutant.contains("no-forward-mem") && variant == Variant.Stall),
-    "no-forward-mem: the Stall variant has no forwarding path to drop"
+    mutant.forall(PipelineConfig.mutants.contains),
+    s"unknown mutant ${mutant.getOrElse("")}: it matches no SoC component either"
   )
+  mutant.foreach(PipelineConfig.requireApplies(_, variant))
 
   /** The mutant for T2's execute stage, if it is one of its own. */
   def executeMutant: Option[String] = mutant.filter(mycpu.rv32im.Execute.mutants)
@@ -123,4 +123,19 @@ object PipelineConfig {
     * `mycpu.pipeline.MutantEmit` in the test sources.
     */
   val mutants: Set[String] = Set("sra", "no-forward-mem")
+
+  /** Whether the mutant `name` applies to `variant`: `no-forward-mem` drops a forwarding path, which
+    * `Stall` has none of, and `no-flush` drops the flush of a branch resolved in EX, which
+    * `EarlyBranch` does not use. Of the other mutants, every variant has the code they change. It
+    * governs the test-code mutants (`no-flush`, `mtip-bit5`) as well as those of `mutants`.
+    */
+  def applies(name: String, variant: Variant): Boolean = name match {
+    case "no-forward-mem" => variant != Variant.Stall
+    case "no-flush"       => variant != Variant.EarlyBranch
+    case _                => true
+  }
+
+  /** Fails unless the mutant `name` [[applies]] to `variant`. */
+  def requireApplies(name: String, variant: Variant): Unit =
+    require(applies(name, variant), s"$name: does not apply to the $variant variant")
 }

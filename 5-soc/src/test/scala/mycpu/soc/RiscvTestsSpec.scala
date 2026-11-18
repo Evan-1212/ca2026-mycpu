@@ -15,7 +15,8 @@ import org.scalatest.flatspec.AnyFlatSpec
   * task (`t5bus`, [[RiscvTestsSpec.busTests]]), each from the boot ROM on and record by record
   * against the golden model.
   *
-  * The environment variable `MUTANT` names a bug to inject (`no-decerr` of the crossbar, or a
+  * The environment variable `MUTANT` names a bug to inject (`no-decerr` of the crossbar,
+  * `ram-wstrb-reversed` of the RAM, `vga-no-id` of the VGA, `uart-no-hold` of the UART, or a
   * mutant of the core, `sra`), on the variant that `VARIANT` names (Forward by default); the spec
   * must then fail (VER-04): `make test-riscv-tests MUTANT=<name> [VARIANT=<v>]`.
   */
@@ -92,6 +93,30 @@ object RiscvTestsSpec {
         )
       )
     ),
+    // 12 stores to TXDATA: the UART takes the first ones at once (those its FIFO holds, and one
+    // that goes to the transmitter) and holds the rest until a frame ends (16 clock cycles a bit,
+    // 10 bits a frame by default), so the CLINT's mtime advances by at least 2 frames' worth, far
+    // more than 100 ticks, between the first and the last
+    "uart" -> T5.asm(f"""
+      li    a0, 3
+      li    t0, 0x$uartBase%x
+      li    t3, 0x${clintBase + MemMap.Clint.MtimeLo}%x
+      li    t1, 0x61
+      lw    s0, 0(t3)
+      .rept 12
+      sw    t1, ${MemMap.Uart.TxData}(t0)
+      .endr
+      lw    s1, 0(t3)
+      sub   s1, s1, s0
+      li    t2, 100
+      bltu  s1, t2, 1f           # a store did not wait for the FIFO
+      li    a0, 0
+    1:
+      li    t0, 0x${simCtrlBase + MemMap.SimCtrl.Exit}%x
+      sw    a0, 0(t0)
+    2:
+      j     2b
+    """),
     "devices" -> T5.asm(f"""
       li    a0, 3
       li    t0, 0x$bootRomBase%x

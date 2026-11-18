@@ -17,7 +17,7 @@ may have several blanks. A blank does not compile (`not found: value ?`) until i
 | 1.2 | `1-single-cycle/src/main/scala/mycpu/singlecycle/InstructionDecode.scala` | 78 | Zifencei, and words the bootcamp decoder does not know |
 | 1.2 | `1-single-cycle/src/main/scala/mycpu/singlecycle/InstructionDecode.scala` | 79 | Zifencei, and words the bootcamp decoder does not know |
 | 1.3 | `1-single-cycle/src/main/scala/mycpu/singlecycle/InstructionDecode.scala` | 94 | What an instruction does with rd |
-| 1.4 | `1-single-cycle/src/main/scala/mycpu/singlecycle/Execute.scala` | 60 | Control transfers: the redirect, and a target that is no instruction address |
+| 1.4 | `1-single-cycle/src/main/scala/mycpu/singlecycle/Execute.scala` | 69 | Control transfers: the redirect, and a target that is no instruction address |
 | 1.5 | `1-single-cycle/src/main/scala/mycpu/singlecycle/MemoryAccess.scala` | 70 | Alignment, and the byte lanes of a store |
 | 1.6 | `1-single-cycle/src/main/scala/mycpu/singlecycle/MemoryAccess.scala` | 89 | Sending the request, waiting for the answer, and what the access moved |
 | 1.6 | `1-single-cycle/src/main/scala/mycpu/singlecycle/MemoryAccess.scala` | 90 | Sending the request, waiting for the answer, and what the access moved |
@@ -26,8 +26,8 @@ may have several blanks. A blank does not compile (`not found: value ?`) until i
 | 1.7 | `1-single-cycle/src/main/scala/mycpu/singlecycle/DataBus.scala` | 38 | Address decode: device select, the answer, and unmapped addresses |
 | 1.8 | `1-single-cycle/src/main/scala/mycpu/singlecycle/WriteBack.scala` | 39 | The write-back value, and when a register really changes |
 | 1.8 | `1-single-cycle/src/main/scala/mycpu/singlecycle/WriteBack.scala` | 40 | The write-back value, and when a register really changes |
-| 1.9 | `1-single-cycle/src/main/scala/mycpu/singlecycle/CPU.scala` | 133 | The halt causes, stage by stage |
-| 1.10 | `1-single-cycle/src/main/scala/mycpu/singlecycle/CPU.scala` | 168 | The retire record of an instruction that completes |
+| 1.9 | `1-single-cycle/src/main/scala/mycpu/singlecycle/CPU.scala` | 149 | The halt causes, stage by stage |
+| 1.10 | `1-single-cycle/src/main/scala/mycpu/singlecycle/CPU.scala` | 184 | The retire record of an instruction that completes |
 
 ## Task 2: `2-rv32im`
 
@@ -50,8 +50,8 @@ may have several blanks. A blank does not compile (`not found: value ?`) until i
 | 2.4 | `2-rv32im/src/main/scala/mycpu/rv32im/Divider.scala` | 174 | Special cases and signs |
 | 2.5 | `2-rv32im/src/main/scala/mycpu/rv32im/Divider.scala` | 185 | Handshake, state transitions and kill |
 | 2.6 | `2-rv32im/src/main/scala/mycpu/rv32im/CPU.scala` | 98 | The stall: an instruction that takes more than one cycle |
-| 2.6 | `2-rv32im/src/main/scala/mycpu/rv32im/Execute.scala` | 93 | The stall: an instruction that takes more than one cycle |
-| 2.7 | `2-rv32im/src/main/scala/mycpu/rv32im/Execute.scala` | 100 | The result of the execute stage |
+| 2.6 | `2-rv32im/src/main/scala/mycpu/rv32im/Execute.scala` | 97 | The stall: an instruction that takes more than one cycle |
+| 2.7 | `2-rv32im/src/main/scala/mycpu/rv32im/Execute.scala` | 105 | The result of the execute stage |
 | 2.8 | `2-rv32im/src/main/scala/mycpu/rv32im/IssM.scala` | 38 | The golden model of M |
 | 2.8 | `2-rv32im/src/main/scala/mycpu/rv32im/IssM.scala` | 49 | The golden model of M |
 
@@ -118,6 +118,6 @@ may have several blanks. A blank does not compile (`not found: value ?`) until i
 | 5.4 | `5-soc/src/main/scala/mycpu/soc/Axi4LiteXbar.scala` | 121 | The way back, and an address that no slave owns |
 | 5.5 | `5-soc/src/main/scala/mycpu/soc/Axi4LiteSlave.scala` | 67 | The word of a synchronous-read memory on the R channel |
 | 5.6 | `5-soc/src/main/scala/mycpu/soc/Axi4LiteChecker.scala` | 57 | The checker's rule for a stable payload |
-| 5.7 | `5-soc/src/main/scala/mycpu/soc/Vga.scala` | 170 | Video timing: scan counters, visible area and sync pulses |
-| 5.8 | `5-soc/src/main/scala/mycpu/soc/Vga.scala` | 188 | Pixel fetch: framebuffer address, x4 scaling and pipeline alignment |
-| 5.9 | `5-soc/src/main/scala/mycpu/soc/Vga.scala` | 239 | Buffer swap at vblank |
+| 5.7 | `5-soc/src/main/scala/mycpu/soc/Vga.scala` | 177 | Video timing: scan counters, visible area and sync pulses |
+| 5.8 | `5-soc/src/main/scala/mycpu/soc/Vga.scala` | 195 | Pixel fetch: framebuffer address, x4 scaling and pipeline alignment |
+| 5.9 | `5-soc/src/main/scala/mycpu/soc/Vga.scala` | 246 | Buffer swap at vblank |

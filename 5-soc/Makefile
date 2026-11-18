@@ -37,10 +37,13 @@
 # states to every RAM response. Each combination has a model of its own (build/t5-forward/,
 # build/t5-stall-async-w2/, ...).
 #
-# MUTANT=no-decerr (the crossbar answers an unmapped address with OKAY, a bug of the bus) or sra (T2's
-# arithmetic shifts shift in zeros, a bug of the core) injects a known bug (VER-04); `make
-# test-riscv-tests MUTANT=<name>` and `make act4 MUTANT=<name>` must then fail. The masters' drop-awvalid
-# is no mutant of the SoC: every slave here takes AW in the cycle it is offered (a master has one
+# MUTANT=no-decerr (the crossbar answers an unmapped address with OKAY, a bug of the bus),
+# ram-wstrb-reversed (the RAM applies a store's byte strobes in reverse order), vga-no-id (the
+# VGA's ID register reads 0), uart-no-hold (the UART drops a TXDATA store while its FIFO is full) or
+# sra (T2's arithmetic shifts shift in zeros, a bug of the core) injects a known bug (VER-04);
+# `make test-riscv-tests MUTANT=<name>` must then fail, and so must `make act4 MUTANT=<name>` for
+# no-decerr and sra (the architecture tests never read the VGA). The
+# masters' drop-awvalid is no mutant of the SoC: every slave here takes AW in the cycle it is offered (a master has one
 # transaction outstanding, and each slave's AW buffer is then empty), so the bug cannot show; the bus
 # specs (Axi4LiteMasterSpec, InterconnectSpec) catch it with slaves that make AW wait.
 
@@ -92,7 +95,7 @@ TASK_MODEL_SUFFIX := -$(call variant_name,$(VARIANT))$(if $(filter-out 34,$(DIV_
 TASK_MODELS       := $(foreach v,$(VARIANTS),t5-$(call variant_name,$(v)))
 TASK_ELF          := fibonacci
 
-MUTANTS := no-decerr sra
+MUTANTS := no-decerr ram-wstrb-reversed vga-no-id uart-no-hold sra
 
 ARCHS := rv32im_zicsr rv32i_zicsr
 ARCH  ?= rv32im_zicsr

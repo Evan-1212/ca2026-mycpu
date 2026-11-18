@@ -11,8 +11,9 @@ import org.scalatest.flatspec.AnyFlatSpec
 /** The negative checks of VER-04 on T2: a core with a known bug must fail riscv-tests, by the
   * tests' own verdict and by co-simulation, in the tests that exercise the bug and in no other.
   * `sra` (T1's: arithmetic right shifts carried out as logical ones) fails `rv32ui`;
-  * `no-sign-fix` (the divider returns the unsigned result of its iterations) fails `rv32um`. A
-  * harness that passed either core would pass anything.
+  * `no-sign-fix` (the divider returns the unsigned result of its iterations), `mulh-unsigned`
+  * (`mulh` multiplies unsigned) and `no-div-stall` (a division is done before the divider answers)
+  * fail `rv32um`. A harness that passed any of these cores would pass anything.
   */
 class MutantSpec extends AnyFlatSpec with ChiselSim {
   private val tests = RiscvTests.all
@@ -46,25 +47,37 @@ class MutantSpec extends AnyFlatSpec with ChiselSim {
     failed
   }
 
-  private val failedBySra       = Set("rv32ui-lui", "rv32ui-sra", "rv32ui-srai")
-  private val failedByNoSignFix = Set("rv32um-div", "rv32um-rem")
+  /** A mutant with the mnemonics that `CoSim2` may report as its first wrong record and the tests
+    * it fails: all of them, and no others.
+    */
+  private case class Expected(
+      mutant: String,
+      culprits: Set[String],
+      failedTests: Set[String]
+  )
 
-  "The sra mutant" should "fail the rv32ui tests that shift arithmetically, and no rv32um test" in {
-    val failed = failing("sra", Set("sra", "srai"))
-    assert(failed == failedBySra, failed)
-    info(s"the mutant fails ${failed.toSeq.sorted.mkString(", ")}")
-  }
+  private val expected = Seq(
+    Expected("sra", Set("sra", "srai"), Set("rv32ui-lui", "rv32ui-sra", "rv32ui-srai")),
+    Expected("no-sign-fix", Set("div", "rem"), Set("rv32um-div", "rv32um-rem")),
+    Expected("mulh-unsigned", Set("mulh"), Set("rv32um-mulh")),
+    Expected(
+      "no-div-stall",
+      Set("div", "divu", "rem", "remu"),
+      Set("rv32um-div", "rv32um-divu", "rv32um-rem", "rv32um-remu")
+    )
+  )
 
-  "The no-sign-fix mutant" should "fail the rv32um tests of the signed divisions, and no other test" in {
-    val failed = failing("no-sign-fix", Set("div", "rem"))
-    assert(failed == failedByNoSignFix, failed)
-    info(s"the mutant fails ${failed.toSeq.sorted.mkString(", ")}")
-  }
+  for (Expected(mutant, culprits, failedTests) <- expected)
+    s"The $mutant mutant" should s"fail ${failedTests.toSeq.sorted.mkString(", ")} and no other test" in {
+      val failed = failing(mutant, culprits)
+      assert(failed == failedTests, failed)
+      info(s"the mutant fails ${failed.toSeq.sorted.mkString(", ")}")
+    }
 
   // the control: it is the bug that fails these tests, not the way they are run here (all the
   // tests on the reference core are RiscvTestsSpec)
   "The reference core" should "pass the tests that the mutants fail" in {
-    val names = failedBySra ++ failedByNoSignFix
+    val names = expected.flatMap(_.failedTests).toSet
     simulate(new Top) { c =>
       for ((name, image) <- tests if names(name)) assert(RiscvTests.run(c, image).isEmpty, name)
     }

@@ -26,8 +26,9 @@
 # DIV_LATENCY=34 (the default) or 66 selects the divider (EX-08); each has a model of its own
 # (build/t2/, build/t2-div66/).
 #
-# MUTANT=sra or MUTANT=no-sign-fix injects a known bug into the core (VER-04): arithmetic right
-# shifts shift in zeros, or the divider leaves out the sign of its result. `make test-riscv-tests
+# MUTANT=sra, no-sign-fix, mulh-unsigned or no-div-stall injects a known bug into the core (VER-04):
+# arithmetic right shifts shift in zeros, the divider leaves out the sign of its result, mulh
+# multiplies unsigned, or a division completes before the divider answers. `make test-riscv-tests
 # MUTANT=<name>` builds the spec's core with the bug and must fail. The targets that run the
 # Verilator model build a model of their own with it (build/t2-<name>/), and those whose programs
 # meet the bug fail too.
@@ -61,7 +62,8 @@ TASK_ELF          := muldiv
 # IssMSpec compares the golden model's M with rv32emu v1.3
 TASK_TEST_RV32EMU := yes
 
-MUTANTS := sra no-sign-fix
+# `unsigned-cmp` also builds here, but its comparisons are T1's: T1's MutantSpec covers it.
+MUTANTS := sra no-sign-fix mulh-unsigned no-div-stall
 
 # The build of the C programs: with hardware M, or with libgcc's multiply and divide (T2-05).
 ARCHS := rv32i rv32im

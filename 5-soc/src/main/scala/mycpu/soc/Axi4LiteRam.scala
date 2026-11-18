@@ -48,9 +48,19 @@ import chisel3.util._
   *   whether the memory is read synchronously (see above)
   * @param waitStates
   *   the extra latency of every response
+  * @param mutant
+  *   a known bug, for negative tests only ([[Axi4LiteRam.mutants]]): `ram-wstrb-reversed` applies
+  *   a store's strobes in reverse order (strobe 0 to byte 3, ...), so a byte or halfword store
+  *   writes the wrong bytes
   */
-class Axi4LiteRam(words: Int, syncRead: Boolean, waitStates: WaitStates = WaitStates.Fixed(0)) extends Module {
+class Axi4LiteRam(
+    words: Int,
+    syncRead: Boolean,
+    waitStates: WaitStates = WaitStates.Fixed(0),
+    mutant: Option[String] = None
+) extends Module {
   require(isPow2(words) && words >= 2, s"$words words: the RAM size must be a power of two")
+  require(mutant.forall(Axi4LiteRam.mutants.contains), s"unknown mutant $mutant")
   val io = IO(new Bundle {
     val i    = Flipped(new Axi4LiteIO)
     val d    = Flipped(new Axi4LiteIO)
@@ -90,11 +100,19 @@ class Axi4LiteRam(words: Int, syncRead: Boolean, waitStates: WaitStates = WaitSt
 
   // One write port for the load port and the stores: firtool drops the masks of a memory whose
   // other write port has none (see the bootcamp's `riscv.Ram`).
-  val store = d_write.io.write.get
-  val addr  = Mux(io.load.valid, io.load.bits.addr, store.bits.addr)
-  val data  = Mux(io.load.valid, io.load.bits.data, store.bits.wdata)
-  val strb  = Mux(io.load.valid, "b1111".U, store.bits.wstrb)
+  val store          = d_write.io.write.get
+  val addr           = Mux(io.load.valid, io.load.bits.addr, store.bits.addr)
+  val data           = Mux(io.load.valid, io.load.bits.data, store.bits.wdata)
+  val reverseStrobes = mutant.contains("ram-wstrb-reversed")
+  val wstrb          = if (reverseStrobes) Reverse(store.bits.wstrb) else store.bits.wstrb
+  val strb           = Mux(io.load.valid, "b1111".U, wstrb)
   when(io.load.valid || store.valid) {
     sync_mem.getOrElse(comb_mem.get).write(index(addr), bytes(data), strb.asBools)
   }
+}
+
+object Axi4LiteRam {
+
+  /** The mutants `Axi4LiteRam` can be built with (negative tests only). */
+  val mutants: Set[String] = Set("ram-wstrb-reversed")
 }

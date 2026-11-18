@@ -26,9 +26,14 @@ import riscv.HaltCause
   * behind it (a fetch, load or store). An instruction that halts changes no state: no register,
   * no memory, not the PC.
   *
-  * `mutant` injects a bug for negative tests (see [[Execute]]).
+  * `mutant` injects a bug for negative tests (VER-04), one of [[CPU.mutants]]: those of
+  * [[Execute]]; `lui-bit31` (`lui`, opcode 0110111, loses bit 31 of its immediate on the way to
+  * the execute stage); and two of the memory access, which the core hands another `funct3`:
+  * `load-unsigned` (`lb` and `lh` zero-extend, as `lbu` and `lhu` do) and `store-word` (`sb` and
+  * `sh` store a word). It is `None` in every real build.
   */
 class CPU(resetPc: Long = MemMap.ramBase, mutant: Option[String] = None) extends Module {
+  require(mutant.forall(CPU.mutants.contains), s"unknown mutant ${mutant.getOrElse("")}")
   val io = IO(new Bundle {
     val imem   = new riscv.MemPort
     val dmem   = new riscv.MemPort
@@ -45,7 +50,7 @@ class CPU(resetPc: Long = MemMap.ramBase, mutant: Option[String] = None) extends
   val fetch      = Module(new InstructionFetch(resetPc))
   val decode     = Module(new InstructionDecode)
   val regs       = Module(new riscv.RegFile)
-  val execute    = Module(new Execute(mutant))
+  val execute    = Module(new Execute(mutant.filter(Execute.mutants)))
   val memory     = Module(new MemoryAccess)
   val write_back = Module(new WriteBack)
   val d          = decode.io.decoded
@@ -62,17 +67,25 @@ class CPU(resetPc: Long = MemMap.ramBase, mutant: Option[String] = None) extends
   regs.io.rs2     := d.rs2
   regs.io.dbgAddr := 0.U
 
-  execute.io.pc       := fetch.io.pc
-  execute.io.decoded  := d
+  execute.io.pc      := fetch.io.pc
+  execute.io.decoded := d
+  if (mutant.contains("lui-bit31")) {
+    // Mutant: `lui` (opcode 0110111) hands the execute stage an immediate without bit 31.
+    when(fetch.io.inst(6, 0) === "b0110111".U)(execute.io.decoded.imm := d.imm(30, 0))
+  }
   execute.io.rs1_data := regs.io.rs1Data
   execute.io.rs2_data := regs.io.rs2Data
 
   memory.io.enable     := has_inst
   memory.io.load       := d.load
   memory.io.store      := d.store
-  memory.io.funct3     := d.funct3
   memory.io.addr       := execute.io.alu_result
   memory.io.store_data := regs.io.rs2Data
+  memory.io.funct3     := (mutant match {
+    case Some("load-unsigned") => Mux(d.load && !d.funct3(1), d.funct3 | 4.U, d.funct3) // lb, lh
+    case Some("store-word")    => Mux(d.store, 2.U, d.funct3)
+    case _                     => d.funct3
+  })
   memory.io.dmem <> io.dmem
 
   val cause = CPU.haltCause(fetch, d, execute.io.target_misaligned, memory)
@@ -108,6 +121,9 @@ class CPU(resetPc: Long = MemMap.ramBase, mutant: Option[String] = None) extends
   * themselves, and from the execute stage the two signals they need.
   */
 object CPU {
+
+  /** The bugs `mutant` can inject (VER-04): [[Execute]]'s, one of `lui` and two of the memory access. */
+  val mutants: Set[String] = Execute.mutants ++ Set("lui-bit31", "load-unsigned", "store-word")
 
   /** Why the instruction at the PC halts the core (`Running`: it does not).
     *

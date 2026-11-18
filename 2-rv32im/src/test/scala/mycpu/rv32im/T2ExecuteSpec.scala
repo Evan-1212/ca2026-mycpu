@@ -162,8 +162,8 @@ class T2ExecuteSpec extends AnyFlatSpec with ChiselSim {
     assert(Divider.latencies == Seq(34, 66) && Divider.DIV_LATENCY == 34 && Divider.EARLY_OUT_LATENCY == 1)
   }
 
-  "The mutants" should "be T1's sra and the divider's no-sign-fix, each in its own unit" in {
-    assert(Execute.mutants == Set("sra", "no-sign-fix"))
+  "The mutants" should "be T1's, the divider's and T2's own, each injected in its own unit" in {
+    assert(Execute.mutants == Set("sra", "unsigned-cmp", "no-sign-fix", "mulh-unsigned", "no-div-stall"))
     val refused = intercept[Exception](simulate(new DecodeExecute(mutant = Some("no-such-bug")))(_ => ()))
     assert(TestTools.causedBy(refused, "unknown mutant no-such-bug"), refused)
     simulate(new DecodeExecute(mutant = Some("sra"))) { c =>

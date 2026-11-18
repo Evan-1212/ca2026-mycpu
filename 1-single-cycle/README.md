@@ -209,7 +209,7 @@ Parameters:
 | `RAM_BYTES` | 4 MiB | RAM size, a power of two (an elaboration parameter of the model) |
 | `SEEDS` | 500 | random programs in `CoSimSpec` (a positive number) |
 | `UART_ARGS` | empty | extra harness arguments for `check-uart` (`+uart-no-flow-control` makes it fail) |
-| `MUTANT` | empty | `sra` builds the core with a known bug (in `build/t1-sra/` for the Verilator model); `test-riscv-tests` must then fail |
+| `MUTANT` | empty | `sra`, `unsigned-cmp`, `lui-bit31`, `load-unsigned` or `store-word` builds the core with a known bug (in `build/t1-<name>/` for the Verilator model); `test-riscv-tests` must then fail |
 | `BOOTCAMP_DIR` | `externals/chisel-bootcamp` | your bootcamp clone; a relative path is relative to the repository's root |
 
 The model is emitted again when one of its parameters (`UART_DIVIDER`, `RAM_BYTES`, `MUTANT`),

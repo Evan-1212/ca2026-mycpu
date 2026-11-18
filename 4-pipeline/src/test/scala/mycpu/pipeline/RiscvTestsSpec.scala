@@ -26,6 +26,9 @@ class RiscvTestsSpec extends AnyFlatSpec with ChiselSim {
 
   for (variant <- variants) {
     s"The $variant pipeline" should s"pass every rv32ui, rv32um and t3mi test$mustFail" in {
+      mutant.foreach(m =>
+        assume(PipelineConfig.applies(m, variant), s"the mutant $m does not apply to the $variant variant")
+      )
       val params = Map("variant" -> variant.name) ++ mutant.map("mutant" -> _)
       simulate(MutantEmit.top(params)) { c =>
         val failures = RiscvTests.suites.flatMap { case (suite, tests) =>

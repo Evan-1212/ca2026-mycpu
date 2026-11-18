@@ -119,7 +119,7 @@ class ClintSpec extends AnyFlatSpec with ChiselSim {
     }
   }
 
-  it should "raise MTIP exactly while mtime >= mtimecmp, unsigned" in {
+  it should "raise MTIP by the unsigned 64-bit comparison mtime >= mtimecmp" in {
     simulate(new Clint()) { c =>
       start(c)
       store(c, MtimecmpHi, 0)

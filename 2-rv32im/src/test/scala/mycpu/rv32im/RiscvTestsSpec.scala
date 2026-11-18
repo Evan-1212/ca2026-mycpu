@@ -13,7 +13,7 @@ import org.scalatest.flatspec.AnyFlatSpec
   * `rv32um` tests of `tests/riscv-tests/rv32um`, record by record against the golden model. A
   * test passes when it ends in `ecall` with a0 = 0.
   *
-  * The environment variable `MUTANT` names a bug to inject (`sra` or `no-sign-fix`, see
+  * The environment variable `MUTANT` names a bug to inject (one of the Makefile's `MUTANTS`, see
   * [[Execute]]); the spec must then fail (VER-04): `make test-riscv-tests MUTANT=<name>`.
   */
 class RiscvTestsSpec extends AnyFlatSpec with ChiselSim {

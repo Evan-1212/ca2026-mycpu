@@ -19,7 +19,7 @@ import org.scalatest.flatspec.AnyFlatSpec
   * other trap it exits with 255. A test passes when it exits with 0.
   *
   * The environment variable `MUTANT` names a bug to inject (`sra` or `no-sign-fix` in the core,
-  * `mtip-bit5` or `mret-no-mpie` in the CSR file, see [[MutantEmit]]); the spec must then fail
+  * any key of `MutantEmit.csrMutants` in the CSR file); the spec must then fail
   * (VER-04): `make test-riscv-tests MUTANT=<name>`.
   */
 class RiscvTestsSpec extends AnyFlatSpec with ChiselSim {

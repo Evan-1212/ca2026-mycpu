@@ -14,8 +14,8 @@ import riscv.Halt
   * `ecall` with a0 = 0 (a0 = (number of the failing case << 1) | 1 otherwise, see the bootcamp's
   * `riscv_test.h`).
   *
-  * The environment variable `MUTANT` names a bug to inject (`sra`, see [[Execute]]); the spec must
-  * then fail (VER-04): `make test-riscv-tests MUTANT=sra`.
+  * The environment variable `MUTANT` names a bug to inject (`CPU.mutants`); the spec must
+  * then fail (VER-04): `make test-riscv-tests MUTANT=<name>`.
   */
 class RiscvTestsSpec extends AnyFlatSpec with ChiselSim {
   private val mutant = sys.env.get("MUTANT").filter(_.nonEmpty)

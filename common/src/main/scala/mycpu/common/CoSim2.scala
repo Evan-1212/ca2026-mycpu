@@ -370,20 +370,26 @@ object CoSim2 {
     * the program failed to end in that time.
     */
   def run(c: CoSimPorts, maxCycles: Int = 100000): CoSimResult = {
-    val trace  = mutable.ArrayBuffer[IssRetire]()
-    var cycles = 0
-    var exit   = Option.empty[Int]
-    var done   = false
-    while (!done && cycles < maxCycles) {
+    val (seen, done) = cycles(c, maxCycles)
+    val trace        = seen.flatMap(_.retire)
+    val timeout      = Option.when(!done)(s"the program did not end within $maxCycles cycles (${trace.size} records)")
+    CoSimResult(trace, trace.size, seen.size, seen.lastOption.flatMap(_.exit), timeout)
+  }
+
+  /** What the system shows in each cycle of the loaded program, up to the one in which a halt
+    * retires, the core halts or SimCtrl `EXIT` is written, or `maxCycles` cycles; and whether it
+    * ended. This is the input of `replay`.
+    */
+  def cycles(c: CoSimPorts, maxCycles: Int = 100000): (Seq[CoSimCycle], Boolean) = {
+    val seen = mutable.ArrayBuffer[CoSimCycle]()
+    var done = false
+    while (!done && seen.size < maxCycles) {
       val now = observe(c)
-      trace ++= now.retire
-      exit = now.exit
-      done = now.retire.exists(_.halt.isDefined) || now.halted || exit.isDefined
+      seen += now
+      done = now.retire.exists(_.halt.isDefined) || now.halted || now.exit.isDefined
       if (!done) c.clock.step() // stay on the halt: the state can be read
-      cycles += 1
     }
-    val timeout = Option.when(!done)(s"the program did not end within $maxCycles cycles (${trace.size} records)")
-    CoSimResult(trace.toSeq, trace.size, cycles, exit, timeout)
+    (seen.toSeq, done)
   }
 
   /** As `run`: the records and the number of cycles. */

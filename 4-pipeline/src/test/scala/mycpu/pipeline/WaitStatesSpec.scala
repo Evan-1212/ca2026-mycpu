@@ -49,17 +49,23 @@ class WaitStatesSpec extends AnyFlatSpec with ChiselSim {
         var sent     = 0
         var accepted = Vector.empty[(Int, Int)] // (cycle, word index)
         var answered = Vector.empty[(Int, Long)]
-        for (cycle <- 0 until 40) {
-          c.io.port.req.valid.poke(true.B)
+        val stream   = 40                       // cycles with a request offered; then the buffer drains
+        for (cycle <- 0 until stream + w + 2) { // the last answer is at stream - 1 + w; one cycle of slack
+          val valid = cycle < stream
+          c.io.port.req.valid.poke(valid.B)
           c.io.port.req.bits.addr.poke((riscv.Ram.base + 4 * sent).U)
-          val fire = c.io.port.req.ready.peek().litToBoolean
+          val fire = valid && c.io.port.req.ready.peek().litToBoolean
           if (c.io.port.resp.valid.peek().litToBoolean)
             answered :+= cycle -> c.io.port.resp.bits.rdata.peek().litValue.toLong
           if (fire) { accepted :+= cycle -> sent; sent += 1 }
           c.clock.step()
         }
-        val n = answered.size
-        assert(n > 30, s"$n answers in 40 cycles: the stream was not taken at one per cycle")
+        assert(accepted.size == stream, s"${accepted.size} of $stream requests accepted: the stream stalled")
+        assert(
+          answered.size == accepted.size,
+          s"${accepted.size} requests accepted, ${answered.size} answered after the buffer drained"
+        )
+        assert(answered.map(_._1) == (w until stream + w), "one answer in each cycle, none missed or doubled")
         for (((at, index), (when, data)) <- accepted.zip(answered)) {
           assert(when == at + w, s"the request of cycle $at was answered in cycle $when")
           assert(data == 0x1000 + index, s"request $index answered with 0x${data.toHexString}")

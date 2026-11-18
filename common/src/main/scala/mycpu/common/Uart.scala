@@ -123,8 +123,13 @@ class UartRx(divider: Int) extends Module {
   * request has its effect (push, pop, clear, write) only in the cycle it is answered, so it suits
   * cores that hold a request until its answer (single-cycle) and cores that send it once and wait
   * for `req.fire` (the bootcamp's `Delay` contract).
+  *
+  * @param mutant
+  *   a known bug, for negative tests only ([[Uart.mutants]]): `uart-no-hold` answers a `TXDATA`
+  *   write at once while the TX FIFO is full, and the byte is lost.
   */
-class Uart(divider: Int) extends Module {
+class Uart(divider: Int, mutant: Option[String] = None) extends Module {
+  require(mutant.forall(Uart.mutants.contains), s"unknown mutant $mutant")
   val io = IO(new Bundle {
     val port = Flipped(new riscv.MemPort)
     val txd  = Output(Bool())
@@ -135,13 +140,13 @@ class Uart(divider: Int) extends Module {
   })
   import MemMap.Uart._
 
-  private val fifoDepth = 8
-  val txFifo            = Module(new Queue(UInt(8.W), fifoDepth))
-  val rxFifo            = Module(new Queue(UInt(8.W), fifoDepth, pipe = true)) // full and popped: takes a byte
-  val tx                = Module(new riscv.UartTx(divider))
-  val rx                = Module(new UartRx(divider))
-  val ctrl              = RegInit(false.B)
-  val overrun           = RegInit(false.B)
+  val fifoDepth = 8
+  val txFifo    = Module(new Queue(UInt(8.W), fifoDepth))
+  val rxFifo    = Module(new Queue(UInt(8.W), fifoDepth, pipe = true)) // full and popped: takes a byte
+  val tx        = Module(new riscv.UartTx(divider))
+  val rx        = Module(new UartRx(divider))
+  val ctrl      = RegInit(false.B)
+  val overrun   = RegInit(false.B)
 
   val req                = io.port.req
   val offset             = req.bits.addr(11, 2) ## 0.U(2.W)
@@ -149,7 +154,9 @@ class Uart(divider: Int) extends Module {
   val write              = req.valid && req.bits.wstrb === "b1111".U
   def at(reg: Int): Bool = offset === reg.U
 
-  val held   = write && at(TxData) && !txFifo.io.enq.ready
+  val holdOnFull = !mutant.contains("uart-no-hold") // elaboration time: the reference holds
+
+  val held   = write && at(TxData) && !txFifo.io.enq.ready && holdOnFull.B
   val answer = req.valid && !held
   req.ready               := answer
   io.port.resp.valid      := answer
@@ -181,4 +188,10 @@ class Uart(divider: Int) extends Module {
 
   when(write && at(Ctrl))(ctrl := req.bits.wdata(0))
   io.irq := ctrl && rxFifo.io.deq.valid
+}
+
+object Uart {
+
+  /** The mutants `Uart` can be built with (negative tests only). */
+  val mutants: Set[String] = Set("uart-no-hold")
 }

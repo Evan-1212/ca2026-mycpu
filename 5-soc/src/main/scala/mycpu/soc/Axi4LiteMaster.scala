@@ -131,5 +131,5 @@ class Axi4LiteMaster(holdsRequest: Boolean = false, mutant: Option[String] = Non
 object Axi4LiteMaster {
 
   /** The mutants `Axi4LiteMaster` can be built with (negative tests only). */
-  val mutants: Seq[String] = Seq("drop-awvalid")
+  val mutants: Set[String] = Set("drop-awvalid")
 }

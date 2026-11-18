@@ -31,10 +31,11 @@ import mycpu.singlecycle.Probes
   *   number of them
   * @param pixelShift
   *   the VGA's negative-test knob ([[Vga]]): the picture that many pixels late
-  * @param masterMutant
-  *   a known bug in both AXI masters ([[Axi4LiteMaster.mutants]]), for negative tests
-  * @param xbarMutant
-  *   a known bug in the crossbar ([[Axi4LiteXbar.mutants]]), for negative tests
+  * @param mutant
+  *   a known bug for negative tests, of the masters ([[Axi4LiteMaster.mutants]]), the crossbar
+  *   ([[Axi4LiteXbar.mutants]]), the RAM ([[Axi4LiteRam.mutants]]), the VGA ([[Vga.mutants]]) or the UART ([[Uart.mutants]]); each
+  *   component takes the one that is its own. The core's (`PipelineConfig.mutants`) is
+  *   `core.mutant`, see [[SocConfig.withMutant]]
   * @param obs
   *   drive the probe groups `pipe`, `csr`, `bus`, `uart` and `vga` of the observation interface
   *   (OBS-10: [[Soc.busProbe]], `mycpu.pipeline.PipeProbes`); without them the model has no probe
@@ -50,21 +51,31 @@ case class SocConfig(
     ramWait: WaitStates = WaitStates.Fixed(0),
     ramSeed: Int = 1,
     pixelShift: Int = 0,
-    masterMutant: Option[String] = None,
-    xbarMutant: Option[String] = None,
+    mutant: Option[String] = None,
     obs: Boolean = true
 ) {
   require(ramSeed > 0 && ramSeed < (1 << 16), s"RAM seed $ramSeed: 1 to 65535")
 
   /** This configuration with the known bug `name`, if one is given (VER-04): of the masters
-    * ([[Axi4LiteMaster.mutants]]), of the crossbar ([[Axi4LiteXbar.mutants]]) or of the core
+    * ([[Axi4LiteMaster.mutants]]), of the crossbar ([[Axi4LiteXbar.mutants]]), of the RAM
+    * ([[Axi4LiteRam.mutants]]), of the VGA ([[Vga.mutants]]), of the UART ([[Uart.mutants]]) or of the core
     * (`PipelineConfig.mutants`).
     */
-  def withMutant(name: Option[String]): SocConfig = name.fold(this) { m =>
-    if (Axi4LiteMaster.mutants.contains(m)) copy(masterMutant = name)
-    else if (Axi4LiteXbar.mutants.contains(m)) copy(xbarMutant = name)
-    else copy(core = core.copy(mutant = name))
-  }
+  def withMutant(name: Option[String]): SocConfig =
+    name match {
+      case Some(n) if SocConfig.mutants.contains(n) => copy(mutant = name, core = core.copy(mutant = None))
+      case _                                        => copy(mutant = None, core = core.copy(mutant = name))
+    }
+
+  /** The known bug of the component whose mutants are `own`, if `mutant` is one of them. */
+  private[soc] def mutantOf(own: Set[String]): Option[String] = mutant.filter(own.contains)
+}
+
+object SocConfig {
+
+  /** The bugs of the SoC's own components; any other name is the core's. */
+  val mutants: Set[String] =
+    Axi4LiteMaster.mutants ++ Axi4LiteXbar.mutants ++ Axi4LiteRam.mutants ++ Vga.mutants ++ Uart.mutants
 }
 
 /** The SoC of T5 (T5-09), as the Verilator harness (`sim/main.cpp`) and `CoSim2` drive it: T4's
@@ -109,10 +120,11 @@ class Soc(val config: SocConfig) extends SimTop {
   private val ramWords       = config.ramBytes / 4
   val regions: Seq[Region]   = Soc.regions(config.ramBytes)
 
-  val cpu      = Module(new CPU(MemMap.bootRomBase, config.core))
-  val i_master = Module(new Axi4LiteMaster(mutant = config.masterMutant))
-  val d_master = Module(new Axi4LiteMaster(mutant = config.masterMutant))
-  val xbar     = Module(new Axi4LiteXbar(regions, config.xbarMutant))
+  val cpu          = Module(new CPU(MemMap.bootRomBase, config.core))
+  val masterMutant = config.mutantOf(Axi4LiteMaster.mutants)
+  val i_master     = Module(new Axi4LiteMaster(mutant = masterMutant))
+  val d_master     = Module(new Axi4LiteMaster(mutant = masterMutant))
+  val xbar         = Module(new Axi4LiteXbar(regions, config.mutantOf(Axi4LiteXbar.mutants)))
   i_master.io.core <> cpu.io.imem
   d_master.io.core <> cpu.io.dmem
   xbar.io.i <> i_master.io.axi
@@ -136,16 +148,16 @@ class Soc(val config: SocConfig) extends SimTop {
   val clint = Module(new Clint(config.tickDivisor))
   device(Soc.Clint, clint.io.port)
 
-  val uart = Module(new Uart(config.uartDivider))
+  val uart = Module(new Uart(config.uartDivider, config.mutantOf(Uart.mutants)))
   device(Soc.Uart, uart.io.port)
 
   val simctrl = Module(new SimCtrl)
   device(Soc.SimCtrl, simctrl.io.port)
 
-  val vga = Module(new Vga(pixelShift = config.pixelShift))
+  val vga = Module(new Vga(pixelShift = config.pixelShift, mutant = config.mutantOf(Vga.mutants)))
   device(Soc.Vga, vga.io.port)
 
-  val ram = Module(new Axi4LiteRam(ramWords, config.syncRead, config.ramWait))
+  val ram = Module(new Axi4LiteRam(ramWords, config.syncRead, config.ramWait, config.mutantOf(Axi4LiteRam.mutants)))
   ram.io.i <> slave(Soc.Ram, Axi4LiteXbar.I)
   ram.io.d <> slave(Soc.Ram, Axi4LiteXbar.D)
   ram.io.load := io.load
@@ -258,8 +270,8 @@ object Soc {
   * `fetchDepth=<n>`, `tickDivisor=<n>`, `syncRead=<0|1>`, `ramWait=<n|rand<max>:<seed>>` (wait
   * states of the RAM: a number, or random up to `max`, a power of two minus one, from an LFSR
   * seeded with `seed`), `vgaShift=<n>`, `obs=<0|1>` (the probes, on by default), and
-  * `mutant=<name>` (VER-04): a bug of the bus
-  * (`drop-awvalid`, `no-decerr`) or of the core (`PipelineConfig.mutants`), see
+  * `mutant=<name>` (VER-04): a bug of the bus (`drop-awvalid`, `no-decerr`), the RAM, the VGA or the UART
+  * (`SocConfig.mutants`), or of the core (`PipelineConfig.mutants`), see
   * [[SocConfig.withMutant]].
   */
 object Emit {
