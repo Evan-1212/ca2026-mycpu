@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
+
+# Repair the Change-Id of the commit just made, if it does not continue the hash
+# chain (see scripts/chain.sh). The commit-msg hook cannot always tell an amend
+# from a new commit; this hook can, because the commit exists by now. It never
+# fails the commit.
+
+# Not in the middle of a rebase, a cherry-pick or a revert: those replay commits, and the chain is
+# repaired afterwards, in one go, with scripts/chain.sh rechain (the post-rewrite hook says so).
+git_dir=$(git rev-parse --git-dir 2>/dev/null) || exit 0
+for state in rebase-merge rebase-apply sequencer CHERRY_PICK_HEAD REVERT_HEAD; do
+  [ ! -e "$git_dir/$state" ] || exit 0
+done
+
+"$(dirname "$0")/../../scripts/chain.sh" fix || true
+exit 0

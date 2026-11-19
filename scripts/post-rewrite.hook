@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
+
+# After an amend or a rebase (git passes `amend` or `rebase`), say so when the history no longer
+# continues the Change-Id chain, and what repairs it. Advice only: it never fails, and it changes
+# nothing (see scripts/chain.sh).
+
+here=$(cd "$(dirname "$0")/../../scripts" 2>/dev/null && pwd) || exit 0
+if ! "$here/chain.sh" verify > /dev/null 2>&1; then
+  echo "post-rewrite: the history does not continue the Change-Id chain now ($1)." >&2
+  echo "post-rewrite: repair it with: scripts/chain.sh rechain   (what is wrong: scripts/chain.sh verify)" >&2
+fi
+exit 0

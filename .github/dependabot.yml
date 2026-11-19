@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: MIT
+# Keep the GitHub Actions of the workflows current: one pull request a week for all of them.
+# Dependabot's commits carry no Change-Id; the maintainer runs scripts/chain.sh rechain on the
+# branch before merging (the history job of the CI skips pull requests of the bot).
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]

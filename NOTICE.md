@@ -12,6 +12,7 @@ repository.
 | Path | Origin | License | Notice |
 |------|--------|---------|--------|
 | `software/benchmarks/dhrystone/dhrystone.c` | Dhrystone 1.1 by Reinhold P. Weicker (1984), C translation by Rick Richardson, version C/1.1-mc by Michael Clark (2017), as `tests/dhrystone.c` of [rv32emu](https://github.com/sysprog21/rv32emu) v1.3 (commit `73265fcc3eba`); changed only under `#ifdef MYCPU` | `NOASSERTION`: the authors state no license; it has been redistributed freely since 1984 | the file's header, unchanged; [README.md](software/benchmarks/dhrystone/README.md) |
+| `scripts/commit-msg.hook` | [git-good-commit](https://github.com/tommarshall/git-good-commit) by Tom Marshall, adapted for the commit rules of this repository and for the Change-Id hash chain | `MIT` | the file's header; this file: [LICENSE](LICENSE) for the changes |
 | `software/benchmarks/duremark/main.c`, `software/benchmarks/duremark/list.c`, `software/benchmarks/duremark/matrix.c`, `software/benchmarks/duremark/state.c`, `software/benchmarks/duremark/duremark.h` | [DureMark](https://github.com/sergev/duremark) 1.0 by Serge Vakulenko, commit `59fc1bb6ecb0`; changed as its README lists | `MIT` | [LICENSE](software/benchmarks/duremark/LICENSE), Copyright (c) 2025 Serge Vakulenko |
 | `software/programs/nyancat/nyancat-data.h` | the frames of `src/animation.c` of [K. Lange's nyancat](https://github.com/klange/nyancat), encoded by `scripts/gen-nyancat-data.py` of [ca2025-mycpu](https://github.com/sysprog21/ca2025-mycpu) (MIT, Copyright (c) 2025 National Cheng Kung University, Taiwan); the original animation is by prguitarman (Christopher Torres) | `MIT AND NCSA` | [LICENSE](software/programs/nyancat/LICENSE), Copyright (c) 2011-2018 K. Lange |
 | `sim/tests/golden/nyancat-1.ppm.gz` | the first frame of the same animation, as the VGA of this repository draws it | `NCSA` | [LICENSE](software/programs/nyancat/LICENSE) |
@@ -47,10 +48,12 @@ interface or the configuration format of another project, not because they copy 
 
 These are the project's own work, under the MIT License of [LICENSE](LICENSE): data that a tool
 reads or writes (expected outputs, golden frames and bundles of the web interface), configuration
-files, and the generated block diagrams and pipeline diagrams. The one exception is the golden nyancat frame, which
+files, the word list of the commit message spell check (`scripts/aspell-pws`, whose first line is
+aspell's header), and the generated block diagrams and pipeline diagrams. The one exception is the golden nyancat frame, which
 follows the row for the nyancat frames above.
 
 - `.gitignore`, `web/.gitignore`, `.clang-format`, `.scalafmt.conf`, `project/build.properties`
+- `scripts/aspell-pws`
 - `**/doc/block-diagram.svg`, `4-pipeline/doc/hazard-*.png`, `5-soc/doc/bus-waves.png`
 - `**/expected.txt`, `**/expected.exit`
 - `sim/tests/golden/*.ppm.gz`

@@ -73,6 +73,7 @@ the install steps for each tool under `~/.local`, without root.
 git clone https://github.com/sysprog21/ca2026-mycpu
 cd ca2026-mycpu
 
+make hooks            # install the Git hooks: commit rules, Change-Id chain, source checks (make prereq first checks their tools)
 make fetch            # clone the pinned external repositories into externals/
 make check-deps       # check the host tools
 make rv32emu          # build the reference emulator
@@ -135,7 +136,7 @@ reference) start at T3, because their test environment needs CSRs.
 
 ```
 ca2026-mycpu/
-├── README.md  LICENSE  NOTICE.md  EXERCISES.md
+├── README.md  LICENSE  NOTICE.md  EXERCISES.md  CONTRIBUTING.md
 ├── Makefile             fetch, check-deps, check-bootcamp, test-all, lint-all, bench-all, indent
 ├── build.sbt  project/  one sbt build: bootcamp (your code), common, one project per task
 ├── common/              shared Chisel code: SimCtrl, UART, golden model (Iss), co-simulation,
@@ -154,7 +155,9 @@ ca2026-mycpu/
 ├── tests/riscv-tests/   rv32um, expanded (rv32ui comes from the bootcamp clone)
 ├── tests/act4/          the ACT4 configuration of the T3 to T5 cores, and its scripts
 ├── web/                 the web observation interface (web/README.md)
-├── scripts/             fetch-repo.sh, check-deps.sh, check-blanks.py, bench-run.sh, ...
+├── scripts/             fetch-repo.sh, check-deps.sh, check-blanks.py, bench-run.sh, the Git hooks
+│                        (*.hook), chain.sh, grade.py, ...
+├── tools/               hashchain.c, the hash behind the Change-Id of every commit
 ├── docs/                toolchain, troubleshooting, bootcamp interface and map, performance,
 │                        counter events, your configuration, observation
 ├── externals/           (not tracked) what `make fetch` clones
@@ -179,6 +182,10 @@ Run these at the top of the repository. `make help` prints the list.
 | `bench-xcheck` | the benchmarks' instruction counts on T3 to T5 against rv32emu v1.3 |
 | `cosim-random` | the random programs of every task against the golden model (`SEEDS=`, `SEED_FIRST=`) |
 | `check-blanks` | list the blanks that remain, and compare with `EXERCISES.md` |
+| `hooks` | install the Git hooks into `.git/hooks` (once per clone) |
+| `history` | verify that every commit since the base commit continues the Change-Id chain; `repo` also checks the hooks and the commit rules |
+| `chaintest`, `unittest` | self-test of the chain tool; unit tests of the scripts (`scripts/test_*.py`) |
+| `grade` | score the public checks with points (`scripts/grade.py --list`); `GRADE_ARGS="--only task1,deps"` selects some |
 | `indent` | format the Scala sources (scalafmt 3.11.5) and this repository's own C and C++ files (clang-format) |
 | `check-format` | fail when `make indent` would change a file |
 | `check-lint-flags` | fail when `sim/` or a task `Makefile` contains a `-Wno-` flag (lint warnings are fixed, or waived in `sim/lint.vlt`) |
@@ -188,8 +195,40 @@ Run these at the top of the repository. `make help` prints the list.
 The pins of the external repositories are variables of the `Makefile` (`BOOTCAMP_COMMIT`,
 `ACT_COMMIT`, `RV32EMU_COMMIT`, `SAIL_VERSION`). There are no git submodules.
 
+## Commit History
+
+Every commit since the base commit (`0f7e5b6`) must carry a `Change-Id` that continues a hash chain. The id is the
+first 40 hex digits of SHA-256 over the previous id and the tree of the commit, and the `commit-msg` hook computes it
+when you commit; `tools/hashchain.c` implements the hash without any library. `make history`, `make repo`, `git push`
+(the `pre-push` hook) and the GitHub Actions workflow recompute the chain from `git log`. A commit made with
+`--no-verify` has no Change-Id, so it is reported by name.
+
+* History must be linear: no merge commits since the base commit. `make hooks` sets `pull.rebase` for the
+  repository, so `git pull` rebases. Do not merge, and do not use the GitHub web editor, "Update branch", "Sync fork"
+  or a squash merge: they create commits without a link.
+* `git commit --amend` is handled: the `post-commit` hook restamps the amended commit when the `commit-msg` hook had
+  to guess. It leaves the commits of a rebase, a cherry-pick and a revert alone, and the `post-rewrite` hook says,
+  after the rewrite, when the history needs `scripts/chain.sh rechain`.
+* A squash (`git rebase -i`, `git merge --squash`) leaves the Change-Ids of the commits it joins in one message. The
+  `commit-msg` hook keeps exactly one, the new link, and prints a line when it dropped others; `scripts/chain.sh verify`
+  names a commit that has more than one, and `rechain` consolidates it.
+* A rebase, a squash, a cherry-pick, a revert and a commit made without the hooks leave links that do not fit.
+  Repair them with `scripts/chain.sh rechain`, then push with `git push --force-with-lease`. It restamps only the
+  commits whose link is wrong, keeps the others (and their hashes), keeps uncommitted changes, and adds a
+  `Rechained: yes` trailer to each commit it rewrote.
+* `make chaintest` exercises all of this in a scratch repository.
+
+What the chain does and does not show. It shows that every commit passed through `commit-msg` (or was restamped by
+`rechain`, visibly) and that the sequence of trees was not edited afterwards. It does not cover the message text
+alone, a force-push back to an earlier valid commit, or the checks of the other hooks; and anyone who runs the tool
+by hand can forge a link. Grading verifies a submission with the scripts of the instructors' checkout
+(`scripts/grade.sh --chain`), not with the submission's own. Linked Git worktrees are not supported.
+
+The commit message rules and the code style are in [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Documentation
 
+- [CONTRIBUTING.md](CONTRIBUTING.md): coding style and the Git commit style the hooks enforce
 - [docs/toolchain.md](docs/toolchain.md): installing the tools under `~/.local`
 - [docs/troubleshooting.md](docs/troubleshooting.md): error messages and what to do about them
 - [docs/bootcamp-interface.md](docs/bootcamp-interface.md): the bootcamp symbols this repository uses

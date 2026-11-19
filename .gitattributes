@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: MIT
+# Recorded program output and third-party text keep their bytes, so the whitespace check of
+# "git diff --check" (and of the pre-commit hook) skips them.
+expected.txt whitespace=-blank-at-eof,-trailing-space
+/web/vendor/** whitespace=-blank-at-eof,-trailing-space,-space-before-tab
+/tests/riscv-tests/LICENSE* whitespace=-blank-at-eof
+
+# Binary files that are committed on purpose: the pre-commit hook refuses any other one.
+/sim/tests/golden/*.ppm.gz binary
+/4-pipeline/doc/hazard-*.png binary
+/5-soc/doc/bus-waves.png binary
+/handout/img/*.png binary
+/web/examples/**/uart.bin binary

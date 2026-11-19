@@ -1,0 +1,122 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
+
+# Install, check or remove the Git hooks of this repository: commit message rules and the
+# Change-Id hash chain (commit-msg, post-commit, prepare-commit-msg, post-rewrite), source checks
+# (pre-commit) and the history check before a push (pre-push).
+#
+#   install-git-hooks              check the prerequisites (scripts/check-prereq.sh), then link
+#                                  .git/hooks/<hook> to scripts/<hook>.hook for each hook
+#   install-git-hooks --check      change nothing; list what is missing, foreign or not executable,
+#                                  and exit 1 unless every hook is in effect
+#   install-git-hooks --uninstall  remove the links that this script made, and no other hook
+#
+# A hook that is already there and is not our link is never overwritten: it is reported as
+# foreign, with what to do. So is a core.hooksPath, which makes Git ignore .git/hooks.
+
+# Ensure that the common script exists and is readable, then verify it has no
+# syntax errors and defines the required function.
+common_script="$(dirname "$0")/common.sh"
+[ -r "$common_script" ] || { echo "[!] '$common_script' not found or not readable." >&2; exit 1; }
+bash -n "$common_script" >/dev/null 2>&1 || { echo "[!] '$common_script' contains syntax errors." >&2; exit 1; }
+source "$common_script"
+declare -F set_colors >/dev/null 2>&1 || { echo "[!] '$common_script' does not define the required function." >&2; exit 1; }
+
+set_colors
+
+mode=install
+case "${1:-}" in
+  "") ;;
+  --check) mode=check ;;
+  --uninstall) mode=uninstall ;;
+  *) sed -n '5,14p' "$0"; exit 2 ;;
+esac
+
+# Run from the root of the repository: the links below are relative to it.
+cd "$(dirname "$0")/.." || exit 1
+
+if ! test -d .git; then
+  throw "Ensure the git repository is cloned correctly. (Linked worktrees are not supported.)"
+fi
+
+HOOKS_DIR=".git/hooks"
+HOOKS=(pre-commit commit-msg post-commit pre-push prepare-commit-msg post-rewrite)
+
+# The state of one hook: ours, missing, foreign (something else is there), or noexec (the script
+# it links to cannot run, so Git would skip it silently).
+hook_state() {
+  local hook=$1 link="$HOOKS_DIR/$1"
+  if [ -L "$link" ]; then
+    [ "$(readlink "$link")" = "../../scripts/${hook}.hook" ] || { echo foreign; return; }
+    [ -x "scripts/${hook}.hook" ] || { echo noexec; return; }
+    echo ours
+  elif [ -e "$link" ]; then
+    echo foreign
+  else
+    echo missing
+  fi
+}
+
+hooks_path=$(git config --get core.hooksPath || true)
+problems=0
+
+if [ -n "$hooks_path" ]; then
+  echo -e "${YELLOW}core.hooksPath is set to '$hooks_path': Git ignores $HOOKS_DIR.${NC}"
+  echo "  Unset it (git config --unset core.hooksPath), or link scripts/*.hook from there yourself."
+  problems=1
+fi
+
+case "$mode" in
+  install)
+    bash "$(dirname "$0")/check-prereq.sh" || throw "The prerequisites of the hooks are not met (see above)."
+    mkdir -p "$HOOKS_DIR" || exit 1
+    for hook in "${HOOKS[@]}"; do
+      case "$(hook_state "$hook")" in
+        foreign)
+          echo -e "${YELLOW}$HOOKS_DIR/$hook is not ours: left alone.${NC}"
+          echo "  Move it away (mv $HOOKS_DIR/$hook $HOOKS_DIR/$hook.local), run this again, and call it from your own copy if you need both."
+          problems=1
+          ;;
+        *)
+          chmod +x "scripts/${hook}.hook" || exit 1
+          ln -sf "../../scripts/${hook}.hook" "$HOOKS_DIR/$hook" || exit 1
+          ;;
+      esac
+    done
+    # A plain git pull would merge upstream commits; the history must stay linear.
+    git config pull.rebase true
+    if [ "$problems" -eq 0 ]; then
+      touch "$HOOKS_DIR/applied" || exit 1
+      echo "Git hooks are installed successfully."
+    else
+      echo -e "${RED}Some hooks are not in effect (see above).${NC}" >&2
+      exit 1
+    fi
+    ;;
+  check)
+    for hook in "${HOOKS[@]}"; do
+      state=$(hook_state "$hook")
+      [ "$state" = ours ] && continue
+      case "$state" in
+        missing) echo -e "${YELLOW}$HOOKS_DIR/$hook is missing.${NC}" ;;
+        foreign) echo -e "${YELLOW}$HOOKS_DIR/$hook is not ours (another hook).${NC}" ;;
+        noexec) echo -e "${YELLOW}scripts/${hook}.hook is not executable: Git would skip $hook.${NC}" ;;
+      esac
+      problems=1
+    done
+    if [ "$problems" -ne 0 ]; then
+      echo "Run 'make hooks' to install them." >&2
+      exit 1
+    fi
+    echo "Git hooks are in effect."
+    ;;
+  uninstall)
+    for hook in "${HOOKS[@]}"; do
+      if [ "$(hook_state "$hook")" = ours ] || [ "$(hook_state "$hook")" = noexec ]; then
+        rm -f "$HOOKS_DIR/$hook"
+      fi
+    done
+    rm -f "$HOOKS_DIR/applied"
+    echo "Git hooks are removed (the hooks that were not ours are untouched)."
+    ;;
+esac

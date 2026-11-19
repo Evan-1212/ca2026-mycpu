@@ -106,6 +106,40 @@ BOOTCAMP_SPECS := AluSpec DecoderSpec ImmGenRegFileSpec MemorySpec IsaSpec \
                   IsaSimSpec AsmSpec SingleCycleSpec ComplianceSpec RegressSpec \
                   PipelinedSpec ForwardingSpec SocSpec
 
+# Git hooks, commit rules and the Change-Id hash chain (CONTRIBUTING.md, "Git commit style").
+# `make hooks` installs the hooks into .git/hooks; `make history` and `make repo` check that every
+# commit since the base commit continues the chain and follows the rules; `make chaintest` runs
+# the chain tool's self-test in a scratch repository.
+GIT_HOOKS := .git/hooks/applied
+
+.PHONY: hooks uninstall-hooks prereq history repo chaintest unittest grade
+hooks $(GIT_HOOKS): scripts/install-git-hooks $(wildcard scripts/*.hook)
+	@scripts/install-git-hooks
+
+uninstall-hooks:
+	@scripts/install-git-hooks --uninstall
+
+# What the hooks need (git, bash, a C compiler; aspell and clang-format are optional).
+prereq:
+	@scripts/check-prereq.sh
+
+history:
+	@scripts/chain.sh verify
+
+repo:
+	@scripts/repo.sh
+
+chaintest:
+	@scripts/chain.sh selftest
+
+# Unit tests of the scripts that ship with the repository (scripts/test_*.py).
+unittest:
+	@python3 -m unittest discover -s scripts -p 'test_*.py'
+
+# The public checks with points (scripts/grade.py --list); GRADE_ARGS="--only task1,deps" selects.
+grade:
+	@python3 scripts/grade.py $(GRADE_ARGS)
+
 .DEFAULT_GOAL := help
 
 .PHONY: help
@@ -119,6 +153,13 @@ help:
 	@echo "  fetch-sail        Sail $(SAIL_VERSION) ($(or $(SAIL_ASSET),unsupported host)) -> $(SAIL_DIR)"
 	@echo "  rv32emu           Build the reference emulator $(RV32EMU)"
 	@echo "  check-deps        Check that host tools work (JDK, sbt, Verilator, RISC-V GCC, ACT4 env)"
+	@echo "  hooks             Install the Git hooks (commit rules, Change-Id chain, source checks)"
+	@echo "  uninstall-hooks   Remove the hooks that make hooks installed, and only those"
+	@echo "  prereq            Check that the tools of the hooks work (git, bash, cc; aspell, clang-format)"
+	@echo "  history           Verify the Change-Id hash chain from the base commit (repo: and the commit rules)"
+	@echo "  chaintest         Self-test of the hash chain tool in a scratch repository"
+	@echo "  unittest          Unit tests of the scripts (scripts/test_*.py)"
+	@echo "  grade             Score the public checks (scripts/grade.py --list; GRADE_ARGS=\"--only task1\")"
 	@echo "  check-bootcamp    Check that bootcamp Module 5 is complete and its tests pass"
 	@echo "  bootcamp-overlay  Take the seven exercise files from BOOTCAMP_SRC=<copy of riscv/src>"
 	@echo "  bootcamp-patch    Write the student's bootcamp changes to $(BUILD)/bootcamp.patch"
@@ -435,11 +476,15 @@ FORMAT_PROJECTS = $(filter-out bootcamp root,$(shell sed -n 's/^lazy val \([A-Za
 # C and C++: this repository's own files. The benchmarks are third-party code and keep the
 # formatting of their upstream (D8).
 # Generated data headers (marked DO NOT EDIT) are excluded too.
-FORMAT_C = $(shell git ls-files -- 'sim/*.cpp' 'sim/*.h' 'software/*.c' 'software/*.h' ':!:software/benchmarks/**' \
+FORMAT_C = $(shell git ls-files -- 'sim/*.cpp' 'sim/*.h' 'software/*.c' 'software/*.h' 'tools/*.c' ':!:software/benchmarks/**' \
              ':!:software/programs/nyancat/nyancat-data.h')
 CLANG_FORMAT ?= clang-format
 
-.PHONY: indent check-format check-lint-flags
+# The C and C++ files that are formatted, one per line (the Git hooks use the list).
+.PHONY: indent check-format check-lint-flags format-c-files
+format-c-files:
+	@printf '%s\n' $(FORMAT_C)
+
 indent:
 	$(SBT) -batch $(addsuffix /scalafmtAll,$(FORMAT_PROJECTS))
 	$(CLANG_FORMAT) -i $(FORMAT_C)

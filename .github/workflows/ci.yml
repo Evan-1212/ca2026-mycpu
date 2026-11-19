@@ -8,14 +8,35 @@
 # to check there is that the blanks are the ones EXERCISES.md lists
 # (`make check-blanks`). It needs python3 and make only.
 #
-# The job runs in the upstream repository only. In a student's fork the count
-# goes down as blanks are filled in, which is the point of the exercise and not
-# a failure.
+# The blanks job runs in the upstream repository only. In a student's fork the
+# count goes down as blanks are filled in, which is the point of the exercise and
+# not a failure. The other two jobs run everywhere: the tests of the Git hook
+# tooling (a scratch repository, no history needed), and the history of the
+# repository, which must continue the Change-Id hash chain and follow the commit
+# rules. The history is verified with the scripts of the upstream repository,
+# never with the ones of the commit under test.
+#
+# A step marked `# needs-history` needs the .git of a clone with its full history,
+# and one marked `# ci-only` installs packages or reads the results of the jobs:
+# `make check-public-ci` lists them and does not run them in the generated tree.
+# The last job, `ci`, is the one to require: it fails when a job failed or was
+# canceled and counts a job that did not run (blanks, in a fork) as a pass.
+#
+# Actions: those of GitHub (`actions/*`) are pinned by major version and kept
+# current by .github/dependabot.yml; an action from anyone else would be pinned by
+# the full commit it is, with its version in a comment. The history of a pull
+# request from Dependabot is not checked: its commits carry no Change-Id, and the
+# maintainer restamps them (scripts/chain.sh rechain) before merging.
 name: CI
 
 on:
   push:
   pull_request:
+
+# A newer push to a pull request replaces the run of the older one; a branch push is never canceled.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -29,3 +50,44 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: make check-blanks
+
+  scripts:
+    name: hook tools
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - run: make prereq
+      - run: make chaintest
+      - run: make unittest
+
+  history:
+    name: history
+    if: github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: sysprog21/ca2026-mycpu
+          ref: main
+          path: .trusted
+          persist-credentials: false
+      - run: env -u CHAIN_BASE -u CHAIN_TOOL -u CHAIN_EXEMPT CC=/usr/bin/cc bash .trusted/scripts/chain.sh verify # needs-history
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq aspell aspell-en # ci-only
+      - run: bash .trusted/scripts/commitlog.sh # needs-history
+
+  ci:
+    name: ci
+    if: ${{ !cancelled() }}
+    needs: [blanks, scripts, history]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - run: echo "blanks ${{ needs.blanks.result }}, hook tools ${{ needs.scripts.result }}, history ${{ needs.history.result }}" >> "$GITHUB_STEP_SUMMARY" # ci-only
+      - run: for r in ${{ needs.blanks.result }} ${{ needs.scripts.result }} ${{ needs.history.result }}; do case $r in failure | cancelled) echo "::error::a job ended with $r"; exit 1 ;; esac; done # ci-only
