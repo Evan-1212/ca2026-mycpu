@@ -242,6 +242,9 @@ stay valid. The harness writes 1.1 in the trace header from then on. The `csr`, 
 `vga` groups were in 1.0 already; the tables above say what the tops of T3 to T5 connect to them,
 and where the core gave a field no signal of its own (`pipe.forwardA`, `forwardB`, `writeback.pc`).
 
+**1.2** added the optional `stamp` of the manifest (below). Bundles of 1.0 and 1.1 stay valid, and
+the harness writes 1.2 in the trace header from then on.
+
 ## Trace file (`+obs-trace`)
 
 ```
@@ -317,6 +320,15 @@ fetches only the chunks of the window it shows. `run` holds `cycles`, `instret` 
 checks for this model and program: `make obs` records the exit code and the console output
 against `expected.txt`. `sources` holds the SHA-256 of the trace, the retire log and the UART log
 that the bundle was packed from.
+
+`stamp` (1.2, with `--stamp`, which `make obs` always gives) says who made the run: the student's
+ID from `STUDENT_ID` (NONE for an auditor, `unset` or `invalid` without a valid file), the git
+e-mail, the HEAD commit (12 digits, with `+` when tracked files differed from it) and a random
+`nonce`, and `sha256`, the SHA-256 of the four as `key=value` lines followed by the ELF's and the
+trace's SHA-256, one per line: a stamp copied into another run's bundle no longer matches it.
+`make sim` gives the same stamp to the harness (`+stamp`), which writes it into the header of a
+`+trace` FST file in place of the writer's name (`fst2vcd` prints it as `$version`), so the
+waveforms of a report name the run and the commit they came from.
 
 Each entry of `vga` has the frame's number and, from 1.1, its `cycle` (the trailer's `frames`).
 `stores` (1.1, only with `--stores LO:HI`) lists `stores.json`: every record of the whole run's

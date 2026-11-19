@@ -394,20 +394,25 @@ One HackMD note for this task, in the format of the course handout's submission 
 
 ### Questions
 
-**Q1. The price of the bus.** Pick one benchmark and one variant. Predict, from T4's numbers of the
+The values in these questions are assigned to you: `make my-params` (at the top of the tree)
+prints them from your student ID, which you write in the file `STUDENT_ID` (its letters in upper
+case, or `NONE` if you audit the course; `scripts/student-id.py` says more). Use those values and
+no others: the instructors repeat your runs with them. `<n>` below is your value.
+
+**Q1. The price of the bus.** Take your benchmark and variant (`T5.Q1.BENCHMARK`,
+`T5.Q1.VARIANT`). Predict, from T4's numbers of the
 same build (`../build/bench/t4.csv`) and the waveform of "What the bus costs", its `hpm_cycles`
 on T5 event by event (hpm events 6 and 7 above all), then run it and explain every difference
 from your prediction, on your variant and on one other.
 
-**Q2. Wait states.** Give the RAM a number of wait states of your choice (`RAM_WAIT=<n>`, or a
-random one, `RAM_WAIT=rand<max>:<seed>`; for example `make bench-one RAM_WAIT=<n>
-BENCH_OUT=../build/q2.csv`). Predict the CPI of one benchmark from the number of its fetches and
+**Q2. Wait states.** Give the RAM your wait states (`T5.Q2.RAM_WAIT`, `RAM_WAIT=<n>`; for example `make bench-one RAM_WAIT=<n>
+BENCH_OUT=../build/q2.csv`). Predict the CPI of your benchmark (`T5.Q2.BENCHMARK`) from the number of its fetches and
 loads, then measure it, explain the change event by event,
 and show in a waveform (`SIM_ARGS="+trace=<file>.fst +trace-start=<cycle>"`) one fetch and one
 load with their AR, R and the cycles between.
 
-**Q3. A device access.** Write a loop of your own that stores to a device register (`PUTC`, a VGA
-palette entry) and one that stores to the RAM. Predict the cycles per store of each, then measure
+**Q3. A device access.** Write a loop of your own that stores to your device register
+(`T5.Q3.DEVICE`: `PUTC` or a VGA palette entry) and one that stores to the RAM. Predict the cycles per store of each, then measure
 them, explain the
 difference from the `MemPortSlave` and the crossbar, and say which `VALID` and `READY` are high in
 each cycle of one device store.

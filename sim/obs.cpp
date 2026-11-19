@@ -18,7 +18,7 @@ namespace
 // The version of the trace file and of the observation schema it follows
 // (web/schema/obs-v1.json); docs/observation.md says when each changes.
 constexpr int kTraceVersion = 1;
-constexpr const char *kSchemaVersion = "1.1";
+constexpr const char *kSchemaVersion = "1.2";
 constexpr char kTrailerMagic[8] = {'O', 'B', 'S', 'E', 'N', 'D', '0', '1'};
 
 struct Field {

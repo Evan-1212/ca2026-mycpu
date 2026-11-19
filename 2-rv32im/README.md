@@ -436,7 +436,12 @@ One HackMD note for this task, in the format of the course handout's submission 
 
 ### Questions
 
-**Q1. Counting divisions without looking at them.** Pick a text of your own for the QR encoder
+The values in these questions are assigned to you: `make my-params` (at the top of the tree)
+prints them from your student ID, which you write in the file `STUDENT_ID` (its letters in upper
+case, or `NONE` if you audit the course; `scripts/student-id.py` says more). Use those values and
+no others: the instructors repeat your runs with them. `<n>` below is your value.
+
+**Q1. Counting divisions without looking at them.** Take your text for the QR encoder (`T2.Q1.QR_TEXT`)
 (`make -C ../software qrcode ARCH=rv32im QR_TEXT='<your text>' BUILD=../build/q1`). Run it on the
 34-cycle and on the 66-cycle model (`make sim ELF=../build/q1/sw/mycpu/rv32im/qrcode.elf`, and the
 same with `DIV_LATENCY=66`) and note `cycles` and `instret` of both whole runs. From these four
@@ -445,8 +450,8 @@ cases (§T2.3 of the handout; measure what one special case costs on each model 
 program of your own if you need one). Then confirm both counts from a `+retire-log` of one of the
 runs. Does `instret` differ between the two models for your text? Explain why or why not.
 
-**Q2. When is libgcc faster than the divider?** Build Dhrystone with a `LOOPS` value of your
-choice for `rv32i` and for `rv32im` (`make -C ../software dhrystone LOOPS=<n> ARCH=<arch>
+**Q2. When is libgcc faster than the divider?** Build Dhrystone with your `LOOPS` value
+(`T2.Q2.LOOPS`) for `rv32i` and for `rv32im` (`make -C ../software dhrystone LOOPS=<n> ARCH=<arch>
 BUILD=../build/q2`) and run both on the 34-cycle model with `+retire-log`. Report `perf: cycles`
 and the harness's `cycles` for both, and explain why hardware M changes the first so little.
 Then take one division from the `rv32im` retire log, read its operands from the records before

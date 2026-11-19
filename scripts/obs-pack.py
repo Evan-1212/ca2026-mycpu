@@ -7,7 +7,7 @@ a manifest.json and chunked data files that a viewer loads one window at a
 time (docs/observation.md, "Bundles").
 
     obs-pack.py --trace RUN.obs --retire-log RUN.log [--uart-log RUN.uart]
-                [--vga N:FRAME.ppm]... [--stores LO:HI] [--tests RESULTS.json]
+                [--vga N:FRAME.ppm]... [--stores LO:HI] [--tests RESULTS.json] [--stamp TEXT]
                 [--elf PROG.elf] [--chunk-cycles N] [--force] OUT_DIR
 
 The parts must come from one run: the trace's trailer holds the SHA-256 of the
@@ -22,6 +22,11 @@ RESULTS.json: {"commit": ..., "program": ..., "retire_log_sha256": ...,
 "results": [{"name": ..., "result": "pass"|"fail", "detail": ...}]}, where
 retire_log_sha256 is that of the run's retire log, which binds the results to
 the run (sim/obs.mk writes one).
+
+--stamp TEXT (scripts/student-id.py stamp: "id=... email=... head=... nonce=...")
+records who made the bundle, from which commit, in the manifest's "stamp" (schema
+1.2), with the SHA-256 of the stamp, the ELF and the trace together, so that a
+copied bundle cannot carry another run's stamp unnoticed.
 
 --stores LO:HI (hexadecimal byte addresses) packs stores.json: every record of
 the whole run's retire log that stores to [LO, HI), as [cycle, pc, addr, bytes,
@@ -78,6 +83,18 @@ def write_file(out, name, data):
     with open(path, "wb") as f:
         f.write(data)
     return {"file": name, "bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()}
+
+
+STAMP_KEYS = ("id", "email", "head", "nonce")
+
+
+def stamp_of(text, elf_sha256, trace_sha256):
+    """The manifest's stamp: the fields of `text` and the SHA-256 that binds them to the run."""
+    fields = dict(w.split("=", 1) for w in text.split() if "=" in w)
+    if sorted(fields) != sorted(STAMP_KEYS):
+        raise ValueError(f"--stamp needs exactly {', '.join(STAMP_KEYS)}, not {text!r}")
+    bound = "\n".join([*(f"{k}={fields[k]}" for k in STAMP_KEYS), elf_sha256, trace_sha256])
+    return dict(fields, sha256=hashlib.sha256(bound.encode()).hexdigest())
 
 
 def pack(args):
@@ -197,6 +214,8 @@ def write_bundle(args, out, trace, log_records, log_hash, uart_hash, tests, stor
     }
     if stored is not None:  # an optional part (schema 1.1)
         manifest["stores"] = stored
+    if args.stamp:  # an optional part (schema 1.2)
+        manifest["stamp"] = stamp_of(args.stamp, h["elf_sha256"], trace.sha256)
     with open(os.path.join(out, "manifest.json"), "w") as f:
         json.dump(manifest, f, indent=1)
         f.write("\n")
@@ -214,6 +233,7 @@ def main():
     p.add_argument("--stores", type=parse_range, help="LO:HI: the run's stores to these addresses (hexadecimal)")
     p.add_argument("--tests", help="the test results of the model and program (JSON)")
     p.add_argument("--elf", help="the ELF that was run, to check its hash")
+    p.add_argument("--stamp", help="id=... email=... head=... nonce=...: who made the run (scripts/student-id.py)")
     p.add_argument("--chunk-cycles", type=int, default=1024, help="cycles per data file (default 1024)")
     p.add_argument("--force", action="store_true", help="replace OUT_DIR if it exists")
     p.add_argument("out", help="the bundle directory to write")

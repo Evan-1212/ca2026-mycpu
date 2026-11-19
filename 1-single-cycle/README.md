@@ -424,7 +424,12 @@ One HackMD note for this task, in the format of the course handout's submission 
 
 ### Questions
 
-**Q1. The UART as console.** Pick a `UART_DIVIDER` between 4 and 64 that is not 16, and build the
+The values in these questions are assigned to you: `make my-params` (at the top of the tree)
+prints them from your student ID, which you write in the file `STUDENT_ID` (its letters in upper
+case, or `NONE` if you audit the course; `scripts/student-id.py` says more). Use those values and
+no others: the instructors repeat your runs with them. `<n>` below is your value.
+
+**Q1. The UART as console.** Take your `UART_DIVIDER` (`T1.Q1.UART_DIVIDER`) and build the
 model with it (`make verilator UART_DIVIDER=<n>`; every later `make sim` needs the same
 `UART_DIVIDER=<n>`). Build `strings` with the UART as console into a directory of its own (`make -C
 ../software strings CONSOLE_UART=1 BUILD=../build/uart`), run it (`make sim UART_DIVIDER=<n>
@@ -436,7 +441,7 @@ choice from your first measurement, then measure them. Finally, describe what a 
 writes `TXDATA` without reading `STATUS` first would change in these two numbers, and which
 exercises of this task decide whether it prints every character.
 
-**Q2. A smaller RAM.** Pick a `RAM_BYTES` that is a power of two between 64 KiB and 2 MiB, build
+**Q2. A smaller RAM.** Take your `RAM_BYTES` (`T1.Q2.RAM_BYTES`), build
 the model with it (`make verilator RAM_BYTES=<n>`) and run `quicksort` on it (`make sim
 RAM_BYTES=<n> ELF=../build/sw/mycpu/rv32i/quicksort.elf SIM_ARGS=+retire-log=q2.log`). Report the
 harness's exit code and the last line it prints, and explain them from the `+retire-log`: which
@@ -445,7 +450,7 @@ instruction is the last record, which address does it use, where does that addre
 code? Then give the smallest change outside the RTL that makes the program run on your RAM, and
 show that it does.
 
-**Q3. Counting loops.** Build Dhrystone with two `LOOPS` values of your choice (`make -C
+**Q3. Counting loops.** Build Dhrystone with your two `LOOPS` values (`T1.Q3.LOOPS`; `make -C
 ../software dhrystone LOOPS=<n> BUILD=../build/loops<n>`) and run each (`make sim
 ELF=../build/loops<n>/sw/mycpu/rv32i/dhrystone.elf`). From your two measurements alone, compute
 the cycles per loop and the cycles that the measured region spends outside the loop, and compare

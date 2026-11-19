@@ -25,6 +25,7 @@ is refused.
 """
 
 import argparse
+import hashlib
 import json
 import os
 import sys
@@ -142,6 +143,15 @@ def validate(args):
             raise ObsError(f"{stored['file']}: not the stores of the retire log to that range")
     if manifest["uart"] and manifest["uart"]["sha256"] != manifest["sources"]["uart_log_sha256"]:
         raise ObsError("uart.bin is not the UART log the bundle was packed from")
+
+    stamp = manifest.get("stamp")
+    if stamp is not None:  # schema 1.2: bound to this run's ELF and trace
+        keys = ("id", "email", "head", "nonce")
+        bound = "\n".join([*(f"{k}={stamp[k]}" for k in keys), manifest["header"]["elf_sha256"],
+                           manifest["sources"]["trace_sha256"]])
+        if hashlib.sha256(bound.encode()).hexdigest() != stamp["sha256"]:
+            raise ObsError("the stamp is not the one of this run (its SHA-256 does not match the ELF and the trace)")
+        print(f"obs-validate: {bundle}: made by {stamp['id']} ({stamp['email']}) at {stamp['head']}, nonce {stamp['nonce']}")
 
     summary = f"obs-validate: {bundle}: schema {manifest['schema']}, {run['count']} cycles from {run['first']}, "
     if log_records is None:

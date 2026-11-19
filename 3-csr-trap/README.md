@@ -452,6 +452,11 @@ One HackMD note for this task, in the format of the course handout's submission 
 
 ### Questions
 
+The values in these questions are assigned to you: `make my-params` (at the top of the tree)
+prints them from your student ID, which you write in the file `STUDENT_ID` (its letters in upper
+case, or `NONE` if you audit the course; `scripts/student-id.py` says more). Use those values and
+no others: the instructors repeat your runs with them. `<n>` below is your value.
+
 **Q1. Where does the timer land?** Copy `software/programs/irqtrap` into a program of your own
 (`software/programs/<name>/`, with a line `<name> privileged T3` in `software/programs/MANIFEST`;
 `make -C ../software <name> ARCH=rv32im_zicsr` builds it), choose
@@ -463,7 +468,7 @@ division were lost, and how many cycles did the division take after the `mret`? 
 program's `cycles - instret` over its whole run, event by event (divisions, interrupted
 divisions, WFI waits, the cycles of the traps).
 
-**Q2. The tick divisor.** Build the model with a `TICK_DIVISOR` of your choice (`make verilator
+**Q2. The tick divisor.** Build the model with your `TICK_DIVISOR` (`T3.Q2.TICK_DIVISOR`; `make verilator
 TICK_DIVISOR=<n>`; every later `make sim` needs the same `TICK_DIVISOR=<n>`) and run `irqtrap`
 and `perf`. Which lines of their output change, which do not, and why? Explain the change of
 `irqtrap`'s cycle count from the number of ticks and the wait of its two WFIs, and say why `make

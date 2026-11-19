@@ -83,6 +83,7 @@ make fetch            # clone the pinned external repositories into externals/
 make check-deps       # check the host tools
 make rv32emu          # build the reference emulator
 make check-bootcamp   # your bootcamp Module 5: no ??? left, and its specs pass
+make my-params        # after writing STUDENT_ID: the values of your report questions
 
 cd 1-single-cycle     # then task by task; see each task's README
 make test             # every spec of the task
@@ -202,6 +203,17 @@ Run these at the top of the repository. `make help` prints the list.
 
 The pins of the external repositories are variables of the `Makefile` (`BOOTCAMP_COMMIT`,
 `ACT_COMMIT`, `RV32EMU_COMMIT`, `SAIL_VERSION`). There are no git submodules.
+
+## Your Student ID
+
+Write your student ID in a file `STUDENT_ID` at the top of your copy, its letters in upper case
+(`F74121234`, not the `f74121234` of your school e-mail), and commit it. If you audit the course,
+write `NONE`: your work goes through the same grading, but its score is not recorded.
+`make my-params` checks the file and prints the values that your ID assigns to the questions of
+the task reports (a UART divisor, wait states, a hazard sequence, a benchmark, ...): use those
+values, since the instructors repeat your runs with them. `scripts/student-id.py` explains the
+format. `make sim` and `make obs` also stamp your ID, git e-mail and commit into the waveforms
+(`+trace`) and bundles they write ([docs/observation.md](docs/observation.md)).
 
 ## Commit History
 

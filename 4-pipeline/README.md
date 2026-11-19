@@ -423,8 +423,13 @@ One HackMD note for this task, in the format of the course handout's submission 
 
 ### Questions
 
-**Q1. Wait states.** Give the RAM a number of wait states of your choice on each port, not the
-`I_WAIT=2 D_WAIT=2` of the `perf` program above (`make bench-one I_WAIT=<i> D_WAIT=<d> VARIANT=<variant>
+The values in these questions are assigned to you: `make my-params` (at the top of the tree)
+prints them from your student ID, which you write in the file `STUDENT_ID` (its letters in upper
+case, or `NONE` if you audit the course; `scripts/student-id.py` says more). Use those values and
+no others: the instructors repeat your runs with them. `<n>` below is your value.
+
+**Q1. Wait states.** Give the RAM your wait states on each port and run your variant
+(`T4.Q1.I_WAIT`, `T4.Q1.D_WAIT`, `T4.Q1.VARIANT`; never the `I_WAIT=2 D_WAIT=2` of the `perf` program above) (`make bench-one I_WAIT=<i> D_WAIT=<d> VARIANT=<variant>
 BENCH_OUT=../build/q1.csv`). Report the CPI change of Dhrystone against the table above and
 explain it event by event: predict `hpm7` from the number of RAM data accesses and `hpm6` from the
 number of redirects (`hpm2`) **before** you run it, then compare. Is the fetch unit's depth
@@ -432,15 +437,14 @@ number of redirects (`hpm2`) **before** you run it, then compare. Is the fetch u
 straight-line code? Derive the depth that a given `I_WAIT` needs from the cycles between a request
 and its response (§T4.6 of the handout), and check your answer against `hpm6`.
 
-**Q2. One hazard, three variants.** Pick a sequence of your own that is not in the hazard table
-(two producers, or a producer three instructions before its consumer, or a store after a
-multiplication), and put it in a loop of a program of your own (`software/programs/<name>/`, with
+**Q2. One hazard, three variants.** Take your sequence (`T4.Q2.SEQUENCE`; `make my-params` prints
+its instructions; none of them is a row of the hazard table), and put it in a loop of a program of your own (`software/programs/<name>/`, with
 a line `<name> user T4` in `software/programs/MANIFEST`).
 Derive its stall and flush cycles for each variant from the tables above, then check them with
 `+retire-log` (the `idle` lines) on each model (`make sim VARIANT=<variant> ELF=...`), and show
 the cycles of the stall in a waveform.
 
-**Q3. Serialization.** Write a loop of your own that reads a counter with `csrr` in every
+**Q3. Serialization.** Write a loop of your own that reads your counter (`T4.Q3.COUNTER`) with `csrr` in every
 iteration. Predict its CPI on each variant, then measure it, explain the "other" cycles that each `csrr` costs, and
 say what a younger instruction that reads the `csrr`'s result waits for, and why that is not a
 load-use stall.

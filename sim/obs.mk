@@ -66,7 +66,7 @@ if [ -n $(call sq,$(OBS_INPUT)) ]; then input=$(call sq,$(OBS_INPUT)); \
 elif [ "$(1)" = uart ]; then printf '$(OBS_UART_TEXT)' > $$d/input; input=$$d/input; \
 else input=/dev/null; fi; \
 echo "  OBS      $(1) on $(OBS_VSIM) (cycles $(3) +$(4))"; \
-code=0; $(OBS_VSIM) +elf=$$elf +max-cycles=$(MAX_CYCLES) +retire-log=$$d/run.log +uart-log=$$d/run.uart \
+code=0; $(OBS_VSIM) +elf=$$elf +max-cycles=$(MAX_CYCLES) $(if $(SIM_STAMP),+stamp=$(call sq,$(SIM_STAMP))) +retire-log=$$d/run.log +uart-log=$$d/run.uart \
     +obs-trace=$$d/run.obs +obs-task=$(TASK) +obs-variant=$(OBS_VARIANT) +obs-start=$(3) +obs-cycles=$(4) \
     $$([ "$(1)" = uart ] || [ -n $(call sq,$(OBS_INPUT)) ] && echo +uart-stdin) $(OBS_SIM_ARGS) \
     $(foreach n,$(OBS_VGA),+vga-dump=$(n):$$d/frame-$(n).ppm) $(if $(filter 1,$(OBS_VGA_EXIT)),+vga-exit-after-dump) \
@@ -84,7 +84,7 @@ printf '{"commit":"%s","program":"%s","retire_log_sha256":"%s","results":[%s]}\n
     "$$($(SHA256) < $$d/run.log | cut -c1-64)" "$$results" > $$d/tests.json; \
 $(PYTHON) $(OBS_PACK) --trace $$d/run.obs --retire-log $$d/run.log --uart-log $$d/run.uart --tests $$d/tests.json \
     $(foreach n,$(OBS_VGA),--vga $(n):$$d/frame-$(n).ppm) $(if $(OBS_STORES),--stores $(OBS_STORES)) \
-    --elf $$elf --chunk-cycles $(OBS_CHUNK) $$d/bundle && \
+    $(if $(SIM_STAMP),--stamp $(call sq,$(SIM_STAMP))) --elf $$elf --chunk-cycles $(OBS_CHUNK) $$d/bundle && \
 $(PYTHON) $(OBS_CHECK) $$d/bundle $$d/run.log
 endef
 

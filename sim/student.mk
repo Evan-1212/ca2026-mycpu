@@ -74,4 +74,9 @@ STUDENT_SIMCTRL_PUTC := $(call student_get,simctrl_putc)
 STUDENT_SIMCTRL_MEIP := $(call student_get,simctrl_meip)
 
 export MYCPU_STUDENT := $(STUDENT_JSON)
+
+# SIM_STAMP: the stamp of a run (scripts/student-id.py stamp): the student's ID from STUDENT_ID at
+# the top of the tree, the git e-mail, the HEAD commit and a random nonce. `make sim` gives it to
+# the harness (+stamp, written into the header of a +trace FST file) and `make obs` to the bundle.
+SIM_STAMP := $(shell python3 $(STUDENT_MK_ROOT)/scripts/student-id.py stamp 2> /dev/null)
 endif

@@ -164,7 +164,7 @@ verilator: $(OUT)/Vsim $(OUT)/cxx.ok
 
 sim: verilator
 	@test -f "$(ELF)" || { echo "sim: $(ELF) not found (make software-$(ARCH) builds the programs into $(BUILD))" >&2; exit 1; }
-	$(OUT)/Vsim +elf=$(ELF) +max-cycles=$(MAX_CYCLES) $(SIM_ARGS)
+	$(OUT)/Vsim +elf=$(ELF) +max-cycles=$(MAX_CYCLES) $(if $(SIM_STAMP),+stamp=$(call sq,$(SIM_STAMP))) $(SIM_ARGS)
 
 # INF-05: zero warnings, with sim/lint.vlt as the only waivers.
 lint: $(OUT)/lint.ok

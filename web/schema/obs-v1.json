@@ -3,7 +3,7 @@
   "$id": "https://github.com/sysprog21/ca2026-mycpu/web/schema/obs-v1.json",
   "title": "MyCPU observation schema",
   "description": "Observation bundles of the Verilator harness. docs/observation.md defines every field; a field's x-width is its width in bits and x-sample its sampling class (state, comb or input).",
-  "x-version": "1.1",
+  "x-version": "1.2",
   "$ref": "#/$defs/manifest",
   "$defs": {
     "u1": {
@@ -1432,6 +1432,37 @@
             },
             "count": {
               "$ref": "#/$defs/count"
+            }
+          }
+        },
+        "stamp": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "email",
+            "head",
+            "nonce",
+            "sha256"
+          ],
+          "description": "Who made the run (schema 1.2, optional; obs-pack.py --stamp, scripts/student-id.py stamp): the student's ID (NONE for an auditor, unset or invalid without a valid STUDENT_ID), the git e-mail, the HEAD commit (12 digits, + when tracked files differed from it) and a random nonce; sha256 is the SHA-256 of the four as key=value lines, the ELF's SHA-256 and the trace's, one per line.",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "email": {
+              "type": "string"
+            },
+            "head": {
+              "type": "string"
+            },
+            "nonce": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{12}$"
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
             }
           }
         },

@@ -28,10 +28,15 @@ the harness (see its header). Options:
   --out DIR         write grade.json and grade.md there
   --history-dir D   run the history check in this checkout (default: here)
 
+The report names the student of STUDENT_ID (scripts/student-id.py): an auditor's
+copy (NONE) runs every check the same way, and its score is marked as not
+recorded, as is one whose STUDENT_ID is missing or not valid.
+
 The exit status is 0 when every selected check passes.
 """
 
 import argparse
+import importlib.util
 import json
 import os
 import re
@@ -144,9 +149,23 @@ def score(results):
     return sum(r.points for r in results), sum(POINTS[r.name] for r in results)
 
 
-def report(results):
+def student():
+    """(the ID, or None, and a line that says whether the score is recorded)."""
+    spec = importlib.util.spec_from_file_location("student_id", os.path.join(ROOT, "scripts", "student-id.py"))
+    sid = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(sid)
+    try:
+        value = sid.read_id(os.path.join(ROOT, "STUDENT_ID"))
+    except sid.IdError as e:
+        return None, "Student: none (%s): the score is not recorded" % e
+    if value == sid.AUDITOR:
+        return value, "Student: NONE, an auditor: graded the same way, the score is not recorded"
+    return value, "Student: %s" % value
+
+
+def report(results, who=""):
     earned, possible = score(results)
-    lines = ["| Check | Points | Result | Seconds |", "|---|---|---|---|"]
+    lines = ([who, ""] if who else []) + ["| Check | Points | Result | Seconds |", "|---|---|---|---|"]
     for r in results:
         verdict = "pass" if r.ok else "partial" if r.points else "FAIL"
         lines.append("| %s | %g/%d | %s | %.0f |" % (r.name, r.points, POINTS[r.name], verdict, r.seconds))
@@ -176,6 +195,8 @@ def main(argv=None):
         print("grade: unknown check %s (see --list)" % ", ".join(unknown), file=sys.stderr)
         return 2
 
+    sid, who = student()
+    print(who, flush=True)
     results = []
     for name in names:
         print("== %s" % name, flush=True)
@@ -185,14 +206,15 @@ def main(argv=None):
             print("\n".join("   " + line for line in r.detail.splitlines()), flush=True)
         results.append(r)
 
-    text = report(results)
+    text = report(results, who)
     print()
     print(text, end="")
     if args.out:
         os.makedirs(args.out, exist_ok=True)
         earned, possible = score(results)
         with open(os.path.join(args.out, "grade.json"), "w", encoding="utf-8") as f:
-            json.dump({"score": earned, "possible": possible,
+            json.dump({"student": sid, "scored": sid is not None and sid != "NONE",
+                       "score": earned, "possible": possible,
                        "checks": [{"name": r.name, "ok": r.ok, "points": r.points,
                                    "seconds": round(r.seconds, 1), "detail": r.detail} for r in results]},
                       f, indent=2)
