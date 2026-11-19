@@ -204,6 +204,27 @@ Run these at the top of the repository. `make help` prints the list.
 The pins of the external repositories are variables of the `Makefile` (`BOOTCAMP_COMMIT`,
 `ACT_COMMIT`, `RV32EMU_COMMIT`, `SAIL_VERSION`). There are no git submodules.
 
+## Submitting Your Work
+
+You submit through a fork of this repository on GitHub, and keep it up to date by rebasing:
+
+```shell
+# on GitHub: Fork sysprog21/ca2026-mycpu into your account, keeping the name ca2026-mycpu
+git clone https://github.com/<you>/ca2026-mycpu && cd ca2026-mycpu
+git remote add upstream https://github.com/sysprog21/ca2026-mycpu
+make hooks                         # the commit rules, the Change-Id chain, the review of a push
+echo F74121234 > STUDENT_ID        # your ID (see below), committed with your work
+git fetch upstream && git rebase upstream/main   # later: the instructors' updates, never a merge
+git push                           # to your fork: the review of your graded changes runs first
+```
+
+- In your fork's **Actions** tab, enable the workflows once: the CI of your fork checks the
+  history and the reviews of every push with the upstream scripts.
+- Do not use GitHub's "Sync fork" or "Update branch" buttons, or open a pull request to the
+  upstream repository: they merge, and the history must stay linear (see "Commit History").
+- The instructors fetch your fork's `main` and its review notes (`refs/notes/mycpu-review`, which
+  the `pre-push` hook pushes); the reports go where the course handout says.
+
 ## Your Student ID
 
 Write your student ID in a file `STUDENT_ID` at the top of your copy, its letters in upper case
