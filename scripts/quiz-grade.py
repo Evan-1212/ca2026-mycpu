@@ -16,9 +16,14 @@ For each program (software/programs/quiz-<name>), in this order:
         50 %  it is correct (all its checks pass, and it keeps s0 to s11 and sp)
         25 %  and it costs no more cycles than the routine of the quiz (`base`)
         25 %  and it costs no more than 105 % of the cycles of the reference (`best`)
-     `base` and `best` are the cycles of 192 calls on this model, from the quiz's
-     own listing and from the reference, in software/quiz/targets.csv (columns
-     model,program,routine,base,best). A model that the file does not list is graded
+     and neither cycle quarter unless it costs fewer cycles than `compiled`: the
+     plain C of the routine (its reference in main.c) compiled by clang -O2 for the
+     base ISA. A routine that a compiler wrote earns the correctness half only,
+     except where the compiled C already costs no more than 105 % of `best` (a
+     routine too small to do better): there the two thresholds alone count.
+     `base`, `best` and `compiled` are the cycles of 192 calls on this model, in
+     software/quiz/targets.csv (columns model,program,routine,base,best,compiled; a
+     file without `compiled` grades as before). A model that the file does not list is graded
      on the instructions (the rows of the model `insn`), which are the same on every task.
 
 A routine that is not correct earns nothing, whatever it costs. The report shows the
@@ -64,7 +69,9 @@ def load_targets(path):
     if os.path.exists(path):
         with open(path, newline="", encoding="utf-8") as f:
             for row in csv.DictReader(f):
-                table[(row["model"], row["program"], row["routine"])] = (int(row["base"]), int(row["best"]))
+                compiled = row.get("compiled")
+                table[(row["model"], row["program"], row["routine"])] = (
+                    int(row["base"]), int(row["best"]), int(compiled) if compiled else None)
     return table
 
 
@@ -88,12 +95,13 @@ def parse(output):
 
 def tiers(model, program, routine, insn, cycles, targets):
     """(base reached, best reached, the targets used, their unit)."""
-    if (model, program, routine) in targets:
-        base, best = targets[(model, program, routine)]
-        return cycles <= base, cycles <= best * BEST_SLACK, (base, best), "cycles"
-    if ("insn", program, routine) in targets:
-        base, best = targets[("insn", program, routine)]
-        return insn <= base, insn <= best * BEST_SLACK, (base, best), "insn"
+    for key, cost, unit in (((model, program, routine), cycles, "cycles"), (("insn", program, routine), insn, "insn")):
+        if key in targets:
+            base, best, *more = targets[key]
+            compiled = more[0] if more else None
+            # where the compiler already reaches the reference, matching it is all there is to do
+            beats = compiled is None or cost < compiled or compiled <= best * BEST_SLACK
+            return beats and cost <= base, beats and cost <= best * BEST_SLACK, (base, best, compiled), unit
     return False, False, None, "none"
 
 
@@ -183,15 +191,16 @@ def main(argv=None):
         if r["exit"] not in (0,):
             print(f"  the program exited with {r['exit']}")
         share = program_points / max(len(r["routines"]), 1)
-        print(f"  {'routine':<14} {'result':<8} {'insn':>9} {'cycles':>9} {'CPI':>6}  {'target (base/best)':<22} points")
+        print(f"  {'routine':<14} {'result':<8} {'insn':>9} {'cycles':>9} {'CPI':>6}  {'target (base/best/compiled)':<28} points")
         for x in r["routines"]:
             all_correct &= x["correct"]
             p = points(x, share)
             total += p
             cpi = f"{x['cycles'] / x['insn']:.2f}" if x["insn"] else "-"
-            tgt = f"{x['targets'][0]}/{x['targets'][1]} {x['unit']}" if x["targets"] else "no target"
+            tgt = (f"{x['targets'][0]}/{x['targets'][1]}/{x['targets'][2] if x['targets'][2] is not None else '-'} {x['unit']}"
+                   if x["targets"] else "no target")
             tier = "best" if x["best"] else "base" if x["base"] else "correct" if x["correct"] else "FAILED"
-            print(f"  {x['routine']:<14} {tier:<8} {x['insn']:>9} {x['cycles']:>9} {cpi:>6}  {tgt:<22} {p:5.1f}")
+            print(f"  {x['routine']:<14} {tier:<8} {x['insn']:>9} {x['cycles']:>9} {cpi:>6}  {tgt:<28} {p:5.1f}")
     print(f"\nquiz score on task {args.task}: {total:.1f} / 100")
     if args.out:
         os.makedirs(args.out, exist_ok=True)

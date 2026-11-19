@@ -48,6 +48,14 @@ class TierTest(unittest.TestCase):
         self.assertEqual(grade.tiers("t4-forward", "quiz-arith", "mulu", 0, 1050, self.targets)[:2], (True, True))
         self.assertEqual(grade.tiers("t4-forward", "quiz-arith", "mulu", 0, 2001, self.targets)[:2], (False, False))
 
+    def test_cycle_points_need_fewer_cycles_than_the_compiled_c(self):
+        t = {("t4-forward", "quiz-arith", "mulu"): (2000, 1000, 1500)}
+        self.assertEqual(grade.tiers("t4-forward", "quiz-arith", "mulu", 0, 1500, t)[:2], (False, False))
+        self.assertEqual(grade.tiers("t4-forward", "quiz-arith", "mulu", 0, 1499, t)[:2], (True, False))
+        # where the compiler already reaches the reference, the thresholds alone count
+        t = {("t4-forward", "quiz-arith", "mulu"): (2000, 1000, 1000)}
+        self.assertEqual(grade.tiers("t4-forward", "quiz-arith", "mulu", 0, 1000, t)[:2], (True, True))
+
     def test_an_unlisted_model_is_graded_on_instructions(self):
         t = grade.tiers("t3-div66", "quiz-arith", "mulu", 480, 99999, self.targets)
         self.assertEqual(t[:2], (True, True))
