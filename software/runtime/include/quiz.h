@@ -85,10 +85,21 @@ static inline int quiz_exit_code(const char *program)
                                                : (int) quiz_failed_total;
 }
 
-// xorshift32: the same inputs on every build.
+// A salt for every input of the programs: 0 (the default) gives the inputs of
+// the listings, any other value gives other inputs of the same kinds, so that a
+// routine that is right only for the inputs it has seen fails (make -C software
+// QUIZ_SEED_SALT=0x<hex> ...). The salt of the final grading is not published.
+#ifndef QUIZ_SEED_SALT
+#define QUIZ_SEED_SALT 0u
+#endif
+
+// xorshift32: the same inputs on every build with the same salt.
 static inline uint32_t quiz_rand(uint32_t *state)
 {
-    uint32_t x = *state;
+    uint32_t x = *state ^ QUIZ_SEED_SALT;
+
+    if (x == 0)
+        x = 1;
 
     x ^= x << 13;
     x ^= x >> 17;

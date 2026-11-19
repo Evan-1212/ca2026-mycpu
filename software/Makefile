@@ -90,7 +90,8 @@ OBJ := $(OUT)/obj
 # The same flags for both platforms: only the platform object differs. -MD
 # (not -MMD) also tracks the runtime headers, which are -isystem headers.
 CFLAGS := -march=$(ARCH) -mabi=ilp32 -O2 -ffreestanding -nostdlib -nostdinc \
-          -isystem runtime/include -static -std=gnu11 -Wall -MD -MP -DMYCPU $(STUDENT_CFLAGS)
+          -isystem runtime/include -static -std=gnu11 -Wall -MD -MP -DMYCPU $(STUDENT_CFLAGS) \
+          $(if $(QUIZ_SEED_SALT),-DQUIZ_SEED_SALT=$(QUIZ_SEED_SALT)u)
 # The one exception: a MyCPU without Zicsr (T1, T2) reads the counters from
 # SimCtrl. rv32emu has no SimCtrl but implements the counter CSRs for every
 # ARCH, so its builds always read the CSRs. With Zicsr, both platforms do.
