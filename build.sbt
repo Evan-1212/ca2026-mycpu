@@ -25,6 +25,20 @@ val bootcampExercises = Seq(
   "UartTx"        -> "5.8"
 )
 
+// How many test suites run at once, each in a JVM of its own. Nearly every test builds a Verilator
+// model, which takes seconds and uses one core, so a suite is mostly waiting for a compiler. The
+// default is one job for every 6 cores of the machine: a 4-core CI runner runs the suites one after
+// the other, as it always did, and a workstation does not. `sbt -Dmycpu.testJobs=<n>` sets it (1:
+// the old behavior, one JVM for all the suites of a task).
+lazy val testJobs: Int =
+  sys.props.get("mycpu.testJobs").map(_.toInt).getOrElse(math.max(1, java.lang.Runtime.getRuntime.availableProcessors / 6))
+// sbt's own list holds the forked test groups to one at a time, and a second limit would only add to
+// it, so the list is replaced: the same limit on all tasks as sbt's (the cores), and ours on the groups.
+Global / concurrentRestrictions := Seq(
+  Tags.limitAll(java.lang.Runtime.getRuntime.availableProcessors),
+  Tags.limit(Tags.ForkedTestGroup, testJobs)
+)
+
 lazy val chiselSettings = Seq(
   libraryDependencies ++= Seq(
     "org.chipsalliance" %% "chisel"    % chiselVersion,
@@ -37,8 +51,11 @@ lazy val chiselSettings = Seq(
 // was not written for -Xfatal-warnings).
 lazy val mycpuSettings = chiselSettings ++ Seq(
   scalacOptions ++= Seq("-deprecation", "-feature", "-language:reflectiveCalls", "-Xfatal-warnings"),
-  // ChiselSim builds Verilator models; run the suites one at a time.
-  Test / parallelExecution := false,
+  // ChiselSim builds Verilator models. The suites share no file: ChiselSim works in a directory of its
+  // own for each test, and the specs keep their scratch files under their own names. They run in
+  // one JVM one after the other, or, when testJobs is more than 1, each in a JVM of its own.
+  // (sbt's parallelExecution := false also holds the forked groups to one at a time.)
+  Test / parallelExecution := testJobs > 1,
   Test / fork              := true,
   // Verilator's make compiles the models through ccache (`OBJCACHE ?= ccache` in verilated.mk).
   // With its precompiled headers, ccache 3.7 keys a model's .cpp without the class header that
@@ -52,6 +69,14 @@ lazy val mycpuSettings = chiselSettings ++ Seq(
   Test / javaOptions ++= Seq(s"-Dmycpu.bootcamp=$bootcampDir", s"-Dmycpu.root=${(ThisBuild / baseDirectory).value}"),
   // where the task Makefiles build the C programs, if not in build/ (`sbt -Dmycpu.build=<dir>`)
   Test / javaOptions ++= sys.props.get("mycpu.build").map(dir => s"-Dmycpu.build=$dir").toSeq
+) ++ (
+  if (testJobs > 1)
+    Seq(
+      Test / testGrouping := (Test / definedTests).value.map { suite =>
+        Tests.Group(suite.name, Seq(suite), Tests.SubProcess((Test / forkOptions).value))
+      }
+    )
+  else Seq()
 )
 
 // The student's own chisel-bootcamp Module 5 code, compiled from their clone.
