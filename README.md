@@ -98,6 +98,12 @@ replace it. `EXERCISES.md` lists the file and line of every blank, and `make che
 those that remain. A task compiles once all of its blanks, and those of the tasks before it, are
 filled.
 
+Besides the blanks, you write four sets of routines in RISC-V assembly, the quiz programs
+`software/programs/quiz-{arith,sine,nn,enc}/routines.S`. The same files run on every task, from T1
+on; the checks and the cost they print (`make -C <task> quiz`, or `make quiz-score` for all pipelines) are the correctness test of your
+core, and later the workload for your hazard and performance analysis. The contract of the routines
+is the header next to each `routines.S`, and `scripts/quiz-grade.py` says how they are scored.
+
 ## Task Map
 
 | Task | Directory | What you build | ISA | Exercises |
@@ -178,6 +184,7 @@ Run these at the top of the repository. `make help` prints the list.
 | `bootcamp-patch` | write your bootcamp changes to `build/bootcamp.patch` |
 | `student ID=<id>` | write `student.json`, your configuration ([docs/student-config.md](docs/student-config.md)) |
 | `test-all`, `lint-all`, `bench-all` | `make test`, `lint` or `bench` in every task |
+| `quiz-all` | `make quiz` in every task: your routines of the four quiz programs, correct? and what they cost there |
 | `bench` | `bench-all`, then the report `build/bench/report.{csv,md}` |
 | `bench-xcheck` | the benchmarks' instruction counts on T3 to T5 against rv32emu v1.3 |
 | `cosim-random` | the random programs of every task against the golden model (`SEEDS=`, `SEED_FIRST=`) |

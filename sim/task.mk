@@ -248,6 +248,16 @@ check-rv32emu: verilator software software-rv32emu
 	@MAX_CYCLES=$(MAX_CYCLES) $(ROOT)/software/scripts/check-model.sh rv32emu $(OUT)/Vsim $(SW_MYCPU) $(TASK) \
 	    $(RV32EMU) $(SW_RV32EMU)
 
+# The quiz programs: your routines in assembly, run on this model. Prints, for each
+# routine, whether it is correct, what it costs in instructions and cycles here, and the points;
+# QUIZ_ARGS="--programs quiz-arith --out build/quiz" selects programs and writes the JSON report.
+.PHONY: quiz
+QUIZ_CROSS ?= $(or $(CROSS),$(or $(RISCV),$(HOME)/riscv/toolchain)/bin/riscv-none-elf-)
+QUIZ_ARGS  ?=
+quiz: verilator software
+	@python3 $(ROOT)/scripts/quiz-grade.py --task $(TASK_NUM) --vsim $(OUT)/Vsim --sw $(SW_MYCPU) \
+	    --model $(MODEL) --max-cycles $(MAX_CYCLES) --cross $(QUIZ_CROSS) $(QUIZ_ARGS)
+
 # T1-08: the uart program echoes what +uart-stdin sends it. It runs twice: as it is built for
 # every task (console on SimCtrl PUTC), and with its console on the UART too, which keeps the
 # program busy sending while input arrives, so the receive FIFO fills and the harness has to wait

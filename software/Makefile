@@ -133,6 +133,12 @@ CFLAGS_vgatest    := $(if $(VGATEST_FRAMES),-DVGATEST_FRAMES=$(VGATEST_FRAMES))
 # flags to the sources it takes from directory <dir>.
 SHARED_SRCS_qrcode-vga := programs/qrcode/qr.c
 
+# The quiz programs share the harness's ABI check, software/quiz/abi.c.
+SHARED_SRCS_quiz-arith := quiz/abi.c
+SHARED_SRCS_quiz-sine  := quiz/abi.c
+SHARED_SRCS_quiz-nn    := quiz/abi.c
+SHARED_SRCS_quiz-enc   := quiz/abi.c
+
 # The shell (T5-08) runs the benchmarks and nyancat, and draws the QR styles
 # of qrcode-vga, so it is built with their sources, each main renamed (and
 # dhrystone's exit, which ends the run) so that it comes back to the prompt:

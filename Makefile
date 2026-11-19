@@ -112,7 +112,7 @@ BOOTCAMP_SPECS := AluSpec DecoderSpec ImmGenRegFileSpec MemorySpec IsaSpec \
 # the chain tool's self-test in a scratch repository.
 GIT_HOOKS := .git/hooks/applied
 
-.PHONY: hooks uninstall-hooks prereq history repo chaintest unittest grade
+.PHONY: hooks uninstall-hooks prereq history repo chaintest unittest grade quiz-score
 hooks $(GIT_HOOKS): scripts/install-git-hooks $(wildcard scripts/*.hook)
 	@scripts/install-git-hooks
 
@@ -135,6 +135,12 @@ chaintest:
 # Unit tests of the scripts that ship with the repository (scripts/test_*.py).
 unittest:
 	@python3 -m unittest discover -s scripts -p 'test_*.py'
+
+# The quiz routines on every pipeline of T4 and T5 (their Verilator models are built first): the score
+# is the lowest of the six. The same tool, run in the instructors' tree, scores a submission.
+quiz-score:
+	@for t in 4-pipeline 5-soc; do for v in Stall Forward EarlyBranch; do $(MAKE) --no-print-directory -C $$t verilator VARIANT=$$v || exit 1; done; done
+	@python3 scripts/quiz-score.py software/programs
 
 # The public checks with points (scripts/grade.py --list); GRADE_ARGS="--only task1,deps" selects.
 grade:
@@ -159,12 +165,14 @@ help:
 	@echo "  history           Verify the Change-Id hash chain from the base commit (repo: and the commit rules)"
 	@echo "  chaintest         Self-test of the hash chain tool in a scratch repository"
 	@echo "  unittest          Unit tests of the scripts (scripts/test_*.py)"
+	@echo "  quiz-score        Your quiz routines on every variant of T4 and T5, scored (the lowest counts; docs in scripts/quiz-score.py)"
 	@echo "  grade             Score the public checks (scripts/grade.py --list; GRADE_ARGS=\"--only task1\")"
 	@echo "  check-bootcamp    Check that bootcamp Module 5 is complete and its tests pass"
 	@echo "  bootcamp-overlay  Take the seven exercise files from BOOTCAMP_SRC=<copy of riscv/src>"
 	@echo "  bootcamp-patch    Write the student's bootcamp changes to $(BUILD)/bootcamp.patch"
 	@echo "  test-all          Run 'make test' in every task ($(TASKS))"
 	@echo "  lint-all          Run 'make lint' in every task"
+	@echo "  quiz-all          Run 'make quiz' in every task: your quiz routines, checked and costed on each"
 	@echo "  bench-all         Run 'make bench' in every task (CSV files in $(BUILD)/bench/)"
 	@echo "  bench             bench-all, then the report $(BUILD)/bench/report.{csv,md} (BEN-03)"
 	@echo "  bench-repeat      Run 'make bench' twice; the two report.csv must be identical"
@@ -377,8 +385,8 @@ include sim/student.mk
 # `+` keeps the jobserver and `make -n` reaching the task makes, as $(MAKE) in the recipe would.
 each_task = for t in $(TASKS); do $(MAKE) -C $$t $(1) || exit 1; done
 
-.PHONY: test-all lint-all bench-all check-obs
-test-all lint-all bench-all: %-all:
+.PHONY: test-all lint-all bench-all quiz-all check-obs
+test-all lint-all bench-all quiz-all: %-all:
 	@+$(call each_task,$*)
 
 # EX-08: `make student ID=<your student ID>` writes student.json, your configuration: the register

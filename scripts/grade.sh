@@ -52,6 +52,11 @@ case "$out" in /*) ;; *) out="$sub/$out" ;; esac
 files=$(sed -n 's/^| [0-9.]* | `\([^`]*\)` | [0-9]* | .*/\1/p' "$trusted/EXERCISES.md" | sort -u)
 [ -n "$files" ] || throw "EXERCISES.md lists no file."
 
+# The routines of the quiz programs are the submission's too: the public tree
+# has a stub of each.
+files="$files
+$(cd "$trusted" && ls software/programs/quiz-*/routines.S 2>/dev/null)"
+
 if [ $chain -eq 1 ]; then
   echo "== history of the submission"
   (cd "$sub" && "$here/chain.sh" verify && "$here/commitlog.sh") || exit 1
@@ -79,7 +84,7 @@ args=(--timeout "$timeout" --out "$out")
 [ -n "$only" ] && args+=(--only "$only")
 # Without --chain the scratch tree has no history: leave that check out.
 if [ $chain -eq 0 ] && [ -z "$only" ]; then
-  args+=(--only "deps,hygiene,task1,task2,task3,task4,task5")
+  args+=(--only "deps,hygiene,task1,task2,task3,task4,task5,quiz")
 fi
 (cd "$work" && python3 scripts/grade.py "${args[@]}") || status=1
 exit $status

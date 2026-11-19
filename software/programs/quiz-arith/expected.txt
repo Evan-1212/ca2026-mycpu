@@ -1,0 +1,7 @@
+quiz: mulu ok
+quiz: qmul15 ok
+quiz: udivmod ok
+quiz: isqrt ok
+quiz: smin ok
+quiz: clz5 ok
+quiz: quiz-arith complete

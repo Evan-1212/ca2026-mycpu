@@ -92,7 +92,7 @@ ARCH  ?= rv32im_zicsr
 # software/programs/MANIFEST but uart, which needs input (check-uart).
 TASK_STALL_ARCHS     := rv32im_zicsr
 TASK_STALL_ALWAYS    := irqtrap
-COSIM_STALL_PROGRAMS ?= quicksort sb strings muldiv qrcode dhrystone duremark ecall perf irqtrap
+COSIM_STALL_PROGRAMS ?= quicksort sb strings muldiv qrcode dhrystone duremark ecall perf irqtrap quiz-arith quiz-sine quiz-nn quiz-enc
 COSIM_PROGRAMS       ?= fibonacci jit
 
 # make bench: one model per <DIV_LATENCY>/<ARCH>, with the eight hpm events of the measured region

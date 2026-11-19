@@ -22,17 +22,23 @@ class ScoreTest(unittest.TestCase):
     def test_total_is_100(self):
         self.assertEqual(sum(grade.POINTS.values()), 100)
 
+    def test_a_check_with_partial_credit(self):
+        r = grade.Result("quiz", False, earned=12.5)
+        self.assertEqual(r.points, 12.5)
+        self.assertEqual(grade.score([r]), (12.5, 25))
+        self.assertIn("partial", grade.report([r]))
+
     def test_failed_check_scores_zero(self):
         r = grade.Result("task3", False)
         self.assertEqual(r.points, 0)
 
     def test_score_counts_the_selected_checks_only(self):
         results = [grade.Result("deps", True), grade.Result("task1", False)]
-        self.assertEqual(grade.score(results), (5, 22))
+        self.assertEqual(grade.score(results), (5, 17))
 
     def test_report_shows_the_score(self):
         text = grade.report([grade.Result("hygiene", True), grade.Result("task2", False)])
-        self.assertIn("Score: 5/22", text)
+        self.assertIn("Score: 5/17", text)
         self.assertIn("FAIL", text)
 
 

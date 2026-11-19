@@ -118,7 +118,7 @@ TASK_COSIM_CHECK  = soc/Test/runMain mycpu.soc.RetireLogCheck --tick=$(TICK_DIVI
 # Every program stalls on the pipeline and the bus, whatever the build.
 TASK_STALL_ARCHS     := $(ARCHS)
 COSIM_STALL_PROGRAMS ?= fibonacci quicksort sb strings muldiv jit qrcode dhrystone duremark ecall perf irqtrap \
-                        vgatest
+                        vgatest quiz-arith quiz-sine quiz-nn quiz-enc
 COSIM_PROGRAMS       ?=
 
 # make bench: one model per variant and build (<variant>/<arch>), with this RAM and its wait states

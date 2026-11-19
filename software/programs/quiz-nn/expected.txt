@@ -1,0 +1,7 @@
+quiz: rank ok
+quiz: slot ok
+quiz: state_copy ok
+quiz: mul16 ok
+quiz: net ok
+quiz: dfs ok
+quiz: quiz-nn complete

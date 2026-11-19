@@ -1,0 +1,11 @@
+quiz: mk_i ok
+quiz: mk_s ok
+quiz: mk_b ok
+quiz: mk_j ok
+quiz: mk_u ok
+quiz: run_i ok
+quiz: run_s ok
+quiz: run_b ok
+quiz: run_j ok
+quiz: run_u ok
+quiz: quiz-enc complete

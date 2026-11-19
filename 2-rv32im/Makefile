@@ -74,7 +74,7 @@ ARCH  ?= rv32im
 # division. Built without M (ARCH=rv32i) no program divides, and every cycle of every log has a
 # record. Together the lists are every C `user` program of software/programs/MANIFEST.
 TASK_STALL_ARCHS     := rv32im
-COSIM_STALL_PROGRAMS ?= quicksort sb strings muldiv qrcode dhrystone duremark
+COSIM_STALL_PROGRAMS ?= quicksort sb strings muldiv qrcode dhrystone duremark quiz-arith quiz-sine quiz-nn quiz-enc
 COSIM_PROGRAMS       ?= fibonacci jit
 
 # ---------------------------------------------------------------------------

@@ -53,7 +53,7 @@ aspell's header), and the generated block diagrams and pipeline diagrams. The on
 follows the row for the nyancat frames above.
 
 - `.gitignore`, `web/.gitignore`, `.clang-format`, `.scalafmt.conf`, `project/build.properties`
-- `scripts/aspell-pws`
+- `scripts/aspell-pws`, `software/quiz/targets.csv`
 - `**/doc/block-diagram.svg`, `4-pipeline/doc/hazard-*.png`, `5-soc/doc/bus-waves.png`
 - `**/expected.txt`, `**/expected.exit`
 - `sim/tests/golden/*.ppm.gz`

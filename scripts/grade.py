@@ -10,6 +10,9 @@ points:
             commit rules (scripts/chain.sh verify, scripts/commitlog.sh)
   hygiene   no -Wno- flag, and no skipped, ignored or pending spec in a task
   task1..5  make -C <task> test: every public spec of the task passes
+  quiz      make -C 1-single-cycle quiz: the routines that you wrote for the quiz
+            programs, scored by correctness and by the cycles they
+            cost on the single-cycle core; the points are the share of the score
 
 A task whose blanks are not filled in does not compile, so it scores 0: an
 untouched copy of the public repository scores the points of no task. The held
@@ -45,7 +48,8 @@ TASKS = {
     "task5": "5-soc",
 }
 POINTS = {"deps": 5, "history": 5, "hygiene": 5}
-POINTS.update({name: 17 for name in TASKS})
+POINTS.update({name: 12 for name in TASKS})
+POINTS["quiz"] = 25
 
 # Spec code that stops a test from running: ScalaTest's ignore, a bare pending, @Ignore.
 # (cancel is not listed: the specs use it to drop a mutant run that does not apply.)
@@ -55,19 +59,22 @@ FLAG_PATTERN = re.compile(r"-Wno-")
 
 
 class Result:
-    def __init__(self, name, ok, detail="", seconds=0.0):
+    def __init__(self, name, ok, detail="", seconds=0.0, earned=None):
         self.name = name
         self.ok = ok
         self.detail = detail
         self.seconds = seconds
+        self.earned = earned  # a check with partial credit says how many points it earned
 
     @property
     def points(self):
+        if self.earned is not None:
+            return self.earned
         return POINTS[self.name] if self.ok else 0
 
 
-def run(argv, cwd, timeout):
-    """Run one command; return (ok, last lines of its output)."""
+def run(argv, cwd, timeout, keep=8):
+    """Run one command; return (ok, last `keep` lines of its output)."""
     try:
         p = subprocess.run(argv, cwd=cwd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                            stderr=subprocess.STDOUT, text=True, timeout=timeout)
@@ -75,7 +82,7 @@ def run(argv, cwd, timeout):
         return False, "timed out after %d s" % timeout
     except OSError as e:
         return False, str(e)
-    tail = "\n".join(p.stdout.strip().splitlines()[-8:])
+    tail = "\n".join(p.stdout.strip().splitlines()[-keep:])
     return p.returncode == 0, tail
 
 
@@ -119,6 +126,11 @@ def run_check(name, args):
         ok, detail = run(["make", "check-deps"], ROOT, args.timeout)
     elif name == "history":
         ok, detail = check_history(args.history_dir, args.timeout)
+    elif name == "quiz":
+        ok, detail = run(["make", "-C", TASKS["task1"], "quiz"], ROOT, args.timeout, keep=60)
+        m = re.search(r"quiz score on task 1: ([0-9.]+) / 100", detail)
+        earned = round(float(m.group(1)) * POINTS["quiz"] / 100.0, 1) if m else 0.0
+        return Result(name, ok and earned >= POINTS["quiz"], detail, time.time() - start, earned)
     elif name == "hygiene":
         problems = scan_hygiene(ROOT)
         ok, detail = (not problems), "\n".join(problems[:8]) or "no skipped spec, no -Wno- flag"
@@ -136,9 +148,10 @@ def report(results):
     earned, possible = score(results)
     lines = ["| Check | Points | Result | Seconds |", "|---|---|---|---|"]
     for r in results:
-        lines.append("| %s | %d/%d | %s | %.0f |" % (r.name, r.points, POINTS[r.name], "pass" if r.ok else "FAIL", r.seconds))
+        verdict = "pass" if r.ok else "partial" if r.points else "FAIL"
+        lines.append("| %s | %g/%d | %s | %.0f |" % (r.name, r.points, POINTS[r.name], verdict, r.seconds))
     lines.append("")
-    lines.append("Score: %d/%d" % (earned, possible))
+    lines.append("Score: %g/%d" % (earned, possible))
     return "\n".join(lines) + "\n"
 
 

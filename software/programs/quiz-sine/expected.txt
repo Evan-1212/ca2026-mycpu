@@ -1,0 +1,5 @@
+quiz: f32_to_bf16 ok
+quiz: fold ok
+quiz: mulq15 ok
+quiz: sinq ok
+quiz: quiz-sine complete

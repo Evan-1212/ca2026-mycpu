@@ -108,7 +108,7 @@ ARCH  ?= rv32im_zicsr
 
 # Every program stalls on a pipeline (filling it, flushes, the hazards), whatever the build.
 TASK_STALL_ARCHS     := $(ARCHS)
-COSIM_STALL_PROGRAMS ?= fibonacci quicksort sb strings muldiv jit qrcode dhrystone duremark ecall perf irqtrap
+COSIM_STALL_PROGRAMS ?= fibonacci quicksort sb strings muldiv jit qrcode dhrystone duremark ecall perf irqtrap quiz-arith quiz-sine quiz-nn quiz-enc
 COSIM_PROGRAMS       ?=
 
 # make bench: one model per variant and build (<variant>/<arch>)

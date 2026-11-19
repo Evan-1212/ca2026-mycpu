@@ -39,6 +39,6 @@ MUTANTS := sra unsigned-cmp lui-bit31 load-unsigned store-word
 ARCHS   := rv32i
 
 # T1-04 for whole C programs: every cycle of this core has a retire record.
-COSIM_PROGRAMS ?= fibonacci quicksort sb strings jit
+COSIM_PROGRAMS ?= fibonacci quicksort sb strings jit quiz-arith quiz-sine quiz-nn quiz-enc
 
 include ../sim/task.mk
