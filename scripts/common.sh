@@ -65,3 +65,32 @@ progress() {
     printf "\n"
   fi
 }
+
+# The major version of clang-format that formats the C and C++ of this
+# repository.
+CLANG_FORMAT_REQUIRED=20
+
+# clang_format_major COMMAND: its major version, or nothing when it cannot run.
+clang_format_major() {
+  "$1" --version 2>/dev/null | sed -n 's/.*version \([0-9][0-9]*\).*/\1/p' | head -n 1
+}
+
+# find_clang_format: print the clang-format of the required major version and
+# succeed, or print nothing and fail. $CLANG_FORMAT comes first when it is set;
+# then the names and the places where a clang-format 20 usually is (the
+# versioned name of a package, pipx and pip, LLVM's own directory, Homebrew).
+find_clang_format() {
+  local candidate resolved
+  for candidate in "${CLANG_FORMAT:-}" clang-format-"$CLANG_FORMAT_REQUIRED" clang-format \
+    "$HOME/.local/bin/clang-format" "/usr/lib/llvm-$CLANG_FORMAT_REQUIRED/bin/clang-format" \
+    "/opt/homebrew/opt/llvm@$CLANG_FORMAT_REQUIRED/bin/clang-format" \
+    "/usr/local/opt/llvm@$CLANG_FORMAT_REQUIRED/bin/clang-format"; do
+    [ -n "$candidate" ] || continue
+    resolved=$(command -v "$candidate" 2>/dev/null) || continue
+    if [ "$(clang_format_major "$resolved")" = "$CLANG_FORMAT_REQUIRED" ]; then
+      echo "$resolved"
+      return 0
+    fi
+  done
+  return 1
+}

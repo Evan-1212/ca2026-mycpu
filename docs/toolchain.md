@@ -24,7 +24,7 @@ its checksum from the same release page.
 | Verilator | 5.054 | 5.042 or newer |
 | RISC-V GCC | xPack GNU RISC-V Embedded GCC 15.2.0 | GCC 15 or newer, prefix `riscv-none-elf-` |
 | mise | 2026.10.25 | from T3 on (or uv, and Ruby 3.2 to 3.x with Bundler) |
-| clang-format | 18.1.8 | only for `make indent` and `make check-format` |
+| clang-format | 20.1.8 | only for `make indent` and `make check-format` |
 | SDL2, qrencode | 2.0.10, 4.0.2 | optional, T5 only |
 
 Scala 2.13.18, Chisel 7.16.0 and firtool 1.160.0 are not installed by hand: sbt downloads them
@@ -157,4 +157,12 @@ build `sail_riscv_sim` 0.16 yourself and pass `SAIL_SIM=<path>` to `make`.
 `make indent` and `make check-format` format Scala with scalafmt 3.11.5 (the version in
 `.scalafmt.conf`), which sbt downloads through the `sbt-scalafmt` plugin, so there is nothing to
 install. For C and C++ they call `clang-format`; the repository's files are formatted with
-version 18.1.8, and another major version may format a few lines differently.
+version 20 (20.1.8 in CI), and another major version may format a few lines differently, so both
+targets, the pre-commit hook and the pre-push hook refuse any other major version.
+
+Ubuntu 24.04 packages version 18 only; install 20 with `pipx install clang-format==20.1.8` (or
+`pip install --user clang-format==20.1.8`), which puts it in `~/.local/bin`. The tools find it by
+version: `$CLANG_FORMAT` when it is set, then `clang-format-20`, `clang-format` on the `PATH`,
+`~/.local/bin/clang-format`, and LLVM's `/usr/lib/llvm-20/bin` or Homebrew's `llvm@20`
+(`scripts/find-clang-format.sh` prints the one that is chosen). `make indent CLANG_FORMAT=<path>`
+chooses one by hand.

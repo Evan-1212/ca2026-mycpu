@@ -17,7 +17,8 @@ declare -F set_colors >/dev/null 2>&1 || { echo "[!] '$common_script' does not d
 set_colors
 
 # The formatting pin is the Makefile's: override only for a dry run.
-CLANG_FORMAT="${CLANG_FORMAT:-clang-format}"
+# Found by version: clang-format-20, a pipx install and the like count, not only the first on PATH.
+CLANG_FORMAT="$(find_clang_format || echo "${CLANG_FORMAT:-clang-format}")"
 
 RETURN=0
 ERRORS_FOUND=()
@@ -122,7 +123,10 @@ done
 formatting_errors=0
 if [ ${#C_FILES[@]} -gt 0 ]; then
   if ! command -v "$CLANG_FORMAT" >/dev/null 2>&1; then
-    report_result 1 "$CLANG_FORMAT not found (see docs/toolchain.md); it formats the C and C++ sources"
+    report_result 1 "$CLANG_FORMAT not found: install clang-format $CLANG_FORMAT_REQUIRED (pipx install clang-format==20.1.8; docs/toolchain.md)"
+    RETURN=1
+  elif [ "$(clang_format_major "$CLANG_FORMAT")" != "$CLANG_FORMAT_REQUIRED" ]; then
+    report_result 1 "clang-format $CLANG_FORMAT_REQUIRED is required, found '$(clang_format_major "$CLANG_FORMAT")' (pipx install clang-format==20.1.8; docs/toolchain.md)"
     RETURN=1
   else
     for file in "${C_FILES[@]}"; do

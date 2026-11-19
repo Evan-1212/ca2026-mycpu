@@ -16,6 +16,9 @@
 
 set -u
 
+# shellcheck source=common.sh
+source "$(dirname "$0")/common.sh"
+
 CROSS=${CROSS:?CROSS not set}
 ACT_CROSS=${ACT_CROSS:-$CROSS}
 GCC_MIN=${GCC_MIN:-15}
@@ -231,6 +234,19 @@ else
     else
         bad act4-env "ACT4 needs Ruby >= $RUBY_MIN and < $RUBY_LIMIT with Bundler; install mise into ~/.local/bin and run mise install in $ACT_DIR"
     fi
+fi
+
+# clang-format 20 formats the C and C++ (make indent, make check-format); a
+# warning, not a failure
+cfbin=$(find_clang_format) || cfbin="${CLANG_FORMAT:-clang-format}"
+if command -v "$cfbin" >/dev/null 2>&1; then
+    cfv=$("$cfbin" --version 2>/dev/null | head -n 1)
+    case "$cfv" in
+        *"version 20."*) ok clang-fmt "$cfv" ;;
+        *) note clang-fmt "$cfv: the C and C++ are formatted with clang-format 20 (pipx install clang-format==20.1.8)" ;;
+    esac
+else
+    note clang-fmt "not found; make indent and make check-format need clang-format 20 (pipx install clang-format==20.1.8)"
 fi
 
 # optional, T5 only

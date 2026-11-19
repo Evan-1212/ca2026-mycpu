@@ -63,8 +63,8 @@ a comment for every non-obvious step, and the register use of each function stat
 
 ### Code Formatting Tools
 
-Software requirement: [clang-format](https://clang.llvm.org/docs/ClangFormat.html), the version pinned in the
-`Makefile` and in `docs/toolchain.md`, for the C and C++ files; sbt runs scalafmt for the Scala files.
+Software requirement: [clang-format](https://clang.llvm.org/docs/ClangFormat.html) 20 (`pipx install
+clang-format==20.1.8`; `make indent` finds it by version, see `docs/toolchain.md`), for the C and C++ files; sbt runs scalafmt for the Scala files.
 
 This repository contains a `.clang-format` file and a `.scalafmt.conf` file that enforce the coding style.
 To format your code, run:

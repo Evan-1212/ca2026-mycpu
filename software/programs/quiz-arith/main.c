@@ -233,7 +233,7 @@ static void test_isqrt(void)
         CALL(quiz_isqrt, x_, 0);                                          \
         uint64_t r_ = R.a0;                                               \
         QUIZ_CHECK(&g,                                                    \
-                   r_ *r_ <= x_ && x_ < (r_ + 1) * (r_ + 1) &&            \
+                   r_ * r_ <= x_ && x_ < (r_ + 1) * (r_ + 1) &&           \
                        R.a1 == x_ - (uint32_t) (r_ * r_),                 \
                    "isqrt(%u) = %u r %u", (unsigned) x_, (unsigned) R.a0, \
                    (unsigned) R.a1);                                      \

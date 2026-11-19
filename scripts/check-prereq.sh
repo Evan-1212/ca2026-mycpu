@@ -18,6 +18,8 @@
 set -u
 
 here=$(cd "$(dirname "$0")" && pwd)
+# shellcheck source=common.sh
+source "$here/common.sh"
 fail=0
 tmp=$(mktemp -d) || { echo "check-prereq: mktemp failed" >&2; exit 1; }
 trap 'rm -rf "$tmp"' EXIT
@@ -82,10 +84,15 @@ if command -v aspell > /dev/null 2>&1; then
 else
   skip aspell "not installed: the spelling of commit messages is not checked"
 fi
-if command -v "${CLANG_FORMAT:-clang-format}" > /dev/null 2>&1; then
-  ok clang-format "$("${CLANG_FORMAT:-clang-format}" --version | head -n 1)"
+cfbin=$(find_clang_format) || cfbin="${CLANG_FORMAT:-clang-format}"
+if command -v "$cfbin" > /dev/null 2>&1; then
+  cfv=$("$cfbin" --version 2> /dev/null | head -n 1)
+  case "$cfv" in
+    *"version 20."*) ok clang-format "$cfv" ;;
+    *) skip clang-format "$cfv: the C and C++ are formatted with clang-format 20 (pipx install clang-format==20.1.8)" ;;
+  esac
 else
-  skip clang-format "not installed: the pre-commit hook cannot check the formatting of C and C++"
+  skip clang-format "not installed: the pre-commit hook cannot check the formatting of C and C++ (pipx install clang-format==20.1.8)"
 fi
 if command -v python3 > /dev/null 2>&1; then
   ok python3 "$(python3 --version 2>&1)"

@@ -239,7 +239,7 @@ UART_ARGS=+uart-no-flow-control` must fail).
 
 ### `check-format: these files are not formatted (run 'make indent'):`<br>`check-format: Scala sources are not formatted (run 'make indent'; log: build/check-format.log)`
 
-`make indent` formats them: clang-format for the C and C++ files the first message lists, and
+`make indent` formats them: clang-format 20 for the C and C++ files the first message lists, and
 scalafmt for the Scala sources, whose `isn't formatted properly!` lines name the files. scalafmt
 inserts a space after `//` in line comments; the exercise tools accept the comments in both forms.
 

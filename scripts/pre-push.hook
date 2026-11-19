@@ -32,7 +32,14 @@ run_build_checks() {
 
   printf "${YELLOW}Checking C and C++ formatting and the lint flags...${NC}"
   local out
-  out=$(make --no-print-directory check-lint-flags 2>&1 && "${CLANG_FORMAT:-clang-format}" --dry-run --Werror \
+  local cf
+  cf=$(find_clang_format) || cf=""
+  if [ -z "$cf" ]; then
+    printf " [ ${RED}FAIL${NC} ]\n"
+    echo -e "${RED}clang-format $CLANG_FORMAT_REQUIRED is required for the C and C++ files (pipx install clang-format==20.1.8)${NC}"
+    return 1
+  fi
+  out=$(make --no-print-directory check-lint-flags 2>&1 && "$cf" --dry-run --Werror \
           $(make -s --no-print-directory format-c-files) 2>&1)
   if [ $? -ne 0 ]; then
     printf " [ ${RED}FAIL${NC} ]\n"

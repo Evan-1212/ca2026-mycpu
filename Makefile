@@ -472,7 +472,17 @@ FORMAT_PROJECTS = $(filter-out bootcamp root,$(shell sed -n 's/^lazy val \([A-Za
 # Generated data headers (marked DO NOT EDIT) are excluded too.
 FORMAT_C = $(shell git ls-files -- 'sim/*.cpp' 'sim/*.h' 'software/*.c' 'software/*.h' 'tools/*.c' ':!:software/benchmarks/**' \
              ':!:software/programs/nyancat/nyancat-data.h')
-CLANG_FORMAT ?= clang-format
+# make indent and check-format look for it: $CLANG_FORMAT, clang-format-20, clang-format on the PATH,
+# pipx and pip's ~/.local/bin, LLVM's directory (scripts/find-clang-format.sh); CLANG_FORMAT=<path>
+# chooses one. When there is none the name stays clang-format and the check below says what to install.
+ifndef CLANG_FORMAT
+CLANG_FORMAT := $(shell scripts/find-clang-format.sh 2> /dev/null || echo clang-format)
+endif
+# The formatting of C and C++ is that of clang-format 20: another major version formats a few lines
+# differently, so indent and check-format refuse it (pipx install clang-format==20.1.8).
+CLANG_FORMAT_MAJOR := 20
+clang_format_check = v=$$($(CLANG_FORMAT) --version 2> /dev/null | sed -n 's/.*version \([0-9][0-9]*\).*/\1/p' | head -n 1); \
+    [ "$$v" = "$(CLANG_FORMAT_MAJOR)" ] || { echo "$(1): clang-format $(CLANG_FORMAT_MAJOR) is required, found '$$v' (pipx install clang-format==20.1.8; see docs/toolchain.md)" >&2; exit 1; }
 
 # The C and C++ files that are formatted, one per line (the Git hooks use the list).
 .PHONY: indent check-format check-lint-flags format-c-files
@@ -480,11 +490,13 @@ format-c-files:
 	@printf '%s\n' $(FORMAT_C)
 
 indent:
+	@$(call clang_format_check,indent)
 	$(SBT) -batch $(addsuffix /scalafmtAll,$(FORMAT_PROJECTS))
 	$(CLANG_FORMAT) -i $(FORMAT_C)
 
 check-format:
-	@command -v $(CLANG_FORMAT) > /dev/null || { echo "check-format: $(CLANG_FORMAT) not found" >&2; exit 1; }
+	@command -v $(CLANG_FORMAT) > /dev/null || { echo "check-format: $(CLANG_FORMAT) not found (pipx install clang-format==20.1.8)" >&2; exit 1; }
+	@$(call clang_format_check,check-format)
 	@files="$(FORMAT_C)"; [ -n "$$files" ] || { echo "check-format: no C or C++ file found" >&2; exit 1; }; \
 	out=$$($(CLANG_FORMAT) --dry-run --Werror $$files 2>&1) && exit_ok=1 || exit_ok=0; \
 	bad=$$(echo "$$out" | sed -n 's/^\([^:]*\):[0-9]*:[0-9]*: error:.*/\1/p' | sort -u); \

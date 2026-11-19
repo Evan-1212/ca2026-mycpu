@@ -962,7 +962,7 @@ static void fill(uint32_t seed, int kind)
 
         switch (kind) {
         case 0:  // mk_i: opcode, funct3, rd, rs1, imm
-            in[i].a = (uint32_t[]){0x13, 0x03, 0x67, 0x73}[r1 & 3];
+            in[i].a = (uint32_t[]) {0x13, 0x03, 0x67, 0x73}[r1 & 3];
             in[i].b = (r1 >> 4) & 7;
             in[i].c = (r2 >> 3) & 31;
             in[i].d = (r2 >> 11) & 31;

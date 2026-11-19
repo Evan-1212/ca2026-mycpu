@@ -59,7 +59,7 @@ exercise builds on.
 | chisel-bootcamp | commit `1fdc4d1b0071` | fetched by `make fetch`, or your own clone |
 | riscv-arch-test, Sail RISC-V | commit `70907fc67108`, release 0.16 | fetched by `make fetch`; used from T3 on |
 | mise, or uv with Ruby 3.2 to 3.x and Bundler | | for the architecture tests from T3 on |
-| clang-format | 18 | only for `make indent` and `make check-format` |
+| clang-format | 20 | only for `make indent` and `make check-format` |
 | SDL2, qrencode | | optional, T5 only |
 
 The Scala, Chisel and sbt versions are those of chisel-bootcamp's `riscv/build.sbt` and
