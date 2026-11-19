@@ -180,24 +180,30 @@ def context(head, path, line, around=6):
     return lines[lo:hi], exercise
 
 
-def asked_file():
-    """The lines asked about before (in the git directory: never committed)."""
-    return os.path.join(git("rev-parse", "--absolute-git-dir"), "mycpu-review-asked.json")
-
-
-def choose(student, head, candidates, asked):
-    """QUESTIONS lines, different files first, not asked before when others remain."""
+def choose(student, head, candidates):
+    """QUESTIONS lines, different files first: a function of the ID, the commit and the change
+    alone, so that CI chooses the same ones again and a note cannot pick its own."""
     def key(c):
-        return hashlib.sha256(f"{student}\n{head}\n{c[0]}:{c[2].strip()}".encode()).hexdigest()
-    fresh = [c for c in candidates if c[2].strip() not in asked] or candidates
+        return hashlib.sha256(f"{student}\n{head}\n{c[0]}:{c[1]}:{c[2].strip()}".encode()).hexdigest()
     chosen, files = [], set()
-    for c in sorted(fresh, key=key):
-        if c[0] not in files or len({x[0] for x in fresh}) <= len(files):
+    for c in sorted(candidates, key=key):
+        if c[0] not in files or len({x[0] for x in candidates}) <= len(files):
             chosen.append(c)
             files.add(c[0])
         if len(chosen) == QUESTIONS:
             break
     return chosen
+
+
+def prompt_for(head, path, line):
+    prompts = ASM_PROMPTS if path.endswith(".S") else SCALA_PROMPTS
+    return prompts[int(hashlib.sha256(f"{head}\n{path}\n{line}".encode()).hexdigest(), 16) % len(prompts)]
+
+
+def questions_for(student, head, base, files):
+    """[(file, line, quote, prompt)] that the review of head asks."""
+    candidates = [c for c in added_lines(base, head, files) if worth_asking(c[0], c[2])]
+    return [(f, line, text, prompt_for(head, f, line)) for f, line, text in choose(student, head, candidates)]
 
 
 def words(text):
@@ -221,12 +227,9 @@ def check_answer(answer, quote, prompt, near):
     return None
 
 
-def student_id():
-    path = os.path.join(ROOT, "STUDENT_ID")
-    try:
-        return open(path, encoding="utf-8").read().strip() or "unset"
-    except OSError:
-        return "unset"
+def student_id(commit="HEAD"):
+    """The ID that the commit records (its STUDENT_ID), which the selection of the lines depends on."""
+    return git("show", f"{commit}:STUDENT_ID", check=False).strip() or "unset"
 
 
 def is_owner_here(up):
@@ -276,52 +279,64 @@ def ask_one(i, q, near):
 
 def cmd_ask(args):
     head = rev("HEAD")
-    up, rest, _, files = status(head, fetch=True)
+    up = upstream(fetch=True)
+    base, files = scope(head, up)
     if not files:
         print("review: no review needed: your commits since the last review change no graded file")
         return 0
-    base = rev(f"{rest[0]}^") if git("rev-list", "--parents", "-n", "1", rest[0]).count(" ") else up
-    candidates = [c for c in added_lines(base, head, files) if worth_asking(c[0], c[2])]
-    if not candidates:
+    student = student_id(head)
+    chosen = questions_for(student, head, base, files)
+    if not chosen:
         raise ReviewError("the graded change adds no line to ask about; commit your work first")
-    student = student_id()
-    path = asked_file()
-    try:
-        asked = set(json.load(open(path, encoding="utf-8")))
-    except (OSError, ValueError):
-        asked = set()
     questions = []
-    for n, (f, line, text) in enumerate(choose(student, head, candidates, asked), 1):
+    for n, (f, line, text, prompt) in enumerate(chosen, 1):
         near, exercise = context(head, f, line)
-        prompts = ASM_PROMPTS if f.endswith(".S") else SCALA_PROMPTS
-        pick = int(hashlib.sha256(f"{head}\n{f}\n{line}".encode()).hexdigest(), 16) % len(prompts)
-        q = {"file": f, "line": line, "exercise": exercise, "quote": text, "prompt": prompts[pick]}
+        q = {"file": f, "line": line, "exercise": exercise, "quote": text, "prompt": prompt}
         q["answer"] = ask_one(n, q, near)
         questions.append(q)
-        asked.add(text.strip())
     record = {"schema": SCHEMA, "student": student, "email": git("config", "user.email", check=False),
               "head": head, "base": base, "upstream": up, "files": files,
               "change_sha256": change_hash(base, head, files), "questions": questions,
               "answered_at": time.strftime("%Y-%m-%dT%H:%M:%S%z")}
     git("notes", f"--ref={NOTES}", "add", "-f", "-F", "-", head, inp=json.dumps(record, indent=1, ensure_ascii=False) + "\n")
-    with open(path, "w", encoding="utf-8") as fh:
-        json.dump(sorted(asked), fh)
     print(f"\nreview: recorded on {head[:12]} ({NOTES}); the pre-push hook pushes it with the branch")
     return 0
 
 
-def valid(record, commit):
+def scope(commit, up):
+    """(base, graded files) of the review of commit: its own commits since the reviewed ancestors
+    before it, as `make review` saw them."""
+    own = git("rev-list", commit, f"^{up}").split()
+    before = [c for c in own if c != commit and note(c) is not None]
+    rest = git("rev-list", "--reverse", commit, f"^{up}", *[f"^{c}" for c in before]).split()
+    if not rest:
+        return up, []
+    has_parent = git("rev-list", "--parents", "-n", "1", rest[0]).count(" ") > 0
+    return (rev(f"{rest[0]}^") if has_parent else up), graded_files(rest)
+
+
+def valid(record, commit, up):
     """None if a recorded review stands for commit, otherwise why not."""
     if not isinstance(record, dict) or record.get("schema") != SCHEMA or record.get("head") != commit:
         return "the note is not a review of this commit"
     qs = record.get("questions") or []
     if len(qs) < QUESTIONS:
         return f"{len(qs)} answered question(s), not {QUESTIONS}"
+    base, files = scope(commit, up)
+    if record.get("base") != base or record.get("files") != files:
+        return "the note reviews another range of commits than this one's"
     try:
         if change_hash(record["base"], commit, record["files"]) != record["change_sha256"]:
             return "the reviewed change is not this commit's"
     except ReviewError as e:
         return str(e)
+    try:
+        want = questions_for(student_id(commit), commit, record["base"], record["files"])
+    except (ReviewError, KeyError, TypeError) as e:
+        return f"the questions cannot be chosen again: {e}"
+    got = [(q.get("file"), q.get("line"), q.get("quote"), q.get("prompt")) for q in qs]
+    if got != want:
+        return "the questions are not the ones the review chooses for this commit (a note written by hand?)"
     for q in qs:
         try:
             near, _ = context(commit, q["file"], q["line"])
@@ -335,9 +350,9 @@ def valid(record, commit):
 
 def check(head, fetch):
     """None when every graded change up to head is reviewed, otherwise why not."""
-    _, rest, reviewed, files = status(head, fetch)
+    up, rest, reviewed, files = status(head, fetch)
     for c in reviewed:
-        why = valid(note(c), c)
+        why = valid(note(c), c, up)
         if why:
             return f"the review on {c[:12]}: {why}"
     if files:
