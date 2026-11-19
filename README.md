@@ -247,6 +247,23 @@ branch; the hook refuses a push without one, and the CI of your fork checks it w
 copy of `scripts/review.py`. The instructors read your answers before the live defense, where you
 explain them again. A rebase or an amend makes new commits: review again.
 
+## The Live Defense
+
+Each student explains the work in a live defense, which decides the explanation part of the grade
+(the review notes of your pushes do not; the instructors read them first). The questions are the
+defense's own, chosen with a salt that only the instructors hold, so they are not in this
+repository:
+
+- three lines that you added to graded files, which your push reviews did not ask about: explain
+  each, then change it as the instructor says (an operator, a constant, a negation), predict which
+  spec or program fails and how, and confirm it with a run on the spot;
+- a bug model: a Verilator model of the reference core of one task with one bug in it, different
+  for every student. Find the bug with your own programs and a waveform: the cycle, the signal,
+  the rule of the task that it breaks, and the exercise of yours that implements that rule.
+
+Each item is marked from 0 (no answer) to 3 (predicted and confirmed with a run). You work in your
+own checkout, without notes or an assistant.
+
 ## Commit History
 
 Every commit since the base commit (`0f7e5b6`) must carry a `Change-Id` that continues a hash chain. The id is the
