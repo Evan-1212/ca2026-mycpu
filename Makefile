@@ -331,6 +331,7 @@ check-bootcamp: bootcamp-source
 	@if [ -z "$(strip $(BOOTCAMP_SRC))" ] && [ "$(BOOTCAMP_NOTEBOOKS)" != skip ] && ls $(BOOTCAMP_DIR)/*.ipynb > /dev/null 2>&1; then \
 	    python3 scripts/bootcamp-notebooks.py $(BOOTCAMP_DIR) || \
 	        { echo "check-bootcamp: finish the exercises of the notebooks above (docs/bootcamp-map.md)" >&2; exit 1; }; \
+	    python3 scripts/bootcamp-copies.py $(BOOTCAMP_DIR) || exit 1; \
 	else echo "  SKIP    notebooks: not checked (BOOTCAMP_SRC or BOOTCAMP_NOTEBOOKS=skip is set, or the clone has none)"; fi
 	@[ -n "$(call chisel_version,build.sbt)" ] || { echo "check-bootcamp: cannot read chiselVersion from build.sbt" >&2; exit 1; }
 	@[ "$(call chisel_version,$(BOOTCAMP_DIR)/riscv/build.sbt)" = "$(call chisel_version,build.sbt)" ] || \
