@@ -314,6 +314,12 @@ check-bootcamp: bootcamp-source
 	    esac; \
 	done; \
 	[ $$todo -eq 0 ] || { echo "check-bootcamp: chisel-bootcamp Module 5 is not finished" >&2; exit 1; }
+	@# The notebooks of Modules 2 to 5 (their cells are read, not run). BOOTCAMP_SRC overlays riscv/src
+	@# only (the reference tree and its CI), so the notebooks of that clone are not the student's.
+	@if [ -z "$(strip $(BOOTCAMP_SRC))" ] && [ "$(BOOTCAMP_NOTEBOOKS)" != skip ] && ls $(BOOTCAMP_DIR)/*.ipynb > /dev/null 2>&1; then \
+	    python3 scripts/bootcamp-notebooks.py $(BOOTCAMP_DIR) || \
+	        { echo "check-bootcamp: finish the exercises of the notebooks above (docs/bootcamp-map.md)" >&2; exit 1; }; \
+	else echo "  SKIP    notebooks: not checked (BOOTCAMP_SRC or BOOTCAMP_NOTEBOOKS=skip is set, or the clone has none)"; fi
 	@[ -n "$(call chisel_version,build.sbt)" ] || { echo "check-bootcamp: cannot read chiselVersion from build.sbt" >&2; exit 1; }
 	@[ "$(call chisel_version,$(BOOTCAMP_DIR)/riscv/build.sbt)" = "$(call chisel_version,build.sbt)" ] || \
 	    { echo "check-bootcamp: $(BOOTCAMP_DIR)/riscv/build.sbt uses Chisel" \
@@ -337,6 +343,7 @@ BOOTCAMP_STAMP := $(BUILD)/bootcamp.ok
 bootcamp-gate:
 	@[ -d $(BOOTCAMP_DIR)/riscv ] && [ -z "$(strip $(BOOTCAMP_SRC))" ] || $(MAKE) --no-print-directory bootcamp-source
 	@$(DRY_RUN_STOP) set -o pipefail; key=$$({ cd $(BOOTCAMP_DIR) && pwd -P && echo '$(BOOTCAMP_COMMIT) $(BOOTCAMP_EXERCISES) $(BOOTCAMP_SPECS)' && \
+	         { ls *.ipynb 2> /dev/null || true; } | LC_ALL=C sort | xargs -r $(SHA256) && \
 	         cd riscv && find build.sbt project src programs -name target -prune -o -type f -print0 | \
 	         LC_ALL=C sort -z | xargs -0 $(SHA256); } | $(SHA256) | cut -d' ' -f1) && [ -n "$$key" ] || \
 	    { echo "bootcamp-gate: cannot read $(BOOTCAMP_DIR)/riscv" >&2; exit 1; }; \

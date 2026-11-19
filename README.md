@@ -16,17 +16,22 @@ Everything is checked in simulation with Verilator. No task needs an FPGA board.
 
 ## Prerequisites
 
-1. **chisel-bootcamp Modules 1 to 3 and Module 5 are finished.** Module 4 is optional. The seven
-   exercise files of Module 5 (`Alu`, `DecodeRows`, `BranchUnit`, `LoadExtend`, `PipelineFlush`,
-   `Forward`, `UartTx`) must be complete: `make check-bootcamp` must pass before any task builds.
+1. **Every exercise of chisel-bootcamp Modules 1 to 5 is finished**, in your own clone: the lab
+   builds on your answers and on what the notebooks taught you, and its questions assume both. The
+   seven exercise files of Module 5 (`Alu`, `DecodeRows`, `BranchUnit`, `LoadExtend`,
+   `PipelineFlush`, `Forward`, `UartTx`) and every exercise cell of the notebooks of Modules 2 to 5
+   (including 5.1 and 5.9) must be complete: `make check-bootcamp` must pass before any task builds.
 2. The host tools of the table below. `make check-deps` checks each of them by making it do real
    work, and prints an install hint for whatever is missing.
 
 ### The bootcamp gate
 
 `make check-bootcamp` fails while a `???` remains in an exercise file, naming the notebook to
-finish (5.2, 5.3, 5.4, 5.6, 5.7 or 5.8), and then runs the 13 bootcamp specs that check those
-files. Every task's `make test`, `make verilator` and `make sim` depend on it, through a stamp
+finish (5.2, 5.3, 5.4, 5.6, 5.7 or 5.8), and while a code cell of a notebook of Modules 2 to 5 still
+contains `???` (`scripts/bootcamp-notebooks.py` reads the cells and names each one; it does not run
+them, so run the cells yourself: their own checks say whether an answer is right). It then runs the
+13 bootcamp specs that check the Module 5 files. With `BOOTCAMP_SRC` (below) only the seven files
+are known, so the notebooks are not checked. Every task's `make test`, `make verilator` and `make sim` depend on it, through a stamp
 (`build/bootcamp.ok`): from a task directory the gate runs again only when the bootcamp clone,
 its pin or a file of its `riscv` project has changed since it last passed. `make check-bootcamp`
 at the top always runs it.
