@@ -386,6 +386,11 @@ One HackMD note for this task, in the format of the course handout's submission 
    different cycles (5.1), or the cycle in which the VGA swaps its buffers (5.9).
 6. **Answers to the three questions below.** Each needs a run with a parameter **you** choose:
    state the parameter, the command lines and the numbers you measured.
+   **Predict first.** For each question, commit your prediction and its derivation (a file
+   `notes/q<n>.md` of your own, in your fork of this repository) **before** the run, then commit
+   the measurement; the note shows both commits (`git log --format='%h %ad %s' -- notes/`), the
+   prediction and the measurement side by side, and explains each difference. A prediction
+   committed after its measurement does not count.
 
 ### Questions
 
@@ -396,12 +401,14 @@ from your prediction, on your variant and on one other.
 
 **Q2. Wait states.** Give the RAM a number of wait states of your choice (`RAM_WAIT=<n>`, or a
 random one, `RAM_WAIT=rand<max>:<seed>`; for example `make bench-one RAM_WAIT=<n>
-BENCH_OUT=../build/q2.csv`). Measure the CPI of one benchmark, explain the change event by event,
+BENCH_OUT=../build/q2.csv`). Predict the CPI of one benchmark from the number of its fetches and
+loads, then measure it, explain the change event by event,
 and show in a waveform (`SIM_ARGS="+trace=<file>.fst +trace-start=<cycle>"`) one fetch and one
 load with their AR, R and the cycles between.
 
 **Q3. A device access.** Write a loop of your own that stores to a device register (`PUTC`, a VGA
-palette entry) and one that stores to the RAM. Measure the cycles per store of each, explain the
+palette entry) and one that stores to the RAM. Predict the cycles per store of each, then measure
+them, explain the
 difference from the `MemPortSlave` and the crossbar, and say which `VALID` and `READY` are high in
 each cycle of one device store.
 

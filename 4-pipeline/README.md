@@ -415,6 +415,11 @@ One HackMD note for this task, in the format of the course handout's submission 
    inserted (4.2), or the cycles around a timer interrupt that lands on a division (4.7, 4.8).
 6. **Answers to the three questions below.** Each needs a run with a parameter **you** choose:
    state the parameter, the command lines and the numbers you measured.
+   **Predict first.** For each question, commit your prediction and its derivation (a file
+   `notes/q<n>.md` of your own, in your fork of this repository) **before** the run, then commit
+   the measurement; the note shows both commits (`git log --format='%h %ad %s' -- notes/`), the
+   prediction and the measurement side by side, and explains each difference. A prediction
+   committed after its measurement does not count.
 
 ### Questions
 
@@ -436,7 +441,7 @@ Derive its stall and flush cycles for each variant from the tables above, then c
 the cycles of the stall in a waveform.
 
 **Q3. Serialization.** Write a loop of your own that reads a counter with `csrr` in every
-iteration. Measure its CPI on each variant, explain the "other" cycles that each `csrr` costs, and
+iteration. Predict its CPI on each variant, then measure it, explain the "other" cycles that each `csrr` costs, and
 say what a younger instruction that reads the `csrr`'s result waits for, and why that is not a
 load-use stall.
 
