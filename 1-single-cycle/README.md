@@ -255,9 +255,6 @@ A missing ELF file is an error that names the command to build it; no spec skips
 
 Measured on the reference implementation with Verilator 5.054 and xPack GCC 15.2.0
 (`-march=rv32i -O2`). Simulation is cycle-exact, so your numbers must be **identical**, not close.
-They are those of the default configuration, which the tree builds without a `student.json` (or with
-`STUDENT_JSON=`); with yours ([student-config.md](../docs/student-config.md)) the counts that its
-options touch differ, and your report quotes your own.
 
 ### riscv-tests
 

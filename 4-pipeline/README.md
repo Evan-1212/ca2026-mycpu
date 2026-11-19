@@ -289,10 +289,7 @@ model directory of its own (`build/t4-forward`, `build/t4-stall-i2-d1`, ...).
 ## Expected Results
 
 Measured on the reference implementation with Verilator 5.054 and xPack GCC 15.2.0 (`-O2`).
-Simulation is cycle-exact, so your numbers must be **identical**. They are those of the default
-configuration, which the tree builds without a `student.json` (or with `STUDENT_JSON=`); with yours
-([student-config.md](../docs/student-config.md)) the counts that its options touch differ, and your
-report quotes your own.
+Simulation is cycle-exact, so your numbers must be **identical**.
 
 ### ACT4 (`make act4`)
 

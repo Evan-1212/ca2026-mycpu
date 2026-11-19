@@ -4,9 +4,8 @@
 // common/src/main/scala/mycpu/common/Sim.scala.
 //
 // The register offsets of the UART and of SimCtrl are those of D12 unless the
-// build defines them: a student.json (EX-08, docs/student-config.md) gives each
-// student a layout of their own, which software/Makefile passes as
-// -DUART_<reg>=... and -DSIMCTRL_<reg>=... (scripts/student.py cflags).
+// build defines them: software/Makefile can pass -DUART_<reg>=... and
+// -DSIMCTRL_<reg>=....
 
 #pragma once
 

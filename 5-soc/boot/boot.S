@@ -16,7 +16,7 @@
 
 #define RAM_BASE     0x80000000  // MemMap.ramBase
 #define SIMCTRL_BASE 0x10001000  // MemMap.simCtrlBase
-#ifndef SIMCTRL_EXIT  // EX-08: student.json may move it (software/Makefile passes -DSIMCTRL_EXIT=...)
+#ifndef SIMCTRL_EXIT  // the build may move it (software/Makefile passes -DSIMCTRL_EXIT=...)
 #define SIMCTRL_EXIT 0x00
 #endif
 #define EXIT_TRAP    63

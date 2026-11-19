@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: MIT
-# The student's configuration (EX-08, docs/student-config.md), for every Makefile that builds or
-# runs something it changes: the task Makefiles, software/Makefile and tests/act4/Makefile.
+# A configuration of the register maps, event IDs and timing (EX-08), for every Makefile that builds
+# or runs something it changes: the task Makefiles, software/Makefile and tests/act4/Makefile.
+# Nobody writes one in the course: every tree builds the default of D12.
 #
-#   STUDENT_JSON   the configuration: student.json at the top of the tree when it exists (written by
-#                  `make student ID=<id>`); STUDENT_JSON= (empty) builds the default of D12 instead
+#   STUDENT_JSON   the configuration: student.json at the top of the tree when it exists;
+#                  STUDENT_JSON= (empty) builds the default of D12 instead
 #
 # and, from it (all empty without a configuration, which is the reference default):
 #
@@ -41,14 +42,13 @@ override STUDENT_JSON := $(if $(strip $(STUDENT_JSON)),$(abspath $(STUDENT_JSON)
 export STUDENT_JSON
 
 # The goals that read the file without building anything from it: an invalid file must not stop
-# them (`make student` writes it, `student-show` reports what is wrong with it, `clean` removes the
-# models of a valid one's tag, `help` lists targets).
-STUDENT_LENIENT_GOALS := student student-show clean distclean help help-private help-ci
+# them (`clean` removes the models of a valid one's tag, `help` lists targets).
+STUDENT_LENIENT_GOALS := clean distclean help help-private help-ci
 ifneq ($(STUDENT_JSON),)
 ifneq ($(filter-out $(STUDENT_LENIENT_GOALS),$(or $(MAKECMDGOALS),$(.DEFAULT_GOAL),all)),)
 STUDENT_WORDS := $(shell python3 $(STUDENT_MK_ROOT)/scripts/student.py make $(call sq,$(STUDENT_JSON)))
 ifeq ($(filter profile=%,$(STUDENT_WORDS)),)
-$(error $(STUDENT_JSON) is not a valid student configuration (see the message above; write it with 'make student ID=<id>'))
+$(error $(STUDENT_JSON) is not a valid student configuration (see the message above))
 endif
 STUDENT_CFLAGS := $(shell python3 $(STUDENT_MK_ROOT)/scripts/student.py cflags $(call sq,$(STUDENT_JSON)))
 else

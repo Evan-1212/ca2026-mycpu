@@ -190,7 +190,7 @@ Parameters:
 | Variable | Default | Meaning |
 |----------|---------|---------|
 | `ARCH` | `rv32im` | the build of the C programs: `rv32im` (hardware multiply and divide) or `rv32i` (libgcc) |
-| `DIV_LATENCY` | 34, or the `div_latency` of your `student.json` | the divider: 34, or 66 (two cycles per bit); each has its own model directory |
+| `DIV_LATENCY` | 34 | the divider: 34, or 66 (two cycles per bit); each has its own model directory |
 | `ELF` | `muldiv.elf` | program for `make sim` |
 | `SIM_ARGS` | empty | extra harness arguments (`+retire-log=`, `+uart-log=`, `+trace=`, `+trace-start=`, `+uart-stdin`) |
 | `MAX_CYCLES` | 500000000 | the harness stops with exit code 124 after this many cycles |
@@ -244,11 +244,7 @@ A missing ELF file is an error that names the command to build it; no spec skips
 ## Expected Results
 
 Measured on the reference implementation with Verilator 5.054 and xPack GCC 15.2.0 (`-O2`).
-Simulation is cycle-exact, so your numbers must be **identical**, not close. They are those of the
-default configuration, which the tree builds without a `student.json` (or with `STUDENT_JSON=`);
-with yours ([student-config.md](../docs/student-config.md)) the counts that its options touch
-differ, and your report quotes your own.
-
+Simulation is cycle-exact, so your numbers must be **identical**, not close.
 ### riscv-tests
 
 `make test-riscv-tests`: **40 of 40** `rv32ui` tests and **8 of 8** `rv32um` tests pass. ACT4

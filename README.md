@@ -78,7 +78,6 @@ make fetch            # clone the pinned external repositories into externals/
 make check-deps       # check the host tools
 make rv32emu          # build the reference emulator
 make check-bootcamp   # your bootcamp Module 5: no ??? left, and its specs pass
-make student ID=<id>  # your configuration, student.json (docs/student-config.md)
 
 cd 1-single-cycle     # then task by task; see each task's README
 make test             # every spec of the task
@@ -133,9 +132,7 @@ they are not in your tree, and the TAs run them on your submission; each task RE
 them.
 
 Simulation is cycle-exact, so the cycle and instruction counts in each task's README are to be
-reproduced exactly, not approximately. They are those of the default configuration, which the tree
-builds without a `student.json`; with yours ([docs/student-config.md](docs/student-config.md)),
-the counts that its options touch differ, and your report quotes your own. The architecture tests (riscv-arch-test 4, with Sail as the
+reproduced exactly, not approximately. The architecture tests (riscv-arch-test 4, with Sail as the
 reference) start at T3, because their test environment needs CSRs.
 
 ## Repository Layout
@@ -182,7 +179,6 @@ Run these at the top of the repository. `make help` prints the list.
 | `check-bootcamp` | the bootcamp gate |
 | `bootcamp-overlay BOOTCAMP_SRC=<dir>` | take the seven exercise files from a plain directory |
 | `bootcamp-patch` | write your bootcamp changes to `build/bootcamp.patch` |
-| `student ID=<id>` | write `student.json`, your configuration ([docs/student-config.md](docs/student-config.md)) |
 | `test-all`, `lint-all`, `bench-all` | `make test`, `lint` or `bench` in every task |
 | `quiz-all` | `make quiz` in every task: your routines of the four quiz programs, correct? and what they cost there |
 | `bench` | `bench-all`, then the report `build/bench/report.{csv,md}` |
@@ -243,7 +239,6 @@ The commit message rules and the code style are in [CONTRIBUTING.md](CONTRIBUTIN
 - [docs/performance.md](docs/performance.md): what the benchmark counters count, and how to read
   and compare CPI
 - [docs/hpm-events.md](docs/hpm-events.md): the performance events of T3 to T5
-- [docs/student-config.md](docs/student-config.md): your configuration (`make student ID=<id>`)
 - [docs/observation.md](docs/observation.md) and [web/README.md](web/README.md): the observation
   bundles of your own runs, and the web interface that replays them;
   [docs/observation-teaching.md](docs/observation-teaching.md): how its views serve the tasks

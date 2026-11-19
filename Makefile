@@ -177,7 +177,6 @@ help:
 	@echo "  bench             bench-all, then the report $(BUILD)/bench/report.{csv,md} (BEN-03)"
 	@echo "  bench-repeat      Run 'make bench' twice; the two report.csv must be identical"
 	@echo "  bench-xcheck      Benchmark instruction counts on T3..T5 against rv32emu v1.3 (VER-06)"
-	@echo "  student ID=<id>   Write student.json, your configuration (EX-08, docs/student-config.md)"
 	@echo "  cosim-random      The 500 random programs of every task through CoSim2 (VER-05; SEEDS=, SEED_FIRST=)"
 	@echo "  check-obs         Observation bundles of T1 to T5 (OBS-03, docs/observation.md)"
 	@echo "  web-check         Course map and browser tests of the web observation interface (web/README.md)"
@@ -388,19 +387,6 @@ each_task = for t in $(TASKS); do $(MAKE) -C $$t $(1) || exit 1; done
 .PHONY: test-all lint-all bench-all quiz-all check-obs
 test-all lint-all bench-all quiz-all: %-all:
 	@+$(call each_task,$*)
-
-# EX-08: `make student ID=<your student ID>` writes student.json, your configuration: the register
-# maps of SimCtrl and the UART, the hpm event IDs, the divider latency, the CLINT tick divisor and the
-# RAM wait states (docs/student-config.md). Every make target of the tree then builds and checks
-# that configuration; `make student-show` prints it.
-.PHONY: student student-show
-student:
-	@[ -n "$(ID)" ] || { echo "student: give your student ID: make student ID=<id>" >&2; exit 1; }
-	@python3 scripts/student.py write $(call sq,$(ID)) -o student.json
-
-student-show:
-	@[ -n $(call sq,$(STUDENT_JSON)) ] || { echo "student-show: no student.json (make student ID=<id>)" >&2; exit 1; }
-	@python3 scripts/student.py show $(call sq,$(STUDENT_JSON))
 
 # VER-05: the 500 random programs of every task (T4 and T5: on each variant) through CoSim2, one sbt
 # run per task. SEEDS=<n> and SEED_FIRST=<first> choose a range of them, as in each task.

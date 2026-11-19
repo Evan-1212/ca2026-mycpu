@@ -274,10 +274,7 @@ frames.
 
 ## Expected Results
 
-The numbers below are those of the reference on Verilator 5.054. They are those of the default
-configuration, which the tree builds without a `student.json` (or with `STUDENT_JSON=`); with yours
-([student-config.md](../docs/student-config.md)) the counts that its options touch differ, and your
-report quotes your own.
+The numbers below are those of the reference on Verilator 5.054.
 
 ### ACT4 (`make act4`)
 

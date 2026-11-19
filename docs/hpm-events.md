@@ -9,9 +9,8 @@ the IDs 9 to 15 select no event (the counter stands still). Eight counters and e
 one run with event n on `mhpmcounter<n + 2>` collects them all; the benchmark markers of the
 C runtime set them up that way (`software/runtime/platform_mycpu.c`, BEN-03).
 
-The IDs below are those of the default configuration. Your `student.json` may permute them
-([student-config.md](student-config.md)); `make student-show` prints yours, and software names
-them with the `HPM_EVENT_*` macros of `software/runtime/include/mmio.h`.
+Software names the events with the `HPM_EVENT_*` macros of `software/runtime/include/mmio.h`, never
+with their numbers.
 
 The events are defined once, in `3-csr-trap/src/main/scala/mycpu/csrtrap/HpmEvents.scala`
 (`HpmEvents`, and the classifier `HpmClassifier` that every core uses), from what the core
