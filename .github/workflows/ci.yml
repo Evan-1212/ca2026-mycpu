@@ -14,7 +14,10 @@
 # tooling (a scratch repository, no history needed), and the history of the
 # repository, which must continue the Change-Id hash chain and follow the commit
 # rules. The history is verified with the scripts of the upstream repository,
-# never with the ones of the commit under test.
+# never with the ones of the commit under test. The review job checks, with the
+# upstream scripts too, that every commit of a fork that changes a graded file
+# is covered by the review recorded as a git note (scripts/review.py); the
+# owners of .github/CODEOWNERS (upstream's) need none.
 #
 # A step marked `# needs-history` needs the .git of a clone with its full history,
 # and one marked `# ci-only` installs packages or reads the results of the jobs:
@@ -82,12 +85,33 @@ jobs:
       - run: sudo apt-get update -qq && sudo apt-get install -y -qq aspell aspell-en # ci-only
       - run: bash .trusted/scripts/commitlog.sh # needs-history
 
+  review:
+    name: review
+    if: github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v7
+        with:
+          repository: sysprog21/ca2026-mycpu
+          ref: main
+          path: .trusted
+          persist-credentials: false
+      - run: git fetch --no-tags https://github.com/sysprog21/ca2026-mycpu.git +main:refs/mycpu-review/upstream # ci-only
+      - run: git fetch --no-tags origin +refs/notes/mycpu-review:refs/notes/mycpu-review || echo "no review notes in this repository" # ci-only
+      - run: python3 .trusted/scripts/review.py verify HEAD --actor "${{ github.actor }}" # ci-only
+
   ci:
     name: ci
     if: ${{ !cancelled() }}
-    needs: [blanks, scripts, history]
+    needs: [blanks, scripts, history, review]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
-      - run: echo "blanks ${{ needs.blanks.result }}, hook tools ${{ needs.scripts.result }}, history ${{ needs.history.result }}" >> "$GITHUB_STEP_SUMMARY" # ci-only
-      - run: for r in ${{ needs.blanks.result }} ${{ needs.scripts.result }} ${{ needs.history.result }}; do case $r in failure | cancelled) echo "::error::a job ended with $r"; exit 1 ;; esac; done # ci-only
+      - run: echo "blanks ${{ needs.blanks.result }}, hook tools ${{ needs.scripts.result }}, history ${{ needs.history.result }}, review ${{ needs.review.result }}" >> "$GITHUB_STEP_SUMMARY" # ci-only
+      - run: for r in ${{ needs.blanks.result }} ${{ needs.scripts.result }} ${{ needs.history.result }} ${{ needs.review.result }}; do case $r in failure | cancelled) echo "::error::a job ended with $r"; exit 1 ;; esac; done # ci-only

@@ -112,7 +112,7 @@ BOOTCAMP_SPECS := AluSpec DecoderSpec ImmGenRegFileSpec MemorySpec IsaSpec \
 # the chain tool's self-test in a scratch repository.
 GIT_HOOKS := .git/hooks/applied
 
-.PHONY: hooks uninstall-hooks prereq history repo chaintest unittest grade quiz-score my-params
+.PHONY: hooks uninstall-hooks prereq history repo chaintest unittest grade quiz-score my-params review
 hooks $(GIT_HOOKS): scripts/install-git-hooks $(wildcard scripts/*.hook)
 	@scripts/install-git-hooks
 
@@ -143,6 +143,11 @@ my-params:
 	@python3 scripts/student-id.py check
 	@python3 scripts/student-id.py params
 
+# The review of a push: questions about the lines that your commits add to the graded files, which
+# the pre-push hook and the CI require (scripts/review.py).
+review:
+	@python3 scripts/review.py ask
+
 quiz-score:
 	@for t in 4-pipeline 5-soc; do for v in Stall Forward EarlyBranch; do $(MAKE) --no-print-directory -C $$t verilator VARIANT=$$v || exit 1; done; done
 	@python3 scripts/quiz-score.py software/programs
@@ -170,6 +175,7 @@ help:
 	@echo "  history           Verify the Change-Id hash chain from the base commit (repo: and the commit rules)"
 	@echo "  chaintest         Self-test of the hash chain tool in a scratch repository"
 	@echo "  unittest          Unit tests of the scripts (scripts/test_*.py)"
+	@echo "  review            Answer the questions about your graded changes before a push (scripts/review.py)"
 	@echo "  my-params         The parameters of the report questions for your student ID (STUDENT_ID)"
 	@echo "  quiz-score        Your quiz routines on every variant of T4 and T5, scored (the lowest counts; docs in scripts/quiz-score.py)"
 	@echo "  grade             Score the public checks (scripts/grade.py --list; GRADE_ARGS=\"--only task1\")"

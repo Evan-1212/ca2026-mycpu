@@ -215,6 +215,16 @@ values, since the instructors repeat your runs with them. `scripts/student-id.py
 format. `make sim` and `make obs` also stamp your ID, git e-mail and commit into the waveforms
 (`+trace`) and bundles they write ([docs/observation.md](docs/observation.md)).
 
+## The Review of a Push
+
+A push of commits that change a graded file (a task's Scala sources, or a quiz `routines.S`)
+needs a review first: `make review` quotes two lines that you added, with the exercise around
+them, and asks a question about each, which you answer in your own words in the terminal. The
+answers are recorded as a git note on your commit, which the `pre-push` hook pushes with the
+branch; the hook refuses a push without one, and the CI of your fork checks it with the upstream
+copy of `scripts/review.py`. The instructors read your answers before the live defense, where you
+explain them again. A rebase or an amend makes new commits: review again.
+
 ## Commit History
 
 Every commit since the base commit (`0f7e5b6`) must carry a `Change-Id` that continues a hash chain. The id is the
