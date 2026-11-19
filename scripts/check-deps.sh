@@ -24,10 +24,11 @@ ACT_DIR=${ACT_DIR:-externals/riscv-arch-test}
 JAVA_MIN=11
 JAVA_RECOMMENDED=17
 RUBY_MIN=3.2
+RUBY_LIMIT=4 # the UDB Gemfile says ruby "~> 3.2", so Ruby 4 is rejected
 
 fail=0
 warn=0
-tmp=$(mktemp -d)
+tmp=$(mktemp -d) || { echo "check-deps: mktemp failed" >&2; exit 1; }
 trap 'rm -rf "$tmp"' EXIT
 
 ok()   { printf "  %-10s %s\n" "$1" "$2"; }
@@ -36,6 +37,8 @@ note() { printf "  %-10s WARN: %s\n" "$1" "$2"; warn=1; }
 
 # version_ge A B: true if version A >= version B
 version_ge() { [ "$(printf '%s\n%s\n' "$2" "$1" | sort -V | head -n1)" = "$2" ]; }
+# ruby_ok V: true if Ruby version V is in the window ACT4 accepts
+ruby_ok() { version_ge "$1" "$RUBY_MIN" && ! version_ge "$1" "$RUBY_LIMIT"; }
 
 hint_local="install it under ~/.local (~/.local/bin must be on PATH)"
 
@@ -56,10 +59,11 @@ done
 
 # JDK
 if command -v java >/dev/null 2>&1; then
-    jv=$(java -version 2>&1 | head -n1)
+    # the version line, not a "Picked up JAVA_TOOL_OPTIONS" banner
+    jv=$(java -version 2>&1 | grep -m1 ' version "')
     jmajor=$(printf '%s\n' "$jv" | sed -E 's/.*version "([0-9]+)(\.[0-9]+)*.*/\1/; s/^1$/8/')
     if ! [ "$jmajor" -ge "$JAVA_MIN" ] 2>/dev/null; then
-        bad java "$jv: JDK $JAVA_MIN or newer is required"
+        bad java "${jv:-java -version printed no version line}: JDK $JAVA_MIN or newer is required"
     elif [ "$jmajor" -ne "$JAVA_RECOMMENDED" ]; then
         note java "$jv: JDK $JAVA_RECOMMENDED is the tested version (D2)"
     else
@@ -71,7 +75,12 @@ fi
 
 # sbt
 if command -v sbt >/dev/null 2>&1; then
-    ok sbt "launcher $(sbt --script-version 2>/dev/null | tail -n1) (the build pins its own sbt version)"
+    sv=$(sbt --script-version 2>/dev/null | tail -n1)
+    if [ -n "$sv" ]; then
+        ok sbt "launcher $sv (the build pins its own sbt version)"
+    else
+        bad sbt "the launcher does not report a version; reinstall it, $hint_local"
+    fi
 else
     bad sbt "not found; $hint_local"
 fi
@@ -116,11 +125,14 @@ EOF
         if ! (cd "$tmp" && verilator --cc --exe --build --assert -j 0 -Wall \
                 --Mdir obj top.sv main.cpp >build.log 2>&1); then
             bad verilator "$vv cannot build a model (see: verilator --cc --exe --build)"
+            tail -n 15 "$tmp/build.log" | sed 's/^/             /'
         else
             "$tmp/obj/Vtop" >/dev/null 2>&1
             rc=$?
             if [ "$rc" -eq 3 ]; then
                 ok verilator "$vv (built and ran a model; --assert works)"
+            elif [ "$rc" -eq 126 ] || [ "$rc" -eq 127 ]; then
+                bad verilator "$vv built a model that cannot run (exit $rc; is TMPDIR mounted noexec?)"
             else
                 bad verilator "$vv built a model, but its assertion did not fire (exit $rc)"
             fi
@@ -159,7 +171,10 @@ void _start(void) { main(); for (;;); }
 EOF
     if "${CROSS}gcc" -march=rv32i_zicsr -mabi=ilp32 -O2 -ffreestanding -nostdlib -static \
         "$tmp/m.c" -lgcc -o "$tmp/m.elf" 2>"$tmp/gcc.log"; then
-        if "${CROSS}objdump" -d "$tmp/m.elf" | grep -qE '\s(mul|mulh|mulhsu|mulhu|div|divu|rem|remu)\s'; then
+        # capture first: a failing objdump must not look like "no M instruction"
+        if ! dis=$("${CROSS}objdump" -d "$tmp/m.elf") || [ -z "$dis" ]; then
+            bad riscv-gcc "${CROSS}objdump cannot disassemble the linked program"
+        elif grep -qE '\s(mul|mulh|mulhsu|mulhu|div|divu|rem|remu)\s' <<<"$dis"; then
             bad riscv-gcc "an rv32i_zicsr link pulls M instructions from libgcc"
         fi
     else
@@ -189,10 +204,10 @@ if command -v mise >/dev/null 2>&1; then
             rv=$("$ruby_bin" -e 'print RUBY_VERSION') &&
             bv=$(PATH="$(dirname "$ruby_bin"):$PATH" "$bundle_bin" --version) &&
             uvv=$("$uv_bin" --version); then
-            if version_ge "$rv" "$RUBY_MIN"; then
-                ok act4-env "ruby $rv, $bv, $uvv (through mise, from $ACT_DIR/.mise.toml)"
+            if ruby_ok "$rv"; then
+                ok act4-env "ruby $rv, $bv, ${uvv%% (*} (through mise, from $ACT_DIR/.mise.toml)"
             else
-                bad act4-env "mise provides ruby $rv < $RUBY_MIN"
+                bad act4-env "mise provides ruby $rv, need >= $RUBY_MIN and < $RUBY_LIMIT"
             fi
         else
             bad act4-env "mise tools missing; run: cd $ACT_DIR && mise trust .mise.toml && mise install"
@@ -206,14 +221,15 @@ else
     else
         bad uv "not found; ACT4 needs uv or mise, $hint_local"
     fi
-    if command -v ruby >/dev/null 2>&1 && version_ge "$(ruby -e 'print RUBY_VERSION')" "$RUBY_MIN"; then
-        if command -v bundle >/dev/null 2>&1; then
-            ok act4-env "ruby $(ruby -e 'print RUBY_VERSION'), $(bundle --version)"
+    rv=$(ruby -e 'print RUBY_VERSION' 2>/dev/null)
+    if [ -n "$rv" ] && ruby_ok "$rv"; then
+        if bv=$(bundle --version 2>/dev/null); then
+            ok act4-env "ruby $rv, $bv"
         else
             bad act4-env "Bundler not found (ACT4's UDB gem needs it); or install mise"
         fi
     else
-        bad act4-env "ACT4 needs Ruby >= $RUBY_MIN with Bundler; install mise into ~/.local/bin and run mise install in $ACT_DIR"
+        bad act4-env "ACT4 needs Ruby >= $RUBY_MIN and < $RUBY_LIMIT with Bundler; install mise into ~/.local/bin and run mise install in $ACT_DIR"
     fi
 fi
 

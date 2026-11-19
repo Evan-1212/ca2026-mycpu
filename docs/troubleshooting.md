@@ -51,7 +51,7 @@ not know the counter extensions. Install xPack GNU RISC-V Embedded GCC 15.2.0.
 
 ### `act4-env   FAIL: mise tools missing; run: cd externals/riscv-arch-test && mise trust .mise.toml && mise install`<br>`act4-env   FAIL: ACT4 needs Ruby >= 3.2 with Bundler; install mise into ~/.local/bin and run mise install in externals/riscv-arch-test`
 
-The architecture tests (from T3 on) need Ruby 3.2 or newer with Bundler, and uv. With mise
+The architecture tests (from T3 on) need Ruby 3.2 to 3.x with Bundler, and uv. With mise
 installed, run the two `mise` commands of the message once; they install the versions that
 riscv-arch-test pins. T1 and T2 do not use these tools, but `make check-deps` reports them for
 the whole repository. No other target depends on `make check-deps`, so until T3 a `FAIL` on this

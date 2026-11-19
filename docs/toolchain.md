@@ -23,7 +23,7 @@ its checksum from the same release page.
 | sbt | 1.13.1 | any launcher; the build pins sbt 1.13.1 itself |
 | Verilator | 5.054 | 5.042 or newer |
 | RISC-V GCC | xPack GNU RISC-V Embedded GCC 15.2.0 | GCC 15 or newer, prefix `riscv-none-elf-` |
-| mise | 2026.10.25 | from T3 on (or uv, and Ruby 3.2 or newer with Bundler) |
+| mise | 2026.10.25 | from T3 on (or uv, and Ruby 3.2 to 3.x with Bundler) |
 | clang-format | 18.1.8 | only for `make indent` and `make check-format` |
 | SDL2, qrencode | 2.0.10, 4.0.2 | optional, T5 only |
 
@@ -108,7 +108,7 @@ Older toolchains fail these checks: for example GCC 11 rejects `zicntr` and `zih
 
 ## mise 2026.10.25, for the architecture tests (from T3 on)
 
-The architecture tests (riscv-arch-test) need Ruby 3.2 or newer with Bundler, and uv. The test
+The architecture tests (riscv-arch-test) need Ruby 3.2 to 3.x with Bundler, and uv. The test
 suite pins exact versions of these in its `.mise.toml`, and [mise](https://mise.jdx.dev/) installs
 them without root.
 
@@ -135,7 +135,7 @@ On the reference host this installed Ruby 3.4.11 (prebuilt), Bundler 4.0.23, uv 
 architecture tests then installs the Ruby gems of the test framework and compiles native
 extensions, which takes a few minutes once.
 
-Without mise, `make check-deps` accepts uv on `PATH` together with a Ruby 3.2 or newer that has
+Without mise, `make check-deps` accepts uv on `PATH` together with a Ruby 3.2 to 3.x that has
 Bundler.
 
 ## What `make fetch` installs for you

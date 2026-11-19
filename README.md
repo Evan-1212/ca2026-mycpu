@@ -58,7 +58,7 @@ exercise builds on.
 | rv32emu | v1.3 (commit `73265fcc3eba`) | fetched by `make fetch`, built by `make rv32emu` |
 | chisel-bootcamp | commit `1fdc4d1b0071` | fetched by `make fetch`, or your own clone |
 | riscv-arch-test, Sail RISC-V | commit `70907fc67108`, release 0.16 | fetched by `make fetch`; used from T3 on |
-| mise, or uv with Ruby 3.2 or newer and Bundler | | for the architecture tests from T3 on |
+| mise, or uv with Ruby 3.2 to 3.x and Bundler | | for the architecture tests from T3 on |
 | clang-format | 18 | only for `make indent` and `make check-format` |
 | SDL2, qrencode | | optional, T5 only |
 
