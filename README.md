@@ -218,7 +218,8 @@ format. `make sim` and `make obs` also stamp your ID, git e-mail and commit into
 ## The Review of a Push
 
 A push of commits that change a graded file (a task's Scala sources, or a quiz `routines.S`)
-needs a review first: `make review` quotes two lines that you added, with the exercise around
+needs a review first, and `git push` triggers it: the `pre-push` hook starts the review in your
+terminal when it is missing (`make review` starts it by hand). It quotes two lines that you added, with the exercise around
 them, and asks a question about each, which you answer in your own words in the terminal. The
 answers are recorded as a git note on your commit, which the `pre-push` hook pushes with the
 branch; the hook refuses a push without one, and the CI of your fork checks it with the upstream

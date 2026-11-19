@@ -63,14 +63,24 @@ main() {
 
   # Every push needs a history that continues the hash chain of Change-Ids.
   local local_ref local_oid remote_ref remote_oid
-  # A push of graded changes needs their review (make review, scripts/review.py), and the review
-  # goes out with the branch as a git note.
+  # A push of graded changes needs their review (scripts/review.py): git push starts it when it is
+  # missing, and the review goes out with the branch as a git note.
   local reviewed=0
+  local review="$(dirname "$0")/../../scripts/review.py"
   while read -r local_ref local_oid remote_ref remote_oid; do
     [[ "$local_oid" =~ ^0+$ ]] && continue
     case "$local_ref" in refs/notes/*) continue ;; esac
     "$(dirname "$0")/../../scripts/chain.sh" verify "$local_oid" || exit 1
-    python3 "$(dirname "$0")/../../scripts/review.py" push-check "$local_oid" || exit 1
+    if ! python3 "$review" push-check "$local_oid"; then
+      # git push triggers the review: with a terminal, ask its questions now (about HEAD, the commit
+      # that make review asks about), then check again; without one, make review does it.
+      if [ "$local_oid" = "$(git rev-parse HEAD)" ] && { : < /dev/tty; } 2> /dev/null; then
+        echo -e "${CYAN}git push: the review of your graded changes (make review) starts now${NC}"
+        python3 "$review" ask < /dev/tty && python3 "$review" push-check "$local_oid" || exit 1
+      else
+        exit 1
+      fi
+    fi
     reviewed=1
   done
   if [ "$reviewed" = 1 ] && git rev-parse -q --verify refs/notes/mycpu-review > /dev/null; then

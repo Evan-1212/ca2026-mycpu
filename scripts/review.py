@@ -19,8 +19,10 @@ decides and in which cycle, or what goes wrong if it changes. Each answer needs 
     or the question, and not the same few words repeated;
   - at least one name (a signal, a register, a label) from the code around the quoted line.
 
-The questions, the answers and the hash of the reviewed change are recorded as a git note on
-HEAD (refs/notes/mycpu-review), which the pre-push hook pushes with the branch. The CI of your
+`git push` triggers the review: when it is missing, the pre-push hook asks the questions on the
+terminal (or refuses the push, without one; `make review` then asks them). The questions, the
+answers and the hash of the reviewed change are recorded as a git note on HEAD
+(refs/notes/mycpu-review), which the pre-push hook pushes with the branch. The CI of your
 fork checks with the upstream copy of this script that every graded change up to the pushed
 commit has a review. The instructors read the answers before the live defense, where you
 explain them again. A rebase or an amend makes new commits without the note: review again.
