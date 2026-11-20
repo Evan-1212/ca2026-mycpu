@@ -32,10 +32,9 @@ class WriteBack extends Module {
 
   // [CA26: Exercise 1.8] The write-back value, and when a register really changes
   // Contract: `value` is what the instruction computes for rd, by `rd_source`. `changes` is true
-  // only in a cycle in which the architectural state of some register changes because of this
-  // instruction: an instruction that is still waiting, or that halts the core, changes nothing,
-  // and neither does a write to the register that always reads zero. The retire record below
-  // reports exactly the change that happens (bootcamp 5.4; handout §T1.2 and §T1.7).
+  // exactly in a cycle in which the architectural state of some register changes because of
+  // this instruction, and the retire record below reports that change (bootcamp 5.4; handout
+  // §T1.2 and §T1.7).
   val value = ?
   val changes = ?
 

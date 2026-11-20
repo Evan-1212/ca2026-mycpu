@@ -17,13 +17,13 @@ After this task you can:
   (`Stage`, exercise 4.1);
 - derive, from the stage where each operand is produced and the stage where it is consumed, how
   many cycles an instruction must wait in each variant, and build the interlock that waits exactly
-  that long (exercises 4.2 and 4.3);
-- flush the wrong path after a taken branch, a trap, an `mret` or a `fence.i` (4.4, 4.9);
+  that long, and what ID may take from EX/MEM in each variant (exercise 4.2);
+- flush the wrong path after a taken branch, a trap, an `mret` or a `fence.i` (4.3);
 - keep traps **precise** in a pipeline: exceptions taken in program order in MEM, interrupts on the
   oldest instruction that has not committed, CSR instructions serialized, no side effect from an
-  instruction that an older one cancels, and a division abandoned and restarted (4.5 to 4.8);
+  instruction that an older one cancels, and a division abandoned and restarted (4.4 to 4.7);
 - fetch from a memory of any latency, with requests in flight that a redirect must not take back
-  but whose responses it must drop (4.10);
+  but whose responses it must drop (4.8);
 - explain every cycle in which nothing commits, event by event, and so the CPI of each variant.
 
 ### Key Characteristics
@@ -67,7 +67,7 @@ in WB has committed.
 - **Exceptions** are noted where they are found (a failed fetch in IF; an illegal word, `ecall`,
   `ebreak` in ID; a misaligned branch or jump target in EX, or in ID for `EarlyBranch`) and taken
   in MEM, together with MEM's own (a CSR access that is not allowed, a misaligned or faulting
-  access), by T3's priority (exercise 3.10, called as `mycpu.csrtrap.CPU.exception`). MEM holds
+  access), by T3's priority (exercise 3.9, called as `mycpu.csrtrap.CPU.exception`). MEM holds
   the oldest instruction, so exceptions are taken in program order; a trap flushes EX, ID and the
   fetch unit, and kills a division in EX.
 - **Interrupts** are taken on the oldest instruction that has not committed: MEM's; if MEM holds a
@@ -195,29 +195,27 @@ other (8). So `mcycle - minstret = hpm1 + hpm4 + hpm5 + hpm6 + hpm7 + hpm8` exac
 | `PipelineConfig.scala` | the variants, the configuration, the wait states (`WaitSpec`) |
 | `Stage.scala` | the stage registers, with the event of a bubble (4.1) |
 | `Hazard.scala` | the interlock of each variant (4.2) |
-| `Fetch.scala` | the fetch unit for any latency (4.10) |
-| `CPU.scala` | the pipeline: forwarding into ID (4.3), flushes (4.4), serialization (4.5), commit (4.6), interrupts (4.7), the divider (4.8), `fence.i` (4.9) |
+| `Fetch.scala` | the fetch unit for any latency (4.8) |
+| `CPU.scala` | the pipeline: forwarding into ID (4.2), flushes and `fence.i` (4.3), serialization (4.4), commit (4.5), interrupts (4.6), the divider (4.7) |
 | `WaitStates.scala` | wait states on a RAM port |
 | `Probes.scala` | the `pipe` and `csr` probe groups of the observation interface |
 | `Top.scala` | the system (`SimTop`) and the model emitter |
 
 ## CA26: Exercises
 
-Ten exercises, each marked `[CA26: Exercise 4.<n>]` in the source.
+Eight exercises, each marked `[CA26: Exercise 4.<n>]` in the source.
 
 <!-- table: exercises 4 -->
 | ID | Title | File | Blanks |
 |----|-------|------|--------|
 | 4.1 | A stage register with enable and flush | `Stage.scala` | 1 |
-| 4.2 | When an instruction must wait in ID | `Hazard.scala` | 1 |
-| 4.3 | Forwarding into ID | `CPU.scala` | 1 |
-| 4.4 | Flushes and redirects | `CPU.scala` | 1 |
-| 4.5 | Serializing CSR instructions, mret, wfi and fence.i | `CPU.scala` | 1 |
-| 4.6 | The commit stage: trap or commit | `CPU.scala` | 1 |
-| 4.7 | Where an interrupt is taken | `CPU.scala` | 1 |
-| 4.8 | The divider in the pipeline | `CPU.scala` | 1 |
-| 4.9 | FENCE.I | `CPU.scala` | 1 |
-| 4.10 | A fetch unit for a memory of any latency | `Fetch.scala` | 1 |
+| 4.2 | Stalls in ID, and forwarding into ID | `CPU.scala`, `Hazard.scala` | 2 |
+| 4.3 | Flushes and redirects, FENCE.I included | `CPU.scala` | 2 |
+| 4.4 | Serializing CSR instructions, mret, wfi and fence.i | `CPU.scala` | 1 |
+| 4.5 | The commit stage: trap or commit | `CPU.scala` | 1 |
+| 4.6 | Where an interrupt is taken | `CPU.scala` | 1 |
+| 4.7 | The divider in the pipeline | `CPU.scala` | 1 |
+| 4.8 | A fetch unit for a memory of any latency | `Fetch.scala` | 1 |
 <!-- end table -->
 
 ### Workflow
@@ -230,9 +228,9 @@ from the narrowest to the widest:
 2. Programs: `make test-programs VARIANT=<v>` for each variant, then
    `sbt "pipeline/testOnly mycpu.pipeline.HazardSpec"` (the exact counts above). Every exercise
    takes part in these: the programs use CSRs, traps, interrupts, the divider and `fence.i`, and
-   nothing commits without 4.6. A failure here points at 4.2 to 4.4 or 4.10 only when the specs of
+   nothing commits without 4.5. A failure here points at 4.2, 4.3 or 4.8 only when the specs of
    step 3 pass.
-3. 4.5 to 4.9: `sbt "pipeline/testOnly mycpu.pipeline.PreciseTrapSpec mycpu.pipeline.CounterSpec
+3. 4.4 to 4.7: `sbt "pipeline/testOnly mycpu.pipeline.PreciseTrapSpec mycpu.pipeline.CounterSpec
    mycpu.pipeline.LatencySpec"`.
 4. `make test`, the programs, then `make act4` for each variant.
 
@@ -412,14 +410,12 @@ One HackMD note for this task, in the format of the course handout's submission 
    the repository.
 5. **Two exercises explained**, at least, with **your own** waveform screenshots or `+retire-log`
    excerpts, walked through cycle by cycle. For example: the cycle in which a load-use stall is
-   inserted (4.2), or the cycles around a timer interrupt that lands on a division (4.7, 4.8).
+   inserted (4.2), or the cycles around a timer interrupt that lands on a division (4.6, 4.7).
 6. **Answers to the three questions below.** Each needs a run with a parameter **you** choose:
    state the parameter, the command lines and the numbers you measured.
-   **Predict first.** For each question, commit your prediction and its derivation (a file
-   `notes/q<n>.md` of your own, in your fork of this repository) **before** the run, then commit
-   the measurement; the note shows both commits (`git log --format='%h %ad %s' -- notes/`), the
-   prediction and the measurement side by side, and explains each difference. A prediction
-   committed after its measurement does not count.
+   **Predict first**, as the Questions section says: the note shows the commit of each prediction
+   and of its measurement (`git log --format='%h %ad %s' -- notes/`), the prediction and the
+   measurement side by side, and explains each difference.
 
 ### Questions
 
@@ -427,6 +423,15 @@ The values in these questions are assigned to you: `make my-params` (at the top 
 prints them from your student ID, which you write in the file `STUDENT_ID` (its letters in upper
 case, or `NONE` if you audit the course; `scripts/student-id.py` says more). Use those values and
 no others: the instructors repeat your runs with them. `<n>` below is your value.
+
+**Predict first, and push the prediction.** Write the prediction of each question, with its
+derivation, in `notes/t4-q<m>.md` of your fork (`notes/t4-q1.md` for Q1), commit it and push it
+**before** the run, and put the measurement and the comparison in later commits without editing the
+prediction. A run with a value of yours that is a make variable (`T4.Q1.I_WAIT` with
+`T4.Q1.D_WAIT`) does not start until its question's prediction is committed and pushed: `make`
+names the file it waits for, and the stamp of the run (`pred=` in a trace header or a bundle) names
+the commit of the prediction. GitHub records when it received that commit; a prediction that
+reached it after the measurement does not count.
 
 **Q1. Wait states.** Give the RAM your wait states on each port and run your variant
 (`T4.Q1.I_WAIT`, `T4.Q1.D_WAIT`, `T4.Q1.VARIANT`; never the `I_WAIT=2 D_WAIT=2` of the `perf` program above) (`make bench-one I_WAIT=<i> D_WAIT=<d> VARIANT=<variant>
@@ -461,8 +466,8 @@ load-use stall.
     │   ├── PipelineConfig.scala      variants, configuration, wait states
     │   ├── Stage.scala               Exercise 4.1
     │   ├── Hazard.scala              Exercise 4.2
-    │   ├── Fetch.scala               Exercise 4.10
-    │   ├── CPU.scala                 Exercises 4.3 to 4.9
+    │   ├── Fetch.scala               Exercise 4.8
+    │   ├── CPU.scala                 Exercises 4.2 to 4.7
     │   ├── WaitStates.scala          wait states on a RAM port
     │   ├── Probes.scala              the probes of the observation interface (docs/observation.md)
     │   └── Top.scala                 the system (SimTop) and the model emitter

@@ -208,7 +208,7 @@ class CPU(
   regs.io.rs2     := d.rs2
   regs.io.dbgAddr := 0.U
   // the register file is written in WB and read in ID in the same cycle (write-through)
-  // [CA26: Exercise 4.3] Forwarding into ID
+  // [CA26: Exercise 4.2] Stalls in ID, and forwarding into ID
   // Contract: `id_from_mem` is what ID's operands may take from EX/MEM in this variant, as the
   // variants table of the handout says where each variant needs a branch's operands, and what
   // `HazardUnit` waits for; `no_result` is a source that never matches. MEM/WB always reaches ID,
@@ -261,7 +261,7 @@ class CPU(
   val div_held  = RegInit(false.B)
   val div_value = Reg(UInt(32.W))
 
-  // [CA26: Exercise 4.8] The divider in the pipeline
+  // [CA26: Exercise 4.7] The divider in the pipeline
   // Contract: drive the execute stage's `valid` and `kill` (T2's `Execute`, whose header and the
   // divider's give the contract of both). A division is carried out once for each time its
   // instruction is in EX and is not canceled: an answer it got is kept above, and an instruction
@@ -375,7 +375,7 @@ class CPU(
   val oldest_pc =
     Mux(mem.valid, mm.pc, Mux(ex.valid, e.pc, Mux(head.valid, head.bits.pc, fetch.io.expected_pc)))
 
-  // [CA26: Exercise 4.7] Where an interrupt is taken
+  // [CA26: Exercise 4.6] Where an interrupt is taken
   // Contract: `take_interrupt` is high in the cycles in which the core takes the interrupt that
   // the CSR file requests (`csr.io.irq.valid`), on the oldest instruction that has not committed
   // (`oldest_pc`), as the "Precise traps" paragraph of this class describes it; `mem_waiting` and
@@ -386,7 +386,7 @@ class CPU(
   // of 3-csr-trap/README.md, "Interrupts and WFI"; Privileged spec §3.3.3; handout §T4.4).
   ?
 
-  // [CA26: Exercise 4.6] The commit stage: trap or commit
+  // [CA26: Exercise 4.5] The commit stage: trap or commit
   // Contract: drive `trap`, `commit` and `mem_free` (see their comments where they are declared)
   // for the instruction in MEM, whose exception, if it raises one, is `exception`. An interrupt
   // wins over everything MEM's instruction would do; an exception is taken when the instruction
@@ -453,9 +453,9 @@ class CPU(
   hazard.io.ex          := producer(ex.valid, e.d, e.sys, false.B)
   hazard.io.mem         := producer(mem.valid, mm.d, mm.sys, !completes)
 
-  val serial_wait   = Wire(Bool()) // ID's instruction waits for older ones (exercise 4.5)
+  val serial_wait   = Wire(Bool()) // ID's instruction waits for older ones (exercise 4.4)
   val behind_serial = Wire(Bool()) // ID's instruction waits for an older one that serializes
-  // [CA26: Exercise 4.5] Serializing CSR instructions, mret, wfi and fence.i
+  // [CA26: Exercise 4.4] Serializing CSR instructions, mret, wfi and fence.i
   // Contract: `serializing` says that the instruction in ID is one of those that the
   // "Serialization" paragraph of this class lists (`sys` and `fencei` decode them), and
   // `serial_wait` and `behind_serial` hold the instruction in ID as that paragraph describes it:
@@ -490,19 +490,19 @@ class CPU(
 
   // ======== redirects and flushes
   val id_taken  = if (early) id_issue && id_branch.valid else false.B
-  val id_fencei = Wire(Bool())     // the redirect of a fence.i (exercise 4.9)
+  val id_fencei = Wire(Bool())     // the redirect of a fence.i (exercise 4.3)
   val id_target = Wire(UInt(32.W)) // where a redirect from ID fetches from
-  // [CA26: Exercise 4.9] FENCE.I
+  // [CA26: Exercise 4.3] Flushes and redirects, FENCE.I included
   // Contract: `id_fencei` is high in the cycle in which the fence.i in ID may make the fetch unit
   // start again, and `id_target` is where ID's redirect fetches from, for a fence.i and for a
   // branch or jump resolved in ID (`id_branch`). By then every older store must have completed,
-  // which the serialization of exercise 4.5 provides, and what the fetch unit holds or has
+  // which the serialization of exercise 4.4 provides, and what the fetch unit holds or has
   // requested may be stale: the instructions after the fence.i are fetched again (Unprivileged
   // spec, "Zifencei"; T4-07; handout §T4.7).
   ?
   val halt        = trap || mret_commit // every younger instruction is canceled
   val id_redirect = Wire(Bool())        // ID redirects the fetch unit: a branch resolved there, or a fence.i
-  // [CA26: Exercise 4.4] Flushes and redirects
+  // [CA26: Exercise 4.3] Flushes and redirects, FENCE.I included
   // Contract: connect the bootcamp's `PipelineFlush` (5.6) and drive `flush_id_ex`, `flush_ex_mem`
   // (EX, MEM get a bubble in place of the instruction before), `id_redirect` and the fetch unit's
   // redirect, which also drops what the fetch unit holds and has requested: a trap or mret in MEM

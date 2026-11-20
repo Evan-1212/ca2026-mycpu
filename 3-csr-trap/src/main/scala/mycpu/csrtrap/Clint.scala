@@ -85,11 +85,11 @@ class Clint(tickDivisor: Int = 1) extends Module {
   io.msip := msip
   io.time := mtime
 
-  // [CA26: Exercise 3.8] The timer registers and the timer interrupt
+  // [CA26: Exercise 3.7] The timer registers and the timer interrupt
   // Contract: a full-word write (`write`) to one half of `mtimecmp` or of `mtime` replaces that
-  // half and leaves the other half as it is. `mtime` gains 1 in a cycle with `tick`; when a store
-  // to `mtime` and a tick fall in the same cycle, the store takes effect first and the tick counts
-  // on top of the stored value, carry into the high half included. `io.mtip` says whether the
+  // half and leaves the other half as it is. `mtime` gains 1 in a cycle with `tick`, and a store
+  // to `mtime` and a tick in the same cycle are both kept: neither is lost (`ClintSpec` checks
+  // the value that follows, carry into the high half included). `io.mtip` says whether the
   // timer interrupt is pending, from the two 64-bit registers alone, so it needs no acknowledge
   // (handout §T3.5; bootcamp 2.4 for `Cat` and bit ranges; Privileged spec §3.2.1, "Machine
   // Timer Registers", for when the interrupt is pending).

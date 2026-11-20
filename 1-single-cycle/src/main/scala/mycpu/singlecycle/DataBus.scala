@@ -29,11 +29,26 @@ class DataBus(regions: Seq[(Long, Long)]) extends Module {
 
   val select = regions.map { case (base, size) => MemMap.in(io.core.req.bits.addr, base, size) }
 
-  // [CA26: Exercise 1.7] Address decode: device select, the answer, and unmapped addresses
+  // [CA26: Exercise 1.7] Find the bug: address decode, and unmapped addresses
   // Contract: a request reaches exactly the device whose window holds its address, and that
   // device's answer (`ready`, `resp`) goes back to the core, in the same cycle if the device
   // answers in the same cycle. No device sees a request for an address outside its window. A
   // request for an address in no window is not left hanging: it is answered at once with
-  // `error`, and it has no effect anywhere (bootcamp 5.8; handout §T1.5).
-  ?
+  // `error`, and it has no effect anywhere (bootcamp 5.8; handout §T1.5). The code below
+  // compiles, but one line of it breaks this rule: find it with the specs, a retire log or a
+  // waveform, fix it, and explain the fix in your report.
+  for ((device, hit) <- io.devices.zip(select)) {
+    device.req.valid := io.core.req.valid && hit
+    device.req.bits  := io.core.req.bits
+  }
+  when(select.reduce(_ || _)) {
+    io.core.req.ready  := Mux1H(select, io.devices.map(_.req.ready))
+    io.core.resp.valid := Mux1H(select, io.devices.map(_.resp.valid))
+    io.core.resp.bits  := Mux1H(select, io.devices.map(_.resp.bits))
+  }.otherwise {
+    io.core.req.ready       := true.B
+    io.core.resp.valid      := io.core.req.valid
+    io.core.resp.bits.rdata := 0.U
+    io.core.resp.bits.error := false.B
+  }
 }

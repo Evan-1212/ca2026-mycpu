@@ -57,6 +57,13 @@ class InstructionDecode extends Module {
   imm_gen.io.inst   := io.inst
   imm_gen.io.format := ctrl.immFormat
 
+  // [CA26: Exercise 1.3] Find the bug: what an instruction does with rd
+  // Contract: `rd_write` is true exactly for the instructions that write a result to register
+  // rd, and `rd_source` then names where that result comes from: the ALU, the data memory or the
+  // link address. Instructions whose encoding has no rd field must not write (bootcamp 5.1 and
+  // 5.4; handout §T1.2). The code of this class compiles, but one line of it breaks this rule:
+  // find it with the specs, a retire log or a waveform, fix it, and explain the fix in your
+  // report (which run showed it, in which cycle and signal, and why the fix is right).
   val d = io.decoded
   d.rs1      := io.inst(19, 15)
   d.rs2      := io.inst(24, 20)
@@ -86,10 +93,7 @@ class InstructionDecode extends Module {
   d.ecall  := is_kind(Kind.Ecall)
   d.ebreak := is_kind(Kind.Ebreak)
 
-  // [CA26: Exercise 1.3] What an instruction does with rd
-  // Contract: `rd_write` is true exactly for the instructions that write a result to register
-  // rd, and `rd_source` then names where that result comes from: the ALU, the data memory or the
-  // link address. Instructions whose encoding has no rd field must not write (bootcamp 5.1 and
-  // 5.4; handout §T1.2).
-  ?
+  // what the instruction does with rd
+  d.rd_write  := is_kind(Kind.Alu) || d.load || d.store || d.jal || d.jalr
+  d.rd_source := Mux(d.load, RdSource.Load, Mux(d.jal || d.jalr, RdSource.Link, RdSource.Alu))
 }

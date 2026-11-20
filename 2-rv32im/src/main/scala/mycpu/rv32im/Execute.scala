@@ -87,14 +87,14 @@ class Execute(divLatency: Int = Divider.DIV_LATENCY, mutant: Option[String] = No
   divider.io.req.bits.divisor  := io.rs2_data
   divider.io.kill              := io.kill
 
-  // [CA26: Exercise 2.6] The stall: an instruction that takes more than one cycle
-  // Contract: a division is given to the divider once, and the instruction is `done` in the cycle
+  // The stall of a division (exercise 2.6): a division is given to the divider once, and the instruction is `done` in the cycle
   // in which the divider answers it, not before; every other instruction is done at once. The
   // header of `Divider` defines the handshake: what `req.ready` and `resp.valid` promise, and so
   // what the requester may and may not do while it waits. The core holds the instruction and its
   // operands until then, and a division whose result nobody reads (rd is x0) is carried out like
-  // any other. Mind `valid` (bootcamp 2.6 for `Decoupled` and `Valid`; handout §T2.5).
-  ?
+  // any other (bootcamp 2.6 for `Decoupled` and `Valid`; handout §T2.5).
+  divider.io.req.valid                             := io.valid && io.m.div
+  io.done                                          := !io.m.div || divider.io.resp.valid
   if (mutant.contains(Execute.NoDivStall)) io.done := true.B
 
   // [CA26: Exercise 2.7] The result of the execute stage

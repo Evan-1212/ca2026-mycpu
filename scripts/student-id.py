@@ -8,7 +8,10 @@ Usage: student-id.py check [FILE]           validate the ID file (exit 1 with th
                                             print the parameters of the questions
        student-id.py get KEY [FILE] [--id ID]
                                             print one parameter, such as T4.Q1.I_WAIT
-       student-id.py stamp [FILE]           print the stamp of a run (sim/student.mk)
+       student-id.py stamp [FILE] [RUN...]  print the stamp of a run (sim/student.mk, sim/task.mk)
+       student-id.py predicted [FILE] RUN...
+                                            refuse a run with an assigned value whose question has
+                                            no prediction committed and pushed (sim/task.mk)
 
 FILE is STUDENT_ID at the top of the tree. It holds one line: your student ID with its letters in
 upper case (F74121234, not the f74121234 of your school e-mail), or NONE if you audit the course.
@@ -25,6 +28,14 @@ report. `make my-params` prints them.
 The stamp names a run: the ID, the git e-mail, the HEAD commit (with + when tracked files differ
 from it) and a random nonce. The harness writes it into the header of a +trace FST file
 (sim/main.cpp) and obs-pack.py into the manifest of a bundle (docs/observation.md, "stamp").
+
+Predictions are binding. RUN is the configuration of a run as sim/task.mk gives it (task=4 i_wait=3
+d_wait=5 ...). A run that uses the values your ID assigns to a question of its task (T1.Q1's
+UART_DIVIDER, T1.Q2's RAM_BYTES, T3.Q2's TICK_DIVISOR, T4.Q1's I_WAIT and D_WAIT, T5.Q2's
+RAM_WAIT) waits for that question's prediction: the file notes/t<n>-q<m>.md, committed, unchanged
+since, and pushed to a remote (GitHub records when). `predicted` refuses the run until then, and
+the stamp of the run names the commit of the prediction (pred=T4.Q1@<commit>). The instructors
+compare the time GitHub received that commit with the commits that hold the measurement.
 """
 
 import hashlib
@@ -137,7 +148,58 @@ def git(*args):
         return ""
 
 
-def stamp(path):
+# a run's configuration word (sim/task.mk) -> the question key whose value it is, for the questions
+# whose assigned values are make variables of a run; T4.Q1 needs both of its waits
+RUN_KEYS = {
+    "T1.Q1": {"uart_divider": "T1.Q1.UART_DIVIDER"},
+    "T1.Q2": {"ram_bytes": "T1.Q2.RAM_BYTES"},
+    "T3.Q2": {"tick_divisor": "T3.Q2.TICK_DIVISOR"},
+    "T4.Q1": {"i_wait": "T4.Q1.I_WAIT", "d_wait": "T4.Q1.D_WAIT"},
+    "T5.Q2": {"ram_wait": "T5.Q2.RAM_WAIT"},
+}
+
+
+def parse_run(words):
+    """{name: value} of RUN words name=value; other words are left to the caller."""
+    run = {}
+    for w in words:
+        name, sep, value = w.partition("=")
+        if sep:
+            run[name] = value
+    return run
+
+
+def run_questions(student, run):
+    """The questions of the run's task whose assigned values the run uses."""
+    p = params(student)
+    found = []
+    for question, keys in RUN_KEYS.items():
+        if run.get("task") != question[1]:
+            continue
+        if all(run.get(word, "") == str(p[key]) for word, key in keys.items()):
+            found.append(question)
+    return found
+
+
+def prediction_file(question):
+    task, q = question.lower().split(".")
+    return f"notes/{task}-{q}.md"
+
+
+def prediction(question):
+    """(commit or None, why not) of the prediction of a question: committed, unchanged and pushed."""
+    path = prediction_file(question)
+    commit = git("log", "-1", "--format=%H", "--", path)
+    if not commit:
+        return None, f"{path} is not committed"
+    if git("status", "--porcelain", "--", path):
+        return None, f"{path} has changes that are not committed"
+    if not git("branch", "-r", "--contains", commit):
+        return None, f"the commit of {path} ({commit[:10]}) is not pushed to a remote"
+    return commit, ""
+
+
+def stamp(path, run=None):
     try:
         student = read_id(path)
     except IdError:
@@ -146,11 +208,43 @@ def stamp(path):
     if head != "none" and git("status", "--porcelain", "--untracked-files=no"):
         head += "+"
     email = re.sub(r"\s", "", git("config", "user.email")) or "-"
-    return f"id={student} email={email} head={head} nonce={secrets.token_hex(6)}"
+    text = f"id={student} email={email} head={head} nonce={secrets.token_hex(6)}"
+    if run and student not in ("unset", "invalid"):
+        marks = []
+        for question in run_questions(student, run):
+            commit, _ = prediction(question)
+            marks.append(f"{question}@{commit[:10] if commit else 'none'}")
+        if marks:
+            text += " pred=" + ",".join(marks)
+    return text
+
+
+def predicted(path, run):
+    """0 when the run may go on; 1, with the reason, when a prediction is missing."""
+    try:
+        student = read_id(path)
+    except IdError:
+        return 0  # no ID, no assigned values: nothing to wait for
+    missing = []
+    for question in run_questions(student, run):
+        commit, why = prediction(question)
+        if commit:
+            print(f"  PREDICT {question}: {prediction_file(question)} at {commit[:10]}, pushed")
+        else:
+            missing.append(f"{question}: {why}")
+    if not missing:
+        return 0
+    print("student-id: this run uses the values your ID assigns to " + ", ".join(m.split(":")[0] for m in missing)
+          + ", and the prediction comes first:", file=sys.stderr)
+    for m in missing:
+        print(f"  {m}", file=sys.stderr)
+    print("  Write your prediction and its derivation there, commit it and push it (git push), then run again.",
+          file=sys.stderr)
+    return 1
 
 
 def main(argv):
-    if not argv or argv[0] not in ("check", "id", "params", "get", "stamp"):
+    if not argv or argv[0] not in ("check", "id", "params", "get", "stamp", "predicted"):
         print(__doc__.split("\n\n")[1], file=sys.stderr)
         return 2
     cmd, rest = argv[0], argv[1:]
@@ -168,10 +262,14 @@ def main(argv):
             words.append(rest[i])
         i += 1
     key = words.pop(0) if cmd == "get" and words else None
+    run = parse_run(words)
+    words = [w for w in words if "=" not in w]
     path = words[0] if words else DEFAULT_FILE
     if cmd == "stamp":
-        print(stamp(path))
+        print(stamp(path, run))
         return 0
+    if cmd == "predicted":
+        return predicted(path, run)
     try:
         student = validate(override) if override is not None else read_id(path)
     except IdError as e:

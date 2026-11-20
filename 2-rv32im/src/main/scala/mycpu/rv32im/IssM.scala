@@ -10,11 +10,11 @@ import mycpu.common.IssConfig
   *
   * `Iss` decodes the M instructions, but what they compute is given to it from here
   * (`IssConfig.mulDiv`): the model of a core with M is `Iss` with the configuration that
-  * [[IssM.apply]] makes. It is the software half of this task: the multiplier and the divider
-  * are checked against it, instruction by instruction, by co-simulation. It should therefore be
-  * written from the specification, in the plainest arithmetic that says what the text says, and
-  * not as a transcription of the hardware: a model that shares a mistake with the unit it checks
-  * finds nothing.
+  * [[IssM.apply]] makes. The multiplier and the divider are checked against it, instruction by
+  * instruction, by co-simulation. It is given, not an exercise: it is written from the
+  * specification, in the plainest arithmetic that says what the text says, and independently of
+  * your hardware, so that a mistake of the hardware shows up as a mismatch instead of being
+  * repeated in its model. Read it as the specification in executable form (handout §T2.6).
   */
 object IssM {
 
@@ -29,24 +29,26 @@ object IssM {
 
   /** `mul`, `mulh`, `mulhsu` or `mulhu` of `a` and `b`. */
   private def multiply(name: String, a: Int, b: Int): Int = {
-    // [CA26: Exercise 2.8] The golden model of M
-    // Contract: the 32 bits that the instruction writes to rd: the low half of the 64-bit
-    // product for `mul`, the high half for the other three, each reading rs1 and rs2 as the
-    // specification says (Unprivileged spec, "M" extension, multiplication operations). An `Int`
-    // is 32 bits and signed, a `Long` 64 bits and signed; mind what a conversion from one to the
-    // other does to a negative number (handout §T2.6).
-    ?
+    // the 32 bits that the instruction writes to rd (Unprivileged spec, "M" extension,
+    // multiplication operations): `toLong` sign-extends, `& 0xffffffffL` reads a word unsigned
+    name match {
+      case "mul"    => a * b
+      case "mulh"   => ((a.toLong * b.toLong) >> 32).toInt
+      case "mulhsu" => ((a.toLong * (b & 0xffffffffL)) >> 32).toInt
+      case "mulhu"  => (((a & 0xffffffffL) * (b & 0xffffffffL)) >>> 32).toInt
+    }
   }
 
   /** `div`, `divu`, `rem` or `remu` of `a` by `b`. */
   private def divide(name: String, a: Int, b: Int): Int = {
-    // [CA26: Exercise 2.8] The golden model of M
-    // Contract: the quotient or the remainder of rs1 by rs2, signed or unsigned, rounded as the
-    // specification says, and its results for the two cases in which there is no quotient to
-    // compute: a division by zero, and the signed overflow (Unprivileged spec, "M" extension,
-    // division operations and the table of their special cases). The JVM throws on an `Int`
-    // division by zero (handout §T2.6).
-    ?
+    // the quotient or the remainder, and the table of special cases (Unprivileged spec, "M"
+    // extension, division operations); the JVM would throw on an `Int` division by zero
+    name match {
+      case "div"  => if (b == 0) -1 else if (a == Int.MinValue && b == -1) a else a / b
+      case "divu" => if (b == 0) -1 else Integer.divideUnsigned(a, b)
+      case "rem"  => if (b == 0) a else if (a == Int.MinValue && b == -1) 0 else a % b
+      case "remu" => if (b == 0) a else Integer.remainderUnsigned(a, b)
+    }
   }
 
   // one function value for every configuration, so that two configurations made here are equal

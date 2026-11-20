@@ -86,14 +86,19 @@ def write_file(out, name, data):
 
 
 STAMP_KEYS = ("id", "email", "head", "nonce")
+# pred: the predictions that the run waited for (scripts/student-id.py), only in a run with a value
+# that the student's ID assigns to a question
+STAMP_OPTIONAL = ("pred",)
 
 
 def stamp_of(text, elf_sha256, trace_sha256):
     """The manifest's stamp: the fields of `text` and the SHA-256 that binds them to the run."""
     fields = dict(w.split("=", 1) for w in text.split() if "=" in w)
-    if sorted(fields) != sorted(STAMP_KEYS):
-        raise ValueError(f"--stamp needs exactly {', '.join(STAMP_KEYS)}, not {text!r}")
-    bound = "\n".join([*(f"{k}={fields[k]}" for k in STAMP_KEYS), elf_sha256, trace_sha256])
+    keys = STAMP_KEYS + tuple(k for k in STAMP_OPTIONAL if k in fields)
+    if sorted(fields) != sorted(keys):
+        raise ValueError(f"--stamp needs exactly {', '.join(STAMP_KEYS)}, and may have {', '.join(STAMP_OPTIONAL)}, "
+                         f"not {text!r}")
+    bound = "\n".join([*(f"{k}={fields[k]}" for k in keys), elf_sha256, trace_sha256])
     return dict(fields, sha256=hashlib.sha256(bound.encode()).hexdigest())
 
 

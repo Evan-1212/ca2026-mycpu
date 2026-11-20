@@ -1445,7 +1445,7 @@
             "nonce",
             "sha256"
           ],
-          "description": "Who made the run (schema 1.2, optional; obs-pack.py --stamp, scripts/student-id.py stamp): the student's ID (NONE for an auditor, unset or invalid without a valid STUDENT_ID), the git e-mail, the HEAD commit (12 digits, + when tracked files differed from it) and a random nonce; sha256 is the SHA-256 of the four as key=value lines, the ELF's SHA-256 and the trace's, one per line.",
+          "description": "Who made the run (schema 1.2, optional; obs-pack.py --stamp, scripts/student-id.py stamp): the student's ID (NONE for an auditor, unset or invalid without a valid STUDENT_ID), the git e-mail, the HEAD commit (12 digits, + when tracked files differed from it) a random nonce and, in a run with a value that the student's ID assigns to a question, pred: the commits of the predictions it waited for; sha256 is the SHA-256 of these as key=value lines in this order, the ELF's SHA-256 and the trace's, one per line.",
           "properties": {
             "id": {
               "type": "string"
@@ -1459,6 +1459,10 @@
             "nonce": {
               "type": "string",
               "pattern": "^[0-9a-f]{12}$"
+            },
+            "pred": {
+              "type": "string",
+              "pattern": "^T[1-5]\\.Q[1-3]@([0-9a-f]{10}|none)(,T[1-5]\\.Q[1-3]@([0-9a-f]{10}|none))*$"
             },
             "sha256": {
               "type": "string",

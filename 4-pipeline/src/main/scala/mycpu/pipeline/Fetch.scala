@@ -76,7 +76,7 @@ class Fetch(resetPc: Long, depth: Int) extends Module {
   val keep      = Wire(Bool())            // the response of this cycle goes into the queue
   val in_flight = Wire(UInt(countBits.W)) // requests in flight after this cycle
 
-  // [CA26: Exercise 4.10] A fetch unit for a memory of any latency
+  // [CA26: Exercise 4.8] A fetch unit for a memory of any latency
   // Contract: drive `req.valid` and `keep`, and update `pc`, `expected_pc`, `outstanding` and
   // `dropping`, so that the unit keeps the rules of this class's comment: the number of
   // instructions requested and not yet handed to ID never exceeds `depth` (`queue.io.count` is

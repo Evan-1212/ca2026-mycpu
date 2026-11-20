@@ -260,12 +260,7 @@ class CsrFile(mtvecReset: Long = 0x80000000L) extends Module {
   // value `rdata` and from `operand` (the source register, or the zero-extended immediate), for
   // each of the three operations of `CsrOp` (Unprivileged spec, "Zicsr" extension, the
   // descriptions of CSRRW, CSRRS and CSRRC; bootcamp 2.3 for `MuxLookup` and bitwise operators).
-  val wdata = MuxLookup(cmd.op, operand)(
-    Seq(
-      CsrOp.Rs -> ?,
-      CsrOp.Rc -> ?
-    )
-  )
+  val wdata = ?
   io.csr.wdata := wdata
 
   val trap_taken = io.trap.exception || io.trap.interrupt
@@ -324,7 +319,7 @@ class CsrFile(mtvecReset: Long = 0x80000000L) extends Module {
   val counters: Seq[(UInt, Int, Int)] = Seq((mcycle, Address.Mcycle, 0), (minstret, Address.Minstret, 2)) ++
     (0 until programmable).map(i => (hpm_counters(i), Address.mhpmcounter(firstHpm + i), firstHpm + i))
 
-  // [CA26: Exercise 3.7] Counting, inhibiting and writing the counters
+  // [CA26: Exercise 3.6] Counting, inhibiting and writing the counters
   // Contract: at the end of every cycle, each counter of `counters` (`mcycle`, `minstret`, then
   // `mhpmcounter3..10`, selected by `hpm_events(0..7)`) takes a CSR write to one of its halves,
   // or counts, or stands still, as the "Counters" paragraph of the class comment defines.
@@ -335,7 +330,7 @@ class CsrFile(mtvecReset: Long = 0x80000000L) extends Module {
 
   // ---- interrupts (T3-03)
   val irq_cause = Wire(UInt(4.W))
-  // [CA26: Exercise 3.5] The interrupt request
+  // [CA26: Exercise 3.4] The interrupt request
   // Contract: drive `irq_cause`, `io.irq.valid` and `io.irq.wake` as `InterruptRequest` defines
   // them, from `mip`, `mie` and `mstatus_mie`. When several interrupts could be taken, the cause
   // is the one the specification ranks highest; when none can, the cause is not looked at
@@ -347,14 +342,14 @@ class CsrFile(mtvecReset: Long = 0x80000000L) extends Module {
   // ---- trap return and trap entry (T3-02)
   val mret_taken = io.mret.valid && !trap_taken
   io.mret.pc := mepc
-  // [CA26: Exercise 3.4] What MRET does to mstatus
+  // [CA26: Exercise 3.3] Trap entry and return
   // Contract: an `mret` that commits (`mret_taken`) restores the interrupt enable that trap entry
   // saved and leaves the saved copy in the state the specification gives it. `MPP` is hardwired
   // in an M-mode-only hart and needs nothing (Privileged spec §3.1.6.1, "Privilege and Global
   // Interrupt-Enable Stack in mstatus register", and §3.3.2, "Trap-Return Instructions").
   ?
 
-  // [CA26: Exercise 3.6] Where a trap goes
+  // [CA26: Exercise 3.5] Where a trap goes
   // Contract: `io.trap.handler_pc` is the address of the handler by `mtvec` (`mtvec_base` is
   // BASE, `mtvec_mode` is MODE), for an interrupt with cause `irq_cause` if `io.trap.interrupt`
   // is high and for an exception otherwise, modulo 2^32. `io.trap.interrupt` comes late in the
@@ -371,7 +366,7 @@ class CsrFile(mtvecReset: Long = 0x80000000L) extends Module {
     "trap.cause is not an exception code of this hart"
   )
 
-  // [CA26: Exercise 3.3] Trap entry
+  // [CA26: Exercise 3.3] Trap entry and return
   // Contract: in a cycle with a trap (`trap_taken`), update `mepc`, `mcause` (its two registers:
   // `mcause_interrupt`, `mcause_code`), `mtval` and the two `mstatus` bits as the specification
   // prescribes for a trap taken into M-mode, from the trap port for an exception and with cause

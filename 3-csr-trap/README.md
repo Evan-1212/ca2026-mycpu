@@ -16,7 +16,7 @@ After this task you can:
   extension mechanism, without touching a row of T2;
 - build the CSR file of an M-mode-only hart: the read and write rules of Zicsr, the three kinds of
   CSR that must not be mixed (read-only by address, WARL, driven by hardware), trap entry and
-  return, and the interrupt request (`CsrFile`, exercises 3.1 to 3.7);
+  return, and the interrupt request (`CsrFile`, exercises 3.1 to 3.6);
 - make a trap **precise**: an instruction that traps, or that an interrupt precedes, leaves no
   register, no CSR, no store, no device access and no division behind;
 - take an interrupt at any instruction boundary, also while the divider stalls (the division is
@@ -105,14 +105,14 @@ hpm8` exactly.
 
 | File | What it is |
 |------|------------|
-| `CsrFile.scala` | the CSRs, trap entry and return, the interrupt request, the counters (3.1 to 3.7) |
-| `Clint.scala` | `msip`, `mtimecmp`, `mtime` (3.8) |
+| `CsrFile.scala` | the CSRs, trap entry and return, the interrupt request, the counters (3.1 to 3.6) |
+| `Clint.scala` | `msip`, `mtimecmp`, `mtime` (3.7) |
 | `HpmEvents.scala` | the events and the cycle classifier |
 | `InstructionDecode.scala` | the decode stage: T2's table with Zicsr, `mret` and `wfi` appended as tagged rows |
-| `CPU.scala` | the core: interrupts, exceptions, WFI, traps and commit (3.9 to 3.12) |
+| `CPU.scala` | the core: interrupts, exceptions, WFI, traps and commit (3.8 to 3.11) |
 | `Top.scala` | the system (`SimTop`) and the model emitter (`divLatency`, `tickDivisor`, `mutant`) |
-| `IssCsr.scala` | the golden model's rules of Zicsr, traps and counters (3.13 to 3.15) |
-| `ClintModel.scala` | the golden model's CLINT (3.15) |
+| `IssCsr.scala` | the golden model's rules of Zicsr, traps and counters (given) |
+| `ClintModel.scala` | the golden model's CLINT (given) |
 | `Probes.scala` | the `csr` probe group of the observation interface |
 
 ### The golden model
@@ -121,30 +121,29 @@ hpm8` exactly.
 sampling of what the ISA does not determine; every rule that the exercises of this task hold
 (which CSR instructions write, which are illegal, what they write, trap entry, `mret`, which
 interrupt wins, when the counters count, the CLINT's timer) comes from `IssCsr` through
-`IssConfig.machine`. The model of this task is `IssCsr.T3` = `IssCsr(IssM(IssConfig.T3))`.
+`IssConfig.machine`. The model of this task is `IssCsr.T3` = `IssCsr(IssM(IssConfig.T3))`. Like
+T2's `IssM`, it is given, written from the specification and independently of your hardware: a
+mistake of your CSR file, CLINT or core shows up as a mismatch instead of being repeated in its
+model.
 
 ## CA26: Exercises
 
-Fifteen exercises, each marked `[CA26: Exercise 3.<n>]` in the source.
+Eleven exercises, each marked `[CA26: Exercise 3.<n>]` in the source.
 
 <!-- table: exercises 3 -->
 | ID | Title | File | Blanks |
 |----|-------|------|--------|
 | 3.1 | Which CSR instructions write, and which are illegal | `CsrFile.scala` | 1 |
-| 3.2 | The value a CSR instruction writes | `CsrFile.scala` | 2 |
-| 3.3 | Trap entry | `CsrFile.scala` | 1 |
-| 3.4 | What MRET does to mstatus | `CsrFile.scala` | 1 |
-| 3.5 | The interrupt request | `CsrFile.scala` | 1 |
-| 3.6 | Where a trap goes | `CsrFile.scala` | 1 |
-| 3.7 | Counting, inhibiting and writing the counters | `CsrFile.scala` | 1 |
-| 3.8 | The timer registers and the timer interrupt | `Clint.scala` | 1 |
-| 3.9 | Traps and commit: what an instruction that traps leaves undone | `CPU.scala` | 1 |
-| 3.10 | Which exception an instruction raises | `CPU.scala` | 1 |
-| 3.11 | Taking an interrupt at an instruction boundary | `CPU.scala` | 1 |
-| 3.12 | WFI: waiting for an interrupt | `CPU.scala` | 1 |
-| 3.13 | Zicsr in the golden model | `IssCsr.scala` | 3 |
-| 3.14 | Traps in the golden model | `IssCsr.scala` | 3 |
-| 3.15 | The counters in the golden model | `ClintModel.scala`, `IssCsr.scala` | 5 |
+| 3.2 | The value a CSR instruction writes | `CsrFile.scala` | 1 |
+| 3.3 | Trap entry and return | `CsrFile.scala` | 2 |
+| 3.4 | The interrupt request | `CsrFile.scala` | 1 |
+| 3.5 | Where a trap goes | `CsrFile.scala` | 1 |
+| 3.6 | Counting, inhibiting and writing the counters | `CsrFile.scala` | 1 |
+| 3.7 | The timer registers and the timer interrupt | `Clint.scala` | 1 |
+| 3.8 | Traps and commit: what an instruction that traps leaves undone | `CPU.scala` | 1 |
+| 3.9 | Which exception an instruction raises | `CPU.scala` | 1 |
+| 3.10 | Taking an interrupt at an instruction boundary | `CPU.scala` | 1 |
+| 3.11 | WFI: waiting for an interrupt | `CPU.scala` | 1 |
 <!-- end table -->
 
 ### Workflow
@@ -153,12 +152,11 @@ A blank does not compile, and sbt compiles a task as a whole, so no spec of this
 a blank of it, or of a task before it, is left. Fill them all; then run the specs in this order,
 which follows the dependencies, so that the first failure points at its exercise:
 
-1. 3.1 to 3.8 and 3.13 to 3.15: `sbt "csrTrap/testOnly mycpu.csrtrap.CsrSpec
+1. 3.1 to 3.7: `sbt "csrTrap/testOnly mycpu.csrtrap.CsrSpec
    mycpu.csrtrap.TrapSpec mycpu.csrtrap.InterruptSpec mycpu.csrtrap.CounterSpec
    mycpu.csrtrap.ClintSpec mycpu.csrtrap.IssTrapSpec mycpu.csrtrap.IssEquivalenceSpec"`. The last
-   one runs the CSR file and the CLINT in lockstep with your model: if both are wrong in the same
-   way it passes, the directed specs and ACT4 do not.
-2. 3.9 to 3.12: `sbt "csrTrap/testOnly mycpu.csrtrap.T3TrapSpec mycpu.csrtrap.T3InterruptSpec
+   one runs the CSR file and the CLINT in lockstep with the golden model.
+2. 3.8 to 3.11: `sbt "csrTrap/testOnly mycpu.csrtrap.T3TrapSpec mycpu.csrtrap.T3InterruptSpec
    mycpu.csrtrap.WfiSpec mycpu.csrtrap.T3CounterSpec mycpu.csrtrap.PreciseTrapSpec"`.
 3. `make test`, the programs, then `make act4`.
 
@@ -446,7 +444,7 @@ One HackMD note for this task, in the format of the course handout's submission 
    the repository.
 5. **Two exercises explained**, at least, with **your own** waveform screenshots or `+retire-log`
    excerpts, walked through cycle by cycle. For example: the cycles around a timer interrupt that
-   lands on a division (3.11), or a WFI's wait and wake-up (3.12).
+   lands on a division (3.10), or a WFI's wait and wake-up (3.11).
 6. **Answers to the three questions below.** Each needs a run with a parameter **you** choose:
    state the parameter, the command lines and the numbers you measured.
 
@@ -456,6 +454,15 @@ The values in these questions are assigned to you: `make my-params` (at the top 
 prints them from your student ID, which you write in the file `STUDENT_ID` (its letters in upper
 case, or `NONE` if you audit the course; `scripts/student-id.py` says more). Use those values and
 no others: the instructors repeat your runs with them. `<n>` below is your value.
+
+**Predict first, and push the prediction.** Write the prediction of each question, with its
+derivation, in `notes/t3-q<m>.md` of your fork (`notes/t3-q1.md` for Q1), commit it and push it
+**before** the run, and put the measurement and the comparison in later commits without editing the
+prediction. A run with a value of yours that is a make variable (`T3.Q2.TICK_DIVISOR`) does not
+start until its question's prediction is committed and pushed: `make` names the file it waits for,
+and the stamp of the run (`pred=` in a trace header or a bundle) names the commit of the
+prediction. GitHub records when it received that commit; a prediction that reached it after the
+measurement does not count.
 
 **Q1. Where does the timer land?** Copy `software/programs/irqtrap` into a program of your own
 (`software/programs/<name>/`, with a line `<name> privileged T3` in `software/programs/MANIFEST`;
@@ -468,11 +475,12 @@ division were lost, and how many cycles did the division take after the `mret`? 
 program's `cycles - instret` over its whole run, event by event (divisions, interrupted
 divisions, WFI waits, the cycles of the traps).
 
-**Q2. The tick divisor.** Build the model with your `TICK_DIVISOR` (`T3.Q2.TICK_DIVISOR`; `make verilator
-TICK_DIVISOR=<n>`; every later `make sim` needs the same `TICK_DIVISOR=<n>`) and run `irqtrap`
-and `perf`. Which lines of their output change, which do not, and why? Explain the change of
-`irqtrap`'s cycle count from the number of ticks and the wait of its two WFIs, and say why `make
-cosim-programs TICK_DIVISOR=<n>` still agrees with the golden model.
+**Q2. The tick divisor.** Before any run with it, predict `irqtrap`'s cycle count with your
+`TICK_DIVISOR` from the default run's. Then build the model with your `TICK_DIVISOR`
+(`T3.Q2.TICK_DIVISOR`; `make verilator TICK_DIVISOR=<n>`; every later `make sim` needs the same
+`TICK_DIVISOR=<n>`) and run `irqtrap` and `perf`. Which lines of their output change, which do not,
+and why? Explain the change of `irqtrap`'s cycle count from the number of ticks and the wait of its
+two WFIs, and say why `make cosim-programs TICK_DIVISOR=<n>` still agrees with the golden model.
 
 **Q3. Counters around your own code.** Write a short C function of your own (with at least one
 division and one loop) and measure it as `perf` does: event n on `mhpmcounter<n + 2>`, frozen,
@@ -491,15 +499,15 @@ counter does with that instruction.
 ├── sail-m-only.json                  the Sail override that makes Sail this hart
 └── src/
     ├── main/scala/mycpu/csrtrap/
-    │   ├── CsrFile.scala             Exercises 3.1 to 3.7
-    │   ├── Clint.scala               Exercise 3.8
+    │   ├── CsrFile.scala             Exercises 3.1 to 3.6
+    │   ├── Clint.scala               Exercise 3.7
     │   ├── HpmEvents.scala           the events and the classifier
     │   ├── InstructionDecode.scala   T2's table with Zicsr, mret and wfi
-    │   ├── CPU.scala                 Exercises 3.9 to 3.12
+    │   ├── CPU.scala                 Exercises 3.8 to 3.11
     │   ├── Probes.scala              the probes of the observation interface (docs/observation.md)
     │   ├── Top.scala                 the system (SimTop) and the model emitter
-    │   ├── IssCsr.scala              Exercises 3.13 to 3.15
-    │   └── ClintModel.scala          Exercise 3.15
+    │   ├── IssCsr.scala              the golden model's rules (given)
+    │   └── ClintModel.scala          the golden model's CLINT (given)
     └── test/scala/mycpu/csrtrap/
         ├── T3.scala                  shared helpers: the golden model, the frame of a program
         ├── CsrBench.scala Checks.scala IssLockstep.scala CsrMutants.scala (and MutantEmit)

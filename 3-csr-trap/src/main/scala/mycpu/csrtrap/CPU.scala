@@ -145,7 +145,7 @@ class CPU(
   val wfi_waiting    = RegInit(false.B)   // the WFI at the pc has waited for at least one cycle
   val wfi_mip        = RegInit(0.U(32.W)) // mip in the cycle in which the WFI at the pc was reached
 
-  // [CA26: Exercise 3.11] Taking an interrupt at an instruction boundary
+  // [CA26: Exercise 3.10] Taking an interrupt at an instruction boundary
   // Contract: `take_interrupt` is high in the cycles in which the core takes the interrupt that
   // the CSR file requests, before the instruction at the pc, as the "Traps" and "WFI" paragraphs
   // of this class describe it; in such a cycle the instruction does not execute: nothing may be
@@ -185,7 +185,7 @@ class CPU(
   val trap      = Wire(Bool()) // a trap is taken in this cycle: an interrupt, or an exception of the instruction
   val commit    = Wire(Bool()) // the instruction retires: it is over and changes the state
 
-  // [CA26: Exercise 3.12] WFI: waiting for an interrupt
+  // [CA26: Exercise 3.11] WFI: waiting for an interrupt
   // Contract: `completes` is high in the one cycle in which the instruction at the pc is over
   // (T2's rule: nothing that can make it wait has anything left to wait for), and a WFI is over
   // only when it need not wait any longer. `wfi_waiting` and `wfi_mip` follow the "WFI" paragraph
@@ -194,7 +194,7 @@ class CPU(
   // spec §3.3.3, "Wait for Interrupt"; handout §T3.3).
   ?
 
-  // [CA26: Exercise 3.9] Traps and commit: what an instruction that traps leaves undone
+  // [CA26: Exercise 3.8] Traps and commit: what an instruction that traps leaves undone
   // Contract: `trap` and `commit` as their comments above say, and `memory.io.enable`, the data
   // port's permission to act for the instruction. An interrupt wins over everything the
   // instruction would do, an exception of the instruction over its own effects; the class comment
@@ -249,7 +249,7 @@ class CPU(
     record.cause     := exception.bits.cause
     record.tval      := exception.bits.tval
   }
-  // an interrupt's own fields, whatever `trap` (exercise 3.9) says
+  // an interrupt's own fields, whatever `trap` (exercise 3.8) says
   when(take_interrupt) {
     record.inst  := 0.U // the instruction did not execute
     record.cause := csr.io.irq.mcause
@@ -296,7 +296,7 @@ object CPU {
     */
   def exception(c: ExceptionCauses): Valid[RaisedException] = {
     val exception = Wire(Valid(new RaisedException))
-    // [CA26: Exercise 3.10] Which exception an instruction raises
+    // [CA26: Exercise 3.9] Which exception an instruction raises
     // Contract: `exception.valid` says that the instruction raises an exception, and
     // `exception.bits` gives its code (`mycpu.common.Trap`) and its `mtval` value, as T3-02 lists
     // them per cause. Several causes can hold for one instruction, in one stage or in more: the

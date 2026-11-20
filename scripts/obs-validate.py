@@ -146,12 +146,13 @@ def validate(args):
 
     stamp = manifest.get("stamp")
     if stamp is not None:  # schema 1.2: bound to this run's ELF and trace
-        keys = ("id", "email", "head", "nonce")
+        keys = ("id", "email", "head", "nonce") + (("pred",) if "pred" in stamp else ())
         bound = "\n".join([*(f"{k}={stamp[k]}" for k in keys), manifest["header"]["elf_sha256"],
                            manifest["sources"]["trace_sha256"]])
         if hashlib.sha256(bound.encode()).hexdigest() != stamp["sha256"]:
             raise ObsError("the stamp is not the one of this run (its SHA-256 does not match the ELF and the trace)")
-        print(f"obs-validate: {bundle}: made by {stamp['id']} ({stamp['email']}) at {stamp['head']}, nonce {stamp['nonce']}")
+        print(f"obs-validate: {bundle}: made by {stamp['id']} ({stamp['email']}) at {stamp['head']}, nonce {stamp['nonce']}"
+              + (f", predictions {stamp['pred']}" if "pred" in stamp else ""))
 
     summary = f"obs-validate: {bundle}: schema {manifest['schema']}, {run['count']} cycles from {run['first']}, "
     if log_records is None:

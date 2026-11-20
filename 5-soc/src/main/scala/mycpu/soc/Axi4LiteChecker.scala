@@ -49,12 +49,14 @@ class Axi4LiteChecker(maxOutstanding: Int = 1) extends Module {
   private def handshake[T <: Data](name: String, channel: DecoupledIO[T]): Unit = {
     val waiting = RegNext(channel.valid && !channel.ready, false.B)
     assert(!waiting || channel.valid, s"AXI4-Lite: ${name}VALID fell before ${name}READY")
-    // [CA26: Exercise 5.6] The checker's rule for a stable payload
+    // [CA26: Exercise 5.6] Find the bug: the checker's rule for a stable payload
     // Contract: `stable` is false exactly in a cycle that breaks rule 2 of this class's
-    // description on `channel`, whose payload is `channel.bits`, a bundle. In `waiting` you have
-    // what rule 1 needed of the previous cycle (AMBA AXI4-Lite spec §A3.2.1, "Handshake
-    // process"; bootcamp 2.4 for `RegNext`; handout §T5.2).
-    val stable = ?
+    // description on `channel`, whose payload is `channel.bits`, a bundle (AMBA AXI4-Lite spec
+    // §A3.2.1, "Handshake process"; bootcamp 2.4 for `RegNext`; handout §T5.2). The rule below
+    // compiles, but it is wrong: a checker that is wrong blames a correct design, or lets a wrong
+    // one pass. Find what it gets wrong with the specs and a waveform, fix it, and explain the fix
+    // in your report.
+    val stable = !channel.valid || channel.bits.asUInt === RegNext(channel.bits.asUInt)
     assert(stable, s"AXI4-Lite: the $name payload changed while ${name}VALID waited for ${name}READY")
   }
   handshake("AW", io.axi.aw)

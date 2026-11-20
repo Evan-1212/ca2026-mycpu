@@ -241,7 +241,6 @@ class Vga(pixelDiv: Int = 2, pixelShift: Int = 0, mutant: Option[String] = None)
   // Contract: a write of 1 to `CTRL.swap` is remembered in `swap_pending`. A remembered request
   // takes effect in the cycle with `vblank_start` and at no other time: the other buffer becomes
   // the front buffer, `swap_count` counts it, and the request is forgotten. A request written in
-  // that same cycle is not lost: it is still pending afterwards (bootcamp 2.3: the last
-  // connection wins; handout §T5.8).
+  // that same cycle is not lost: it is still pending afterwards (handout §T5.8).
   ?
 }

@@ -67,7 +67,7 @@ class HazardUnit(variant: Variant) extends RawModule {
       ((io.id.uses_rs1 && io.id.rs1 === p.rd) || (io.id.uses_rs2 && io.id.rs2 === p.rd))
 
   val forward = Wire(Bool()) // the interlock of `Forward`, which `EarlyBranch` shares
-  // [CA26: Exercise 4.2] When an instruction must wait in ID
+  // [CA26: Exercise 4.2] Stalls in ID, and forwarding into ID
   // Contract: `stall` is high exactly when the instruction in ID (`io.id`, if valid) would leave ID
   // in this cycle without one of its operands being available at the stage where the variant
   // takes it, as the class comment describes it per variant: the producer in EX is one stage

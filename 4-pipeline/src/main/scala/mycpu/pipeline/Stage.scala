@@ -56,11 +56,10 @@ object Stage {
     val r = RegInit(empty)
     // [CA26: Exercise 4.1] A stage register with enable and flush
     // Contract: at each clock edge the register takes `next` when `enable` is high, a bubble
-    // when `flush` is high, and keeps what it holds when neither is. When both are high, the
-    // instruction in `next` is on a path that must not go on (a flush is a cancellation that the
-    // stage register itself performs), so the bubble wins; a flush bubble is counted as a flush
-    // (its `bubble` is `flushEvent`). `bits` of a bubble mean nothing (bootcamp 5.6, `Stage`;
-    // handout §T4.1).
+    // when `flush` is high, and keeps what it holds when neither is. When both are high, it does
+    // what a stall and a cancellation that meet require (work it out in handout §T4.1; `StageSpec`
+    // checks it). A flush bubble is counted as a flush (its `bubble` is `flushEvent`). `bits` of
+    // a bubble mean nothing (bootcamp 5.6, `Stage`).
     ?
     r
   }

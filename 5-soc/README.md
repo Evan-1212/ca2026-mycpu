@@ -163,7 +163,7 @@ Nine exercises, each marked `[CA26: Exercise 5.<n>]` in the source.
 | 5.3 | The grant | `Axi4LiteXbar.scala` | 2 |
 | 5.4 | The way back, and an address that no slave owns | `Axi4LiteXbar.scala` | 2 |
 | 5.5 | The word of a synchronous-read memory on the R channel | `Axi4LiteSlave.scala` | 1 |
-| 5.6 | The checker's rule for a stable payload | `Axi4LiteChecker.scala` | 1 |
+| 5.6 | Find the bug: the checker's rule for a stable payload | `Axi4LiteChecker.scala` | none: a bug to find |
 | 5.7 | Video timing: scan counters, visible area and sync pulses | `Vga.scala` | 1 |
 | 5.8 | Pixel fetch: framebuffer address, x4 scaling and pipeline alignment | `Vga.scala` | 1 |
 | 5.9 | Buffer swap at vblank | `Vga.scala` | 1 |
@@ -386,11 +386,9 @@ One HackMD note for this task, in the format of the course handout's submission 
    different cycles (5.1), or the cycle in which the VGA swaps its buffers (5.9).
 6. **Answers to the three questions below.** Each needs a run with a parameter **you** choose:
    state the parameter, the command lines and the numbers you measured.
-   **Predict first.** For each question, commit your prediction and its derivation (a file
-   `notes/q<n>.md` of your own, in your fork of this repository) **before** the run, then commit
-   the measurement; the note shows both commits (`git log --format='%h %ad %s' -- notes/`), the
-   prediction and the measurement side by side, and explains each difference. A prediction
-   committed after its measurement does not count.
+   **Predict first**, as the Questions section says: the note shows the commit of each prediction
+   and of its measurement (`git log --format='%h %ad %s' -- notes/`), the prediction and the
+   measurement side by side, and explains each difference.
 
 ### Questions
 
@@ -398,6 +396,15 @@ The values in these questions are assigned to you: `make my-params` (at the top 
 prints them from your student ID, which you write in the file `STUDENT_ID` (its letters in upper
 case, or `NONE` if you audit the course; `scripts/student-id.py` says more). Use those values and
 no others: the instructors repeat your runs with them. `<n>` below is your value.
+
+**Predict first, and push the prediction.** Write the prediction of each question, with its
+derivation, in `notes/t5-q<m>.md` of your fork (`notes/t5-q1.md` for Q1), commit it and push it
+**before** the run, and put the measurement and the comparison in later commits without editing the
+prediction. A run with a value of yours that is a make variable (`T5.Q2.RAM_WAIT`) does not start
+until its question's prediction is committed and pushed: `make` names the file it waits for, and
+the stamp of the run (`pred=` in a trace header or a bundle) names the commit of the prediction.
+GitHub records when it received that commit; a prediction that reached it after the measurement
+does not count.
 
 **Q1. The price of the bus.** Take your benchmark and variant (`T5.Q1.BENCHMARK`,
 `T5.Q1.VARIANT`). Predict, from T4's numbers of the

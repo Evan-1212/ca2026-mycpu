@@ -33,17 +33,12 @@ class Multiplier extends RawModule {
   })
 
   // [CA26: Exercise 2.2] One signed multiplier for four instructions
-  // Contract: each operand is widened to 33 bits so that, read as a signed 33-bit number, it has
-  // the value the instruction gives it; `a_signed` and `b_signed` say whether the instruction
-  // reads that operand as a two's complement number. The signed 33 x 33 product then holds the
-  // instruction's 64-bit product in its low 64 bits, and `result` is the half the instruction
-  // returns (Unprivileged spec, "M" extension, multiplication operations; bootcamp 2.4 and 2.7
-  // for widths and signed arithmetic; handout §T2.2).
-  val a_signed = ?
-  val b_signed = ?
-  val a_wide   = Cat(a_signed && io.a(31), io.a).asSInt
-  val b_wide   = Cat(b_signed && io.b(31), io.b).asSInt
-  val product  = (a_wide * b_wide)(63, 0)
+  // Contract: `product` is the 64-bit product of `a` and `b` as the instruction reads them, each
+  // operand as a two's complement number or as an unsigned one, from the one signed multiplier
+  // of this class; `result` is the half the instruction returns (Unprivileged spec, "M"
+  // extension, multiplication operations; bootcamp 2.4 and 2.7 for widths and signed
+  // arithmetic; handout §T2.2).
+  val product = ?
   // [CA26: Exercise 2.2] One signed multiplier for four instructions
   // Contract: the half of `product` that `op` returns.
   io.result := ?

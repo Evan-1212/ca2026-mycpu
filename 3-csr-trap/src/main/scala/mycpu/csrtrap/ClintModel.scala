@@ -39,27 +39,24 @@ class ClintModel(base: Long = MemMap.clintBase, tickDivisor: Int = 1)
     case _          => 0
   }
 
-  // [CA26: Exercise 3.15] The counters in the golden model
-  // Contract: the timer, as this class's comment and `Clint`'s define it: a store (`data`) to a
-  // half of `mtimecmp` or `mtime` replaces that half alone (`ModelDevice.withHalf`), `elapse(n)`
-  // lets `n` steps pass, `mtip` is the timer interrupt (Privileged spec §3.2.1; handout §T3.5).
+  // a store (`data`) to a half of `mtimecmp` or `mtime` replaces that half alone, `elapse(n)` lets
+  // `n` steps pass, `mtip` is the timer interrupt (Privileged spec §3.2.1; handout §T3.5)
   protected def writeWord(offset: Int, data: Long): Unit = offset match {
     case Msip                    => msip = (data & 1) != 0
     case MtimecmpLo | MtimecmpHi =>
-      mtimecmp = ?
-    case MtimeLo | MtimeHi => mtime = ?
+      mtimecmp = ModelDevice.withHalf(mtimecmp, offset == MtimecmpHi, data)
+    case MtimeLo | MtimeHi => mtime = ModelDevice.withHalf(mtime, offset == MtimeHi, data)
     case _                 => ()
   }
 
-  // [CA26: Exercise 3.15] The counters in the golden model
-  // Contract: see above; `phase` counts the steps since the last tick.
+  // `phase` counts the steps since the last tick
   override def elapse(n: Long): Unit = {
-    ?
+    phase += n
+    mtime += phase / tickDivisor
+    phase %= tickDivisor
   }
 
-  // [CA26: Exercise 3.15] The counters in the golden model
-  // Contract: see above: whether the timer interrupt is pending.
-  def mtip: Boolean = ?
+  def mtip: Boolean = java.lang.Long.compareUnsigned(mtime, mtimecmp) >= 0
 
   override protected def kindOf(offset: Int): ReadKind = offset match {
     case MtimeLo => ReadKind.Counter(Iss.timeCounter, high = false)

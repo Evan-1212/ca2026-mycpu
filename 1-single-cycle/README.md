@@ -142,20 +142,25 @@ bootcamp clone; `make check-bootcamp` then runs the bootcamp's own tests again.
 
 ## CA26: Exercises
 
-Ten exercises, each marked `[CA26: Exercise 1.<n>]` in the source. A blank is a Scala `?`, which
-does not compile (`not found: value ?`) until you replace it. `EXERCISES.md` at the top of the
-repository lists the file and line of every blank.
+Ten exercises, each marked `[CA26: Exercise 1.<n>]` in the source: eight with blanks, and two
+(1.3 and 1.7) to find a bug in. A blank is a Scala `?`, which does not compile (`not found: value
+?`) until you replace it. `EXERCISES.md` at the top of the repository lists the file and line of
+every blank, and the header of every find-the-bug exercise.
+
+A find-the-bug exercise has no blank: its code is given, compiles, and breaks the rule its header
+states in one place. Find the bug with the specs, a retire log or a waveform, fix it, and explain
+the fix in your report: which run showed it, in which cycle and signal, and why the fix is right.
 
 <!-- table: exercises 1 -->
 | ID | Title | File | Blanks |
 |----|-------|------|--------|
 | 1.1 | Next-PC selection and PC update | `InstructionFetch.scala` | 1 |
 | 1.2 | Zifencei, and words the bootcamp decoder does not know | `InstructionDecode.scala` | 3 |
-| 1.3 | What an instruction does with rd | `InstructionDecode.scala` | 1 |
+| 1.3 | Find the bug: what an instruction does with rd | `InstructionDecode.scala` | none: a bug to find |
 | 1.4 | Control transfers: the redirect, and a target that is no instruction address | `Execute.scala` | 1 |
 | 1.5 | Alignment, and the byte lanes of a store | `MemoryAccess.scala` | 1 |
 | 1.6 | Sending the request, waiting for the answer, and what the access moved | `MemoryAccess.scala` | 4 |
-| 1.7 | Address decode: device select, the answer, and unmapped addresses | `DataBus.scala` | 1 |
+| 1.7 | Find the bug: address decode, and unmapped addresses | `DataBus.scala` | none: a bug to find |
 | 1.8 | The write-back value, and when a register really changes | `WriteBack.scala` | 2 |
 | 1.9 | The halt causes, stage by stage | `CPU.scala` | 1 |
 | 1.10 | The retire record of an instruction that completes | `CPU.scala` | 1 |
@@ -429,26 +434,37 @@ prints them from your student ID, which you write in the file `STUDENT_ID` (its 
 case, or `NONE` if you audit the course; `scripts/student-id.py` says more). Use those values and
 no others: the instructors repeat your runs with them. `<n>` below is your value.
 
-**Q1. The UART as console.** Take your `UART_DIVIDER` (`T1.Q1.UART_DIVIDER`) and build the
-model with it (`make verilator UART_DIVIDER=<n>`; every later `make sim` needs the same
-`UART_DIVIDER=<n>`). Build `strings` with the UART as console into a directory of its own (`make -C
-../software strings CONSOLE_UART=1 BUILD=../build/uart`), run it (`make sim UART_DIVIDER=<n>
-ELF=../build/uart/sw/mycpu/rv32i/strings.elf`) and compare `cycles` and `instret` with the
-SimCtrl console build (33624 each). Is `cycles` still equal to `instret` for your divider, that
-is, did the core ever wait for the UART? Explain your answer from `software/runtime/uart.c`, and
-say where the extra instructions come from. Predict both counts for a second divider of your
-choice from your first measurement, then measure them. Finally, describe what a program that
-writes `TXDATA` without reading `STATUS` first would change in these two numbers, and which
-exercises of this task decide whether it prints every character.
+**Predict first, and push the prediction.** Write the prediction of each question, with its
+derivation, in `notes/t1-q<m>.md` of your fork (`notes/t1-q1.md` for Q1), commit it and push it
+**before** the run, and put the measurement and the comparison in later commits without editing the
+prediction. A run with a value of yours that is a make variable (`T1.Q1.UART_DIVIDER`,
+`T1.Q2.RAM_BYTES`) does not start until its question's prediction is committed and pushed: `make`
+names the file it waits for, and the stamp of the run (`pred=` in a trace header or a bundle) names
+the commit of the prediction. GitHub records when it received that commit; a prediction that
+reached it after the measurement does not count.
 
-**Q2. A smaller RAM.** Take your `RAM_BYTES` (`T1.Q2.RAM_BYTES`), build
-the model with it (`make verilator RAM_BYTES=<n>`) and run `quicksort` on it (`make sim
-RAM_BYTES=<n> ELF=../build/sw/mycpu/rv32i/quicksort.elf SIM_ARGS=+retire-log=q2.log`). Report the
-harness's exit code and the last line it prints, and explain them from the `+retire-log`: which
-instruction is the last record, which address does it use, where does that address come from
-(`software/runtime/link.ld`), and which path through `DataBus` and `CPU` turns it into this exit
-code? Then give the smallest change outside the RTL that makes the program run on your RAM, and
-show that it does.
+**Q1. The UART as console.** Before any run with it, predict from `software/runtime/uart.c` whether
+the core will wait for the UART with your `UART_DIVIDER` (`T1.Q1.UART_DIVIDER`), and by how many
+cycles in all. Then build the model with it (`make verilator UART_DIVIDER=<n>`; every later `make
+sim` needs the same `UART_DIVIDER=<n>`). Build `strings` with the UART as console into a directory
+of its own (`make -C ../software strings CONSOLE_UART=1 BUILD=../build/uart`), run it (`make sim
+UART_DIVIDER=<n> ELF=../build/uart/sw/mycpu/rv32i/strings.elf`) and compare `cycles` and `instret`
+with the SimCtrl console build (33624 each). Is `cycles` still equal to `instret` for your divider,
+that is, did the core ever wait for the UART? Explain your answer from `software/runtime/uart.c`,
+and say where the extra instructions come from. Predict both counts for a second divider of your
+choice from your first measurement, then measure them. Finally, describe what a program that writes
+`TXDATA` without reading `STATUS` first would change in these two numbers, and which exercises of
+this task decide whether it prints every character.
+
+**Q2. A smaller RAM.** Before any run with it, predict from `software/runtime/link.ld` what
+`quicksort` does on a RAM of your `RAM_BYTES` (`T1.Q2.RAM_BYTES`): runs, faults or hangs, and at
+which address. Then build the model with it (`make verilator RAM_BYTES=<n>`) and run `quicksort` on
+it (`make sim RAM_BYTES=<n> ELF=../build/sw/mycpu/rv32i/quicksort.elf
+SIM_ARGS=+retire-log=q2.log`). Report the harness's exit code and the last line it prints, and
+explain them from the `+retire-log`: which instruction is the last record, which address does it
+use, where does that address come from (`software/runtime/link.ld`), and which path through
+`DataBus` and `CPU` turns it into this exit code? Then give the smallest change outside the RTL
+that makes the program run on your RAM, and show that it does.
 
 **Q3. Counting loops.** Build Dhrystone with your two `LOOPS` values (`T1.Q3.LOOPS`; `make -C
 ../software dhrystone LOOPS=<n> BUILD=../build/loops<n>`) and run each (`make sim
@@ -469,10 +485,10 @@ between them.
 └── src/
     ├── main/scala/mycpu/singlecycle/
     │   ├── InstructionFetch.scala    Exercise 1.1
-    │   ├── InstructionDecode.scala   Exercises 1.2, 1.3
+    │   ├── InstructionDecode.scala   Exercises 1.2, 1.3 (find the bug)
     │   ├── Execute.scala             Exercise 1.4
     │   ├── MemoryAccess.scala        Exercises 1.5, 1.6
-    │   ├── DataBus.scala             Exercise 1.7
+    │   ├── DataBus.scala             Exercise 1.7 (find the bug)
     │   ├── WriteBack.scala           Exercise 1.8
     │   ├── CPU.scala                 Exercises 1.9, 1.10
     │   ├── Probes.scala              the probes of the observation interface (docs/observation.md)

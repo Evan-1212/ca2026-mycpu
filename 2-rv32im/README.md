@@ -129,21 +129,29 @@ instruction it executes, so T1 does not need this task to build.
 
 ## CA26: Exercises
 
-Eight exercises, each marked `[CA26: Exercise 2.<n>]` in the source. A blank is a Scala `?`,
-which does not compile until you replace it. `EXERCISES.md` at the top of the repository lists
-the file and line of every blank.
+Seven exercises, each marked `[CA26: Exercise 2.<n>]` in the source: six with blanks, and one
+(2.6) to find a bug in. A blank is a Scala `?`, which does not compile until you replace it.
+`EXERCISES.md` at the top of the repository lists the file and line of every blank.
+
+A find-the-bug exercise has no blank: its code is given, compiles, and breaks the rule its header
+states in one place. Find the bug with the specs, a retire log or a waveform, fix it, and explain
+the fix in your report: which run showed it, in which cycle and signal, and why the fix is right.
+
+The golden model of M (`IssM.scala`) is given: it is written from the specification and
+independently of your hardware, so that a mistake of your multiplier or divider shows up as a
+co-simulation mismatch instead of being repeated in its model. Read it as the specification of
+M in executable form.
 
 <!-- table: exercises 2 -->
 | ID | Title | File | Blanks |
 |----|-------|------|--------|
 | 2.1 | The rows of the decode table | `Decode.scala` | 4 |
-| 2.2 | One signed multiplier for four instructions | `Multiplier.scala` | 3 |
+| 2.2 | One signed multiplier for four instructions | `Multiplier.scala` | 2 |
 | 2.3 | The iteration step | `Divider.scala` | 1 |
 | 2.4 | Special cases and signs | `Divider.scala` | 5 |
 | 2.5 | Handshake, state transitions and kill | `Divider.scala` | 1 |
-| 2.6 | The stall: an instruction that takes more than one cycle | `CPU.scala`, `Execute.scala` | 2 |
+| 2.6 | Find the bug: the stall of an instruction that takes more than one cycle | `CPU.scala` | none: a bug to find |
 | 2.7 | The result of the execute stage | `Execute.scala` | 1 |
-| 2.8 | The golden model of M | `IssM.scala` | 2 |
 <!-- end table -->
 
 ### Workflow
@@ -151,9 +159,9 @@ the file and line of every blank.
 All blanks of this task are in one sbt project, so nothing compiles until every one is filled.
 A workable order:
 
-1. 2.1, 2.2 and 2.8 first (tables and arithmetic). Then 2.3 to 2.5; a first version of the
-   divider may answer in the wrong cycle and still let everything compile. Then 2.6 and 2.7, so
-   that the project compiles.
+1. 2.1 and 2.2 first (tables and arithmetic). Then 2.3 to 2.5; a first version of the divider
+   may answer in the wrong cycle and still let everything compile. Then 2.7, so that the project
+   compiles; 2.6 compiles as it is given, and its bug shows in the specs of step 3.
 2. Run the unit specs, at the top of the repository as in T1:
    `sbt "rv32im/testOnly mycpu.rv32im.MulSpec mycpu.rv32im.DivSpec mycpu.rv32im.IssMSpec"`.
    The specs that check the table of 2.1 on its own are held back (see the Test Suite); a wrong
@@ -482,10 +490,10 @@ which spec would fail first, if `completes` did not wait for the execute stage.
     │   ├── Multiplier.scala          Exercise 2.2
     │   ├── Divider.scala             Exercises 2.3, 2.4, 2.5
     │   ├── InstructionDecode.scala   the decode stage
-    │   ├── Execute.scala             Exercises 2.6, 2.7
-    │   ├── CPU.scala                 Exercise 2.6
+    │   ├── Execute.scala             Exercise 2.7, and the divider's handshake of 2.6
+    │   ├── CPU.scala                 Exercise 2.6 (find the bug)
     │   ├── Top.scala                 the system (SimTop) and the model emitter
-    │   └── IssM.scala                Exercise 2.8
+    │   └── IssM.scala                the golden model of M (given)
     └── test/scala/mycpu/rv32im/
         ├── T2.scala                  shared helpers: golden model, ELF files, expected stalls
         ├── Operands.scala  MModel.scala  MModelSpec.scala  DivProbe.scala
