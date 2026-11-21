@@ -57,7 +57,7 @@ class Axi4LiteReadChannel(syncData: Boolean) extends Module {
   if (syncData) {
     val fresh = RegNext(io.ar.fire, false.B) // `io.data` is the word of the read accepted a cycle ago
     val kept  = Reg(UInt(Axi4Lite.dataBits.W))
-    // [CA26: Exercise 5.5] The word of a synchronous-read memory on the R channel
+    // [CA26: Exercise 5.4] The word of a synchronous-read memory on the R channel
     // Contract: `io.data` holds the word of a read for one cycle only, the cycle after the read
     // was accepted (`fresh`); in any other cycle it is undefined. `RDATA` must be that word in
     // every cycle from the first with `RVALID` to the R transfer, which wait states or a low

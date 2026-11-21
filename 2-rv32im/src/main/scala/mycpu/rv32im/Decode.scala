@@ -165,7 +165,7 @@ object Decode {
   def fromBootcamp(row: riscv.Row): ControlRow = {
     val alu = ControlRow(aluOp = row.aluOp, imm = row.imm, a = row.a, b = row.b)
     def writes(source: ResultSource.Type): ControlRow = alu.copy(rdWrite = true, rdSource = Some(source))
-    // [CA26: Exercise 2.1] The rows of the decode table
+    // [CA26: Exercise 2.1] The rows of the decode table, and the result of the execute stage
     // Contract: for each of the bootcamp's kinds, `alu` with the flags of that kind set: what
     // the instruction is (`load`, `store`, `branch`, `jal`, `jalr`, `ecall`, `ebreak`), whether
     // it writes `rd`, and from where (`writes`). A kind that only moves the pc on sets nothing
@@ -187,11 +187,8 @@ object Decode {
     }
   }
 
-  /** `fence.i` (Zifencei): legal, and nothing but the pc changes. Like the bootcamp's `FENCE`
-    * pattern, it fixes the major opcode and funct3 only: the specification reserves `imm[11:0]`,
-    * `rs1` and `rd` for finer fences and says that an implementation shall ignore them
-    * (Unprivileged spec, "Zifencei" extension), so a word with other values there is `fence.i`
-    * too, not an illegal instruction. rv32emu, the reference of the co-simulation, decodes it so.
+  /** `fence.i` (Zifencei): legal, and nothing but the pc changes; which words are `fence.i` is the
+    * rule of exercise 1.2, and rv32emu, the reference of the co-simulation, decodes them by it.
     */
   def zifencei: Seq[DecodeEntry] =
     Seq(DecodeEntry("FENCE.I", any(17) ## BitPat("b001") ## any(5) ## BitPat(Opcode.MiscMem), ControlRow()))
@@ -201,14 +198,14 @@ object Decode {
   /** The names of the M instructions, in the order of funct3. */
   val mNames: Seq[String] = Seq("MUL", "MULH", "MULHSU", "MULHU", "DIV", "DIVU", "REM", "REMU")
 
-  // [CA26: Exercise 2.1] The rows of the decode table
+  // [CA26: Exercise 2.1] The rows of the decode table, and the result of the execute stage
   // Contract: `mPattern` covers exactly the words of the M instruction with that funct3, for
   // any registers. A word that differs in a fixed bit of the encoding must not match, or an
   // illegal word becomes legal (Unprivileged spec, "M" extension and the instruction listings;
   // bootcamp 5.3 for `BitPat`; handout §T2.1).
   private def mPattern(funct3: Int): BitPat = ?
 
-  // [CA26: Exercise 2.1] The rows of the decode table
+  // [CA26: Exercise 2.1] The rows of the decode table, and the result of the execute stage
   // Contract: the rows of a multiplication and of a division. Both write `rd`; the operands
   // are the two registers, which reach the multiplier and the divider directly, not through
   // the ALU (bootcamp 5.3 for don't-care fields; handout §T2.1).

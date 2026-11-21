@@ -11,7 +11,7 @@ tests pass.
 Task sources contain blanks: a Scala `?` under a comment `[CA26: Exercise <task>.<n>]` that
 states a contract and cites a chisel-bootcamp notebook, a section of the RISC-V specification or
 the course handout. `EXERCISES.md` lists them. A blank does not compile (`not found: value ?`)
-until it is replaced. Four exercises (1.3, 1.7, 2.6 and 5.6, "Find the bug" in `EXERCISES.md`) have
+until it is replaced. Four exercises (1.3, 1.7, 2.6 and 5.5, "Find the bug" in `EXERCISES.md`) have
 no blank: their code is given with one planted bug, which the student finds and explains.
 
 ## Please do
@@ -47,8 +47,9 @@ no blank: their code is given with one planted bug, which the student finds and 
   other values, or put another person's ID in `STUDENT_ID`.
 - Do not remove or rewrite the stamp of a trace or a bundle (`+stamp`, the manifest's `stamp`).
 - Do not write or polish a prediction (`notes/t<n>-q<m>.md`), and do not run the student's
-  assigned values (in a scratch copy or by calling the model directly) before their prediction
-  is committed and pushed: a prediction derived from a measurement is not one.
+  assigned values, or neighboring values of the same variables (in a scratch copy or by calling
+  the model directly), before their prediction is committed and pushed: a prediction derived from
+  a measurement is not one.
 - Do not weaken a check to make it pass: no edited or skipped specs, no changed expected
   output, no `-Wno-...` flags or new lint waivers, no change to the Makefiles' gates.
 

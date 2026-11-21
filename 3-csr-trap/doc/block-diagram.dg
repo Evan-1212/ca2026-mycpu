@@ -10,7 +10,7 @@ box EX 330 170 300 66 "Execute (T2)" "ALU, branch, target," "multiplier, divider
 box RF 740 300 180 50 "riscv.RegFile"
 box MEM 280 300 180 66 "MemoryAccess" "(T1), enable"
 box WB 520 300 150 66 "WriteBack" "(T1)"
-box CTL 170 420 750 98 "CPU" "take_interrupt (3.11), exception priority (3.10)" "wfi wait (3.12), trap / commit (3.9)" "HpmClassifier: events"
+box CTL 170 420 750 98 "CPU" "take_interrupt (3.9), exception priority (3.8)" "wfi wait (3.10), trap / commit (3.7)" "HpmClassifier: events"
 
 arrow IF.e ID.w "inst"
 arrow ID.s@0.45 532,170 "decoded, m"

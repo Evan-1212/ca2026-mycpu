@@ -12,15 +12,18 @@ For each program (software/programs/quiz-<name>), in this order:
      are correct; `perf: quiz <program> <routine> calls=<n> insn=<n> cycles=<n>`
      says what a routine costs on this model.
   3. A routine earns, out of its share of the program's points (every program is
-     worth the same, every routine of a program the same):
+     worth the same):
         50 %  it is correct (all its checks pass, and it keeps s0 to s11 and sp)
         25 %  and it costs no more cycles than the routine of the quiz (`base`)
         25 %  and it costs no more than 105 % of the cycles of the reference (`best`)
      and neither cycle quarter unless it costs fewer cycles than `compiled`: the
      plain C of the routine (its reference in main.c) compiled by clang -O2 for the
-     base ISA. A routine that a compiler wrote earns the correctness half only,
-     except where the compiled C already costs no more than 105 % of `best` (a
-     routine too small to do better): there the two thresholds alone count.
+     base ISA. A routine that a compiler wrote earns the correctness half only.
+     Where the compiled C already costs no more than 105 % of `best` on this model
+     (a routine too small to do better than the compiler), cycles cannot tell a
+     hand-written routine from a compiled one: that routine is graded on
+     correctness alone and has half the share of the others, so the program's
+     points go to the routines where hand work shows.
      `base`, `best` and `compiled` are the cycles of 192 calls on this model, in
      software/quiz/targets.csv (columns model,program,routine,base,best,compiled; a
      file without `compiled` grades as before). A model that the file does not list is graded
@@ -94,15 +97,16 @@ def parse(output):
 
 
 def tiers(model, program, routine, insn, cycles, targets):
-    """(base reached, best reached, the targets used, their unit)."""
+    """(base reached, best reached, the targets used, their unit, whether the compiled C already
+    reaches the reference, so that the routine is graded on correctness alone)."""
     for key, cost, unit in (((model, program, routine), cycles, "cycles"), (("insn", program, routine), insn, "insn")):
         if key in targets:
             base, best, *more = targets[key]
             compiled = more[0] if more else None
-            # where the compiler already reaches the reference, matching it is all there is to do
-            beats = compiled is None or cost < compiled or compiled <= best * BEST_SLACK
-            return beats and cost <= base, beats and cost <= best * BEST_SLACK, (base, best, compiled), unit
-    return False, False, None, "none"
+            beats = compiled is None or cost < compiled
+            plain = compiled is not None and compiled <= best * BEST_SLACK
+            return beats and cost <= base, beats and cost <= best * BEST_SLACK, (base, best, compiled), unit, plain
+    return False, False, None, "none", False
 
 
 def grade_program(args, program, targets):
@@ -133,10 +137,11 @@ def grade_program(args, program, targets):
     for name in names:
         calls, insn, cycles = cost.get((program, name), (0, 0, 0))
         correct = ok.get(name, False)
-        base_ok, best_ok, used, unit = tiers(args.model, program, name, insn, cycles, targets)
+        base_ok, best_ok, used, unit, plain = tiers(args.model, program, name, insn, cycles, targets)
         result["routines"].append({
             "routine": name, "correct": correct, "calls": calls, "insn": insn, "cycles": cycles,
-            "base": correct and base_ok, "best": correct and best_ok and base_ok, "targets": used, "unit": unit,
+            "base": correct and base_ok and not plain, "best": correct and best_ok and base_ok and not plain,
+            "targets": used, "unit": unit, "plain": plain,
         })
     return result
 
@@ -151,7 +156,17 @@ def routines_of(program):
     return [n[len("quiz_"):] for n in module.declared(os.path.join(PROGRAM_DIRS, program))]
 
 
+def shares(routines, program_points):
+    """The points of each routine of a program: a routine graded on correctness alone has half the
+    share of the others."""
+    weights = [0.5 if r.get("plain") else 1.0 for r in routines]
+    total = sum(weights)
+    return [program_points * w / total for w in weights] if total else []
+
+
 def points(routine, share):
+    if routine.get("plain"):
+        return share if routine["correct"] else 0.0
     pct = 0
     if routine["correct"]:
         pct += WEIGHTS["correct"]
@@ -190,17 +205,21 @@ def main(argv=None):
             continue
         if r["exit"] not in (0,):
             print(f"  the program exited with {r['exit']}")
-        share = program_points / max(len(r["routines"]), 1)
+        plain_note = False
         print(f"  {'routine':<14} {'result':<8} {'insn':>9} {'cycles':>9} {'CPI':>6}  {'target (base/best/compiled)':<28} points")
-        for x in r["routines"]:
+        for x, share in zip(r["routines"], shares(r["routines"], program_points)):
             all_correct &= x["correct"]
             p = points(x, share)
+            plain_note |= x.get("plain", False)
             total += p
             cpi = f"{x['cycles'] / x['insn']:.2f}" if x["insn"] else "-"
             tgt = (f"{x['targets'][0]}/{x['targets'][1]}/{x['targets'][2] if x['targets'][2] is not None else '-'} {x['unit']}"
                    if x["targets"] else "no target")
             tier = "best" if x["best"] else "base" if x["base"] else "correct" if x["correct"] else "FAILED"
-            print(f"  {x['routine']:<14} {tier:<8} {x['insn']:>9} {x['cycles']:>9} {cpi:>6}  {tgt:<28} {p:5.1f}")
+            mark = " *" if x.get("plain") else ""
+            print(f"  {x['routine']:<14} {tier:<8} {x['insn']:>9} {x['cycles']:>9} {cpi:>6}  {tgt:<28} {p:5.1f}{mark}")
+        if plain_note:
+            print("  * the compiled C already reaches the reference here: correctness alone, half a share")
     print(f"\nquiz score on task {args.task}: {total:.1f} / 100")
     if args.out:
         os.makedirs(args.out, exist_ok=True)

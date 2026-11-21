@@ -129,7 +129,7 @@ instruction it executes, so T1 does not need this task to build.
 
 ## CA26: Exercises
 
-Seven exercises, each marked `[CA26: Exercise 2.<n>]` in the source: six with blanks, and one
+Six exercises, each marked `[CA26: Exercise 2.<n>]` in the source: five with blanks, and one
 (2.6) to find a bug in. A blank is a Scala `?`, which does not compile until you replace it.
 `EXERCISES.md` at the top of the repository lists the file and line of every blank.
 
@@ -145,13 +145,12 @@ M in executable form.
 <!-- table: exercises 2 -->
 | ID | Title | File | Blanks |
 |----|-------|------|--------|
-| 2.1 | The rows of the decode table | `Decode.scala` | 4 |
+| 2.1 | The rows of the decode table, and the result of the execute stage | `Decode.scala`, `Execute.scala` | 5 |
 | 2.2 | One signed multiplier for four instructions | `Multiplier.scala` | 2 |
 | 2.3 | The iteration step | `Divider.scala` | 1 |
 | 2.4 | Special cases and signs | `Divider.scala` | 5 |
 | 2.5 | Handshake, state transitions and kill | `Divider.scala` | 1 |
-| 2.6 | Find the bug: the stall of an instruction that takes more than one cycle | `CPU.scala` | none: a bug to find |
-| 2.7 | The result of the execute stage | `Execute.scala` | 1 |
+| 2.6 | Find the bug: the stall of a division | `Execute.scala` | none: a bug to find |
 <!-- end table -->
 
 ### Workflow
@@ -160,13 +159,14 @@ All blanks of this task are in one sbt project, so nothing compiles until every 
 A workable order:
 
 1. 2.1 and 2.2 first (tables and arithmetic). Then 2.3 to 2.5; a first version of the divider
-   may answer in the wrong cycle and still let everything compile. Then 2.7, so that the project
-   compiles; 2.6 compiles as it is given, and its bug shows in the specs of step 3.
+   may answer in the wrong cycle and still let everything compile. The last blank of 2.1, the
+   result of the execute stage, makes the project compile; 2.6 compiles as it is given, and its
+   bug shows in the specs of step 3.
 2. Run the unit specs, at the top of the repository as in T1:
    `sbt "rv32im/testOnly mycpu.rv32im.MulSpec mycpu.rv32im.DivSpec mycpu.rv32im.IssMSpec"`.
    The specs that check the table of 2.1 on its own are held back (see the Test Suite); a wrong
    row of it shows from step 3 on, in the specs that run programs.
-3. Then the specs of 2.6 and 2.7: `sbt "rv32im/testOnly mycpu.rv32im.T2ExecuteSpec mycpu.rv32im.T2CpuSpec
+3. Then the specs of 2.6 and of the execute stage's result: `sbt "rv32im/testOnly mycpu.rv32im.T2ExecuteSpec mycpu.rv32im.T2CpuSpec
    mycpu.rv32im.StallSpec"`. `T2CpuSpec` names the cycle and the signal that is wrong.
 4. `make test`, then the programs. Look at a division in a waveform:
    `make sim SIM_ARGS="+trace=t2.fst"`.
@@ -490,8 +490,8 @@ which spec would fail first, if `completes` did not wait for the execute stage.
     │   ├── Multiplier.scala          Exercise 2.2
     │   ├── Divider.scala             Exercises 2.3, 2.4, 2.5
     │   ├── InstructionDecode.scala   the decode stage
-    │   ├── Execute.scala             Exercise 2.7, and the divider's handshake of 2.6
-    │   ├── CPU.scala                 Exercise 2.6 (find the bug)
+    │   ├── Execute.scala             Exercises 2.1 (the result) and 2.6 (find the bug)
+    │   ├── CPU.scala                 the core and its stall
     │   ├── Top.scala                 the system (SimTop) and the model emitter
     │   └── IssM.scala                the golden model of M (given)
     └── test/scala/mycpu/rv32im/

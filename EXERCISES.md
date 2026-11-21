@@ -41,14 +41,15 @@ Find the bug:
 
 ## Task 2: `2-rv32im`
 
-7 exercises: 14 blanks, and 1 bug to find.
+6 exercises: 14 blanks, and 1 bug to find.
 
 | Exercise | File | Line | Title |
 |----------|------|------|-------|
-| 2.1 | `2-rv32im/src/main/scala/mycpu/rv32im/Decode.scala` | 173 | The rows of the decode table |
-| 2.1 | `2-rv32im/src/main/scala/mycpu/rv32im/Decode.scala` | 209 | The rows of the decode table |
-| 2.1 | `2-rv32im/src/main/scala/mycpu/rv32im/Decode.scala` | 215 | The rows of the decode table |
-| 2.1 | `2-rv32im/src/main/scala/mycpu/rv32im/Decode.scala` | 216 | The rows of the decode table |
+| 2.1 | `2-rv32im/src/main/scala/mycpu/rv32im/Decode.scala` | 173 | The rows of the decode table, and the result of the execute stage |
+| 2.1 | `2-rv32im/src/main/scala/mycpu/rv32im/Decode.scala` | 206 | The rows of the decode table, and the result of the execute stage |
+| 2.1 | `2-rv32im/src/main/scala/mycpu/rv32im/Decode.scala` | 212 | The rows of the decode table, and the result of the execute stage |
+| 2.1 | `2-rv32im/src/main/scala/mycpu/rv32im/Decode.scala` | 213 | The rows of the decode table, and the result of the execute stage |
+| 2.1 | `2-rv32im/src/main/scala/mycpu/rv32im/Execute.scala` | 110 | The rows of the decode table, and the result of the execute stage |
 | 2.2 | `2-rv32im/src/main/scala/mycpu/rv32im/Multiplier.scala` | 41 | One signed multiplier for four instructions |
 | 2.2 | `2-rv32im/src/main/scala/mycpu/rv32im/Multiplier.scala` | 44 | One signed multiplier for four instructions |
 | 2.3 | `2-rv32im/src/main/scala/mycpu/rv32im/Divider.scala` | 168 | The iteration step |
@@ -58,32 +59,31 @@ Find the bug:
 | 2.4 | `2-rv32im/src/main/scala/mycpu/rv32im/Divider.scala` | 152 | Special cases and signs |
 | 2.4 | `2-rv32im/src/main/scala/mycpu/rv32im/Divider.scala` | 174 | Special cases and signs |
 | 2.5 | `2-rv32im/src/main/scala/mycpu/rv32im/Divider.scala` | 185 | Handshake, state transitions and kill |
-| 2.7 | `2-rv32im/src/main/scala/mycpu/rv32im/Execute.scala` | 105 | The result of the execute stage |
 
 Find the bug:
 
 | Exercise | Title | Header |
 |----------|-------|--------|
-| 2.6 | Find the bug: the stall of an instruction that takes more than one cycle | `2-rv32im/src/main/scala/mycpu/rv32im/CPU.scala`, line 93 |
+| 2.6 | Find the bug: the stall of a division | `2-rv32im/src/main/scala/mycpu/rv32im/Execute.scala`, line 66 |
 
 ## Task 3: `3-csr-trap`
 
-11 exercises, 12 blanks.
+10 exercises, 12 blanks.
 
 | Exercise | File | Line | Title |
 |----------|------|------|-------|
-| 3.1 | `3-csr-trap/src/main/scala/mycpu/csrtrap/CsrFile.scala` | 275 | Which CSR instructions write, and which are illegal |
-| 3.2 | `3-csr-trap/src/main/scala/mycpu/csrtrap/CsrFile.scala` | 263 | The value a CSR instruction writes |
-| 3.3 | `3-csr-trap/src/main/scala/mycpu/csrtrap/CsrFile.scala` | 350 | Trap entry and return |
-| 3.3 | `3-csr-trap/src/main/scala/mycpu/csrtrap/CsrFile.scala` | 377 | Trap entry and return |
-| 3.4 | `3-csr-trap/src/main/scala/mycpu/csrtrap/CsrFile.scala` | 339 | The interrupt request |
-| 3.5 | `3-csr-trap/src/main/scala/mycpu/csrtrap/CsrFile.scala` | 358 | Where a trap goes |
-| 3.6 | `3-csr-trap/src/main/scala/mycpu/csrtrap/CsrFile.scala` | 329 | Counting, inhibiting and writing the counters |
-| 3.7 | `3-csr-trap/src/main/scala/mycpu/csrtrap/Clint.scala` | 96 | The timer registers and the timer interrupt |
-| 3.8 | `3-csr-trap/src/main/scala/mycpu/csrtrap/CPU.scala` | 204 | Traps and commit: what an instruction that traps leaves undone |
-| 3.9 | `3-csr-trap/src/main/scala/mycpu/csrtrap/CPU.scala` | 307 | Which exception an instruction raises |
-| 3.10 | `3-csr-trap/src/main/scala/mycpu/csrtrap/CPU.scala` | 155 | Taking an interrupt at an instruction boundary |
-| 3.11 | `3-csr-trap/src/main/scala/mycpu/csrtrap/CPU.scala` | 195 | WFI: waiting for an interrupt |
+| 3.1 | `3-csr-trap/src/main/scala/mycpu/csrtrap/CsrFile.scala` | 263 | CSR instructions: what they write, whether they write, and which are illegal |
+| 3.1 | `3-csr-trap/src/main/scala/mycpu/csrtrap/CsrFile.scala` | 275 | CSR instructions: what they write, whether they write, and which are illegal |
+| 3.2 | `3-csr-trap/src/main/scala/mycpu/csrtrap/CsrFile.scala` | 350 | Trap entry and return |
+| 3.2 | `3-csr-trap/src/main/scala/mycpu/csrtrap/CsrFile.scala` | 377 | Trap entry and return |
+| 3.3 | `3-csr-trap/src/main/scala/mycpu/csrtrap/CsrFile.scala` | 339 | The interrupt request |
+| 3.4 | `3-csr-trap/src/main/scala/mycpu/csrtrap/CsrFile.scala` | 358 | Where a trap goes |
+| 3.5 | `3-csr-trap/src/main/scala/mycpu/csrtrap/CsrFile.scala` | 329 | Counting, inhibiting and writing the counters |
+| 3.6 | `3-csr-trap/src/main/scala/mycpu/csrtrap/Clint.scala` | 96 | The timer registers and the timer interrupt |
+| 3.7 | `3-csr-trap/src/main/scala/mycpu/csrtrap/CPU.scala` | 204 | Traps and commit: what an instruction that traps leaves undone |
+| 3.8 | `3-csr-trap/src/main/scala/mycpu/csrtrap/CPU.scala` | 307 | Which exception an instruction raises |
+| 3.9 | `3-csr-trap/src/main/scala/mycpu/csrtrap/CPU.scala` | 155 | Taking an interrupt at an instruction boundary |
+| 3.10 | `3-csr-trap/src/main/scala/mycpu/csrtrap/CPU.scala` | 195 | WFI: waiting for an interrupt |
 
 ## Task 4: `4-pipeline`
 
@@ -98,30 +98,30 @@ Find the bug:
 | 4.3 | `4-pipeline/src/main/scala/mycpu/pipeline/CPU.scala` | 512 | Flushes and redirects, FENCE.I included |
 | 4.4 | `4-pipeline/src/main/scala/mycpu/pipeline/CPU.scala` | 466 | Serializing CSR instructions, mret, wfi and fence.i |
 | 4.5 | `4-pipeline/src/main/scala/mycpu/pipeline/CPU.scala` | 396 | The commit stage: trap or commit |
-| 4.6 | `4-pipeline/src/main/scala/mycpu/pipeline/CPU.scala` | 387 | Where an interrupt is taken |
+| 4.6 | `4-pipeline/src/main/scala/mycpu/pipeline/CPU.scala` | 386 | Where an interrupt is taken |
 | 4.7 | `4-pipeline/src/main/scala/mycpu/pipeline/CPU.scala` | 271 | The divider in the pipeline |
 | 4.8 | `4-pipeline/src/main/scala/mycpu/pipeline/Fetch.scala` | 87 | A fetch unit for a memory of any latency |
 
 ## Task 5: `5-soc`
 
-9 exercises: 11 blanks, and 1 bug to find.
+8 exercises: 11 blanks, and 1 bug to find.
 
 | Exercise | File | Line | Title |
 |----------|------|------|-------|
-| 5.1 | `5-soc/src/main/scala/mycpu/soc/Axi4LiteMaster.scala` | 113 | The request channels: each VALID until its own READY |
-| 5.2 | `5-soc/src/main/scala/mycpu/soc/Axi4LiteMaster.scala` | 124 | The response to the core |
-| 5.2 | `5-soc/src/main/scala/mycpu/soc/Axi4LiteMaster.scala` | 127 | The response to the core |
-| 5.3 | `5-soc/src/main/scala/mycpu/soc/Axi4LiteXbar.scala` | 167 | The grant |
-| 5.3 | `5-soc/src/main/scala/mycpu/soc/Axi4LiteXbar.scala` | 209 | The grant |
-| 5.4 | `5-soc/src/main/scala/mycpu/soc/Axi4LiteXbar.scala` | 87 | The way back, and an address that no slave owns |
-| 5.4 | `5-soc/src/main/scala/mycpu/soc/Axi4LiteXbar.scala` | 121 | The way back, and an address that no slave owns |
-| 5.5 | `5-soc/src/main/scala/mycpu/soc/Axi4LiteSlave.scala` | 67 | The word of a synchronous-read memory on the R channel |
-| 5.7 | `5-soc/src/main/scala/mycpu/soc/Vga.scala` | 177 | Video timing: scan counters, visible area and sync pulses |
-| 5.8 | `5-soc/src/main/scala/mycpu/soc/Vga.scala` | 195 | Pixel fetch: framebuffer address, x4 scaling and pipeline alignment |
-| 5.9 | `5-soc/src/main/scala/mycpu/soc/Vga.scala` | 245 | Buffer swap at vblank |
+| 5.1 | `5-soc/src/main/scala/mycpu/soc/Axi4LiteMaster.scala` | 113 | The master: each VALID until its own READY, and the response to the core |
+| 5.1 | `5-soc/src/main/scala/mycpu/soc/Axi4LiteMaster.scala` | 124 | The master: each VALID until its own READY, and the response to the core |
+| 5.1 | `5-soc/src/main/scala/mycpu/soc/Axi4LiteMaster.scala` | 127 | The master: each VALID until its own READY, and the response to the core |
+| 5.2 | `5-soc/src/main/scala/mycpu/soc/Axi4LiteXbar.scala` | 167 | The grant |
+| 5.2 | `5-soc/src/main/scala/mycpu/soc/Axi4LiteXbar.scala` | 209 | The grant |
+| 5.3 | `5-soc/src/main/scala/mycpu/soc/Axi4LiteXbar.scala` | 87 | The way back, and an address that no slave owns |
+| 5.3 | `5-soc/src/main/scala/mycpu/soc/Axi4LiteXbar.scala` | 121 | The way back, and an address that no slave owns |
+| 5.4 | `5-soc/src/main/scala/mycpu/soc/Axi4LiteSlave.scala` | 67 | The word of a synchronous-read memory on the R channel |
+| 5.6 | `5-soc/src/main/scala/mycpu/soc/Vga.scala` | 177 | Video timing: scan counters, visible area and sync pulses |
+| 5.7 | `5-soc/src/main/scala/mycpu/soc/Vga.scala` | 195 | Pixel fetch: framebuffer address, x4 scaling and pipeline alignment |
+| 5.8 | `5-soc/src/main/scala/mycpu/soc/Vga.scala` | 245 | Buffer swap at vblank |
 
 Find the bug:
 
 | Exercise | Title | Header |
 |----------|-------|--------|
-| 5.6 | Find the bug: the checker's rule for a stable payload | `5-soc/src/main/scala/mycpu/soc/Axi4LiteChecker.scala`, line 52 |
+| 5.5 | Find the bug: the protocol checker | `5-soc/src/main/scala/mycpu/soc/Axi4LiteChecker.scala`, line 48 |

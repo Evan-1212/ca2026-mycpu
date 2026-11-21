@@ -6,7 +6,7 @@ Usage: scripts/bootcamp-notebooks.py <chisel-bootcamp clone>
 
 An exercise of the notebooks is a code cell with `???` in it (Module 5's exercises of
 riscv/src are checked by `make check-bootcamp` itself; this covers the notebooks, among them the
-exercises 5.1 and 5.9 that live only there). The cells are read as JSON, never run. A `???` in a
+blanks of notebooks 5.1 and 5.9, which live only there). The cells are read as JSON, never run. A `???` in a
 comment, or in a Markdown cell (the Solution accordion), is not a blank. The exit status is 1
 when a cell is blank, 0 when none is.
 

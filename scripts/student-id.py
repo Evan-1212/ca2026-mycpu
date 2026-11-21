@@ -10,8 +10,9 @@ Usage: student-id.py check [FILE]           validate the ID file (exit 1 with th
                                             print one parameter, such as T4.Q1.I_WAIT
        student-id.py stamp [FILE] [RUN...]  print the stamp of a run (sim/student.mk, sim/task.mk)
        student-id.py predicted [FILE] RUN...
-                                            refuse a run with an assigned value whose question has
-                                            no prediction committed and pushed (sim/task.mk)
+                                            refuse a run that sets a question's make variable
+                                            before that question's prediction is committed and
+                                            pushed (sim/task.mk)
 
 FILE is STUDENT_ID at the top of the tree. It holds one line: your student ID with its letters in
 upper case (F74121234, not the f74121234 of your school e-mail), or NONE if you audit the course.
@@ -30,12 +31,16 @@ from it) and a random nonce. The harness writes it into the header of a +trace F
 (sim/main.cpp) and obs-pack.py into the manifest of a bundle (docs/observation.md, "stamp").
 
 Predictions are binding. RUN is the configuration of a run as sim/task.mk gives it (task=4 i_wait=3
-d_wait=5 ...). A run that uses the values your ID assigns to a question of its task (T1.Q1's
-UART_DIVIDER, T1.Q2's RAM_BYTES, T3.Q2's TICK_DIVISOR, T4.Q1's I_WAIT and D_WAIT, T5.Q2's
-RAM_WAIT) waits for that question's prediction: the file notes/t<n>-q<m>.md, committed, unchanged
-since, and pushed to a remote (GitHub records when). `predicted` refuses the run until then, and
-the stamp of the run names the commit of the prediction (pred=T4.Q1@<commit>). The instructors
-compare the time GitHub received that commit with the commits that hold the measurement.
+d_wait=5 ...). A question whose values are make variables (T1.Q1's UART_DIVIDER, T1.Q2's
+RAM_BYTES, T3.Q2's TICK_DIVISOR, T4.Q1's I_WAIT and D_WAIT, T5.Q2's RAM_WAIT) owns those
+variables: a run in any task that gives one of them a value other than its default, and other than
+a worked example of the READMEs (I_WAIT=2 with D_WAIT=2 or rand3:7), waits for that question's
+prediction, whatever the value and with or without an ID. A neighbor of the assigned value
+measures the same thing, so it waits too. The prediction is the file notes/t<n>-q<m>.md,
+committed, unchanged since, and pushed to a remote (GitHub records when). `predicted` refuses the
+run until then, and the stamp of the run names the commit of the prediction
+(pred=T4.Q1@<commit>). The instructors compare the time GitHub received that commit with the
+commits that hold the measurement.
 """
 
 import hashlib
@@ -158,6 +163,15 @@ RUN_KEYS = {
     "T5.Q2": {"ram_wait": "T5.Q2.RAM_WAIT"},
 }
 
+# the value of each word when the make variable is not set (sim/task.mk and the task Makefiles)
+RUN_DEFAULTS = {"uart_divider": "16", "ram_bytes": "", "tick_divisor": "1", "i_wait": "0", "d_wait": "0",
+                "ram_wait": "0"}
+
+# the runs that the READMEs make themselves, with their results: no prediction to wait for
+RUN_EXAMPLES = {
+    "T4.Q1": [{"i_wait": "2", "d_wait": "2"}, {"i_wait": "2", "d_wait": "rand3:7"}],
+}
+
 
 def parse_run(words):
     """{name: value} of RUN words name=value; other words are left to the caller."""
@@ -169,15 +183,18 @@ def parse_run(words):
     return run
 
 
-def run_questions(student, run):
-    """The questions of the run's task whose assigned values the run uses."""
-    p = params(student)
+def run_questions(run):
+    """The questions whose make variables the run sets to a value that is neither the default nor a
+    worked example of the READMEs, in any task: a run of a later task measures the same thing."""
     found = []
     for question, keys in RUN_KEYS.items():
-        if run.get("task") != question[1]:
+        # a variable that the task does not set (T1 has no TICK_DIVISOR) comes as an empty word
+        values = {word: run.get(word) or RUN_DEFAULTS[word] for word in keys}
+        if all(v == RUN_DEFAULTS[w] for w, v in values.items()):
             continue
-        if all(run.get(word, "") == str(p[key]) for word, key in keys.items()):
-            found.append(question)
+        if values in RUN_EXAMPLES.get(question, []):
+            continue
+        found.append(question)
     return found
 
 
@@ -209,9 +226,9 @@ def stamp(path, run=None):
         head += "+"
     email = re.sub(r"\s", "", git("config", "user.email")) or "-"
     text = f"id={student} email={email} head={head} nonce={secrets.token_hex(6)}"
-    if run and student not in ("unset", "invalid"):
+    if run:
         marks = []
-        for question in run_questions(student, run):
+        for question in run_questions(run):
             commit, _ = prediction(question)
             marks.append(f"{question}@{commit[:10] if commit else 'none'}")
         if marks:
@@ -221,23 +238,22 @@ def stamp(path, run=None):
 
 def predicted(path, run):
     """0 when the run may go on; 1, with the reason, when a prediction is missing."""
-    try:
-        student = read_id(path)
-    except IdError:
-        return 0  # no ID, no assigned values: nothing to wait for
+    del path  # the questions follow from the run alone: a run without an ID waits as well
     missing = []
-    for question in run_questions(student, run):
+    for question in run_questions(run):
         commit, why = prediction(question)
         if commit:
             print(f"  PREDICT {question}: {prediction_file(question)} at {commit[:10]}, pushed")
         else:
-            missing.append(f"{question}: {why}")
+            missing.append((question, why))
     if not missing:
         return 0
-    print("student-id: this run uses the values your ID assigns to " + ", ".join(m.split(":")[0] for m in missing)
-          + ", and the prediction comes first:", file=sys.stderr)
-    for m in missing:
-        print(f"  {m}", file=sys.stderr)
+    names = ", ".join(", ".join(RUN_KEYS[q]).upper() for q, _ in missing)
+    print(f"student-id: this run sets {names} to a value other than the default, which "
+          + ", ".join(q for q, _ in missing) + " asks you to predict, and the prediction comes first:",
+          file=sys.stderr)
+    for question, why in missing:
+        print(f"  {question}: {why}", file=sys.stderr)
     print("  Write your prediction and its derivation there, commit it and push it (git push), then run again.",
           file=sys.stderr)
     return 1

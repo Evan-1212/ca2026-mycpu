@@ -43,12 +43,12 @@ class DataBus(regions: Seq[(Long, Long)]) extends Module {
   }
   when(select.reduce(_ || _)) {
     io.core.req.ready  := Mux1H(select, io.devices.map(_.req.ready))
-    io.core.resp.valid := Mux1H(select, io.devices.map(_.resp.valid))
+    io.core.resp.valid := io.core.req.valid
     io.core.resp.bits  := Mux1H(select, io.devices.map(_.resp.bits))
   }.otherwise {
     io.core.req.ready       := true.B
     io.core.resp.valid      := io.core.req.valid
     io.core.resp.bits.rdata := 0.U
-    io.core.resp.bits.error := false.B
+    io.core.resp.bits.error := true.B
   }
 }

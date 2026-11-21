@@ -167,7 +167,7 @@ class Vga(pixelDiv: Int = 2, pixelShift: Int = 0, mutant: Option[String] = None)
   // In every cycle with `tick` the scan position advances by one pixel: `h` runs through a whole
   // line, then `v` advances, and after the last line both start again at 0. The numbers are those
   // of `object Vga`.
-  // [CA26: Exercise 5.7] Video timing: scan counters, visible area and sync pulses
+  // [CA26: Exercise 5.6] Video timing: scan counters, visible area and sync pulses
   // Contract: `h` and `v` count as described above. `h_active` and `v_active` say whether
   // (`h`, `v`) is in the visible columns and lines. `hsync` and `vsync` are low exactly during
   // their pulses, each after the front porch of its direction; `vsync` changes only where a line
@@ -185,7 +185,7 @@ class Vga(pixelDiv: Int = 2, pixelShift: Int = 0, mutant: Option[String] = None)
   val pixel_lane  = Reg(UInt(log2Ceil(PixelsPerWord).W))
   val pixel_index = WireDefault(0.U(4.W))
 
-  // [CA26: Exercise 5.8] Pixel fetch: framebuffer address, x4 scaling and pipeline alignment
+  // [CA26: Exercise 5.7] Pixel fetch: framebuffer address, x4 scaling and pipeline alignment
   // Contract: at each `tick`, `pixel_word` and `pixel_lane` load the word of the front buffer,
   // and the place in it, of the framebuffer pixel under screen position (`h`, `v`): a
   // framebuffer pixel covers 4 x 4 screen pixels ("Pixel packing" above). `pixel_index` is that
@@ -237,7 +237,7 @@ class Vga(pixelDiv: Int = 2, pixelShift: Int = 0, mutant: Option[String] = None)
   }
 
   when(vblank_start) { frame_count := frame_count + 1.U }
-  // [CA26: Exercise 5.9] Buffer swap at vblank
+  // [CA26: Exercise 5.8] Buffer swap at vblank
   // Contract: a write of 1 to `CTRL.swap` is remembered in `swap_pending`. A remembered request
   // takes effect in the cycle with `vblank_start` and at no other time: the other buffer becomes
   // the front buffer, `swap_count` counts it, and the request is forgotten. A request written in

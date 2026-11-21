@@ -42,4 +42,12 @@ class MulSpec extends AnyFlatSpec with ChiselSim {
   it should s"agree with the model on ${Operands.randomPairs} random operand pairs, for all four operations" in {
     simulateRaw(new Multiplier)(check(_, Operands.random(Operands.randomPairs, seed = 2026)))
   }
+
+  it should "hold one multiplier for the four operations, as exercise 2.2 asks" in {
+    // a `*` of Chisel is one `mul` of the circuit; a multiplier per operation (or per signedness)
+    // gives the right products too, at four (or two) times the area, and only this check sees it
+    val circuit     = circt.stage.ChiselStage.emitCHIRRTL(new Multiplier)
+    val multipliers = "\\bmul\\(".r.findAllIn(circuit).size
+    assert(multipliers == 1, s"the circuit of Multiplier has $multipliers multipliers, not one")
+  }
 }

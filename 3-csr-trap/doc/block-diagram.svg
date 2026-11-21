@@ -11,7 +11,7 @@
 <rect class="box" x="740" y="300" width="180" height="50" rx="3"/><text class="title" x="830" y="329">riscv.RegFile</text>
 <rect class="box" x="280" y="300" width="180" height="66" rx="3"/><text class="title" x="370" y="329">MemoryAccess</text><text class="line" x="370" y="345">(T1), enable</text>
 <rect class="box" x="520" y="300" width="150" height="66" rx="3"/><text class="title" x="595" y="329">WriteBack</text><text class="line" x="595" y="345">(T1)</text>
-<rect class="box" x="170" y="420" width="750" height="98" rx="3"/><text class="title" x="545" y="449">CPU</text><text class="line" x="545" y="465">take_interrupt (3.11), exception priority (3.10)</text><text class="line" x="545" y="481">wfi wait (3.12), trap / commit (3.9)</text><text class="line" x="545" y="497">HpmClassifier: events</text>
+<rect class="box" x="170" y="420" width="750" height="98" rx="3"/><text class="title" x="545" y="449">CPU</text><text class="line" x="545" y="465">take_interrupt (3.9), exception priority (3.8)</text><text class="line" x="545" y="481">wfi wait (3.10), trap / commit (3.7)</text><text class="line" x="545" y="497">HpmClassifier: events</text>
 <polyline class="wire" points="350,85 420,85" marker-end="url(#head)"/><text class="wlabel" x="385" y="81" text-anchor="middle">inst</text>
 <polyline class="wire" points="532,126 532,170" marker-end="url(#head)"/><text class="wlabel" x="536" y="152">decoded, m</text>
 <polyline class="wire" points="670,85 830,85 830,150" marker-end="url(#head)"/><text class="wlabel" x="750" y="81" text-anchor="middle">csr, mret, wfi</text>

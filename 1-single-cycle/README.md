@@ -437,11 +437,12 @@ no others: the instructors repeat your runs with them. `<n>` below is your value
 **Predict first, and push the prediction.** Write the prediction of each question, with its
 derivation, in `notes/t1-q<m>.md` of your fork (`notes/t1-q1.md` for Q1), commit it and push it
 **before** the run, and put the measurement and the comparison in later commits without editing the
-prediction. A run with a value of yours that is a make variable (`T1.Q1.UART_DIVIDER`,
-`T1.Q2.RAM_BYTES`) does not start until its question's prediction is committed and pushed: `make`
-names the file it waits for, and the stamp of the run (`pred=` in a trace header or a bundle) names
-the commit of the prediction. GitHub records when it received that commit; a prediction that
-reached it after the measurement does not count.
+prediction. These questions own their make variables (`UART_DIVIDER` for Q1, `RAM_BYTES` for
+Q2): a run that gives one any value other than its default, yours or a neighbor of it, in any
+task and with or without an ID, does not start until that question's prediction is committed and
+pushed. `make` names the file it waits for, and the stamp of the run (`pred=` in a trace header
+or a bundle) names the commit of the prediction. GitHub records when it received that commit; a
+prediction that reached it after the measurement does not count.
 
 **Q1. The UART as console.** Before any run with it, predict from `software/runtime/uart.c` whether
 the core will wait for the UART with your `UART_DIVIDER` (`T1.Q1.UART_DIVIDER`), and by how many

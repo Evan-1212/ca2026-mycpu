@@ -159,10 +159,10 @@ TASK_SOURCES := $(sort $(wildcard $(addsuffix /*.scala,$(TASK_SOURCE_DIRS))) $(i
 $(eval $(call sim_topgen,$(GEN),$(EMIT),$(TASK_SOURCES)))
 $(eval $(call sim_model,$(OUT),$(GEN)))
 
-# Binding predictions (scripts/student-id.py, "Predictions are binding"): a run with a value that the
-# student's ID assigns to a question of this task waits until that question's prediction is
-# committed and pushed, and its stamp names the prediction. Every target that runs the model goes
-# through `verilator`, so the check is an order-only prerequisite of it.
+# Binding predictions (scripts/student-id.py, "Predictions are binding"): a run that sets a make
+# variable of a report question to a value other than its default waits until that question's
+# prediction is committed and pushed, and its stamp names the prediction. Every target that runs
+# the model goes through `verilator`, so the check is an order-only prerequisite of it.
 STUDENT_RUN := task=$(TASK_NUM) uart_divider=$(UART_DIVIDER) ram_bytes=$(RAM_BYTES) tick_divisor=$(TICK_DIVISOR) \
                i_wait=$(I_WAIT) d_wait=$(D_WAIT) ram_wait=$(RAM_WAIT)
 SIM_STAMP   := $(shell python3 $(ROOT)/scripts/student-id.py stamp $(STUDENT_RUN) 2> /dev/null)

@@ -7,10 +7,10 @@ text 830 30 "dmem: one request in flight" middle
 arrow 100,40 100,120 both
 arrow 830,40 830,120 both
 
-box IF 20 120 170 178 "IF: Fetch" "pc, in flight," "dropping (4.10)" "instruction queue"
-box ID 240 120 200 178 "ID" "InstructionDecode (T3)" "RegFile, HazardUnit" "serialization (4.5)" "forward into ID (4.3)" "EarlyBranch: T1's" "Execute in ID"
-box EX 490 120 180 178 "EX" "Execute (T2):" "ALU, branch, mul," "divider (4.8)" "Forward (bootcamp)"
-box MEM 720 120 220 178 "MEM: the commit stage" "MemoryAccess, WriteBack" "(T1), CsrFile (T3)," "exceptions," "commit / trap (4.6)," "interrupt on the oldest" "(4.7), classifier"
+box IF 20 120 170 178 "IF: Fetch" "pc, in flight," "dropping (4.8)" "instruction queue"
+box ID 240 120 200 178 "ID" "InstructionDecode (T3)" "RegFile, HazardUnit" "serialization (4.4)" "forward into ID (4.2)" "EarlyBranch: T1's" "Execute in ID"
+box EX 490 120 180 178 "EX" "Execute (T2):" "ALU, branch, mul," "divider (4.7)" "Forward (bootcamp)"
+box MEM 720 120 220 178 "MEM: the commit stage" "MemoryAccess, WriteBack" "(T1), CsrFile (T3)," "exceptions," "commit / trap (4.5)," "interrupt on the oldest" "(4.6), classifier"
 box WB 990 120 90 178 "WB" "regs"
 
 arrow 190,160 240,160 "queue"
@@ -21,7 +21,7 @@ arrow 753,298 753,320 580,320 580,298 "EX/MEM forward"
 arrow 738,298 738,340 400,340 400,298 "EX/MEM into ID"
 arrow 1035,298 1035,380 616,380 616,298 "MEM/WB forward"
 
-box FL 240 420 680 70 "PipelineFlush (bootcamp 5.6) + flush logic (4.4, 4.9)" "trap or mret in MEM, branch in EX, branch or fence.i in ID"
+box FL 240 420 680 70 "PipelineFlush (bootcamp 5.6) + flush logic (4.3)" "trap or mret in MEM, branch in EX, branch or fence.i in ID"
 arrow 900,298 900,420 "trap"
 arrow 508,298 508,420 "taken"
 arrow 300,298 300,420 "id_redirect"

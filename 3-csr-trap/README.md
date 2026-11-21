@@ -16,7 +16,7 @@ After this task you can:
   extension mechanism, without touching a row of T2;
 - build the CSR file of an M-mode-only hart: the read and write rules of Zicsr, the three kinds of
   CSR that must not be mixed (read-only by address, WARL, driven by hardware), trap entry and
-  return, and the interrupt request (`CsrFile`, exercises 3.1 to 3.6);
+  return, and the interrupt request (`CsrFile`, exercises 3.1 to 3.5);
 - make a trap **precise**: an instruction that traps, or that an interrupt precedes, leaves no
   register, no CSR, no store, no device access and no division behind;
 - take an interrupt at any instruction boundary, also while the divider stalls (the division is
@@ -105,11 +105,11 @@ hpm8` exactly.
 
 | File | What it is |
 |------|------------|
-| `CsrFile.scala` | the CSRs, trap entry and return, the interrupt request, the counters (3.1 to 3.6) |
-| `Clint.scala` | `msip`, `mtimecmp`, `mtime` (3.7) |
+| `CsrFile.scala` | the CSRs, trap entry and return, the interrupt request, the counters (3.1 to 3.5) |
+| `Clint.scala` | `msip`, `mtimecmp`, `mtime` (3.6) |
 | `HpmEvents.scala` | the events and the cycle classifier |
 | `InstructionDecode.scala` | the decode stage: T2's table with Zicsr, `mret` and `wfi` appended as tagged rows |
-| `CPU.scala` | the core: interrupts, exceptions, WFI, traps and commit (3.8 to 3.11) |
+| `CPU.scala` | the core: interrupts, exceptions, WFI, traps and commit (3.7 to 3.10) |
 | `Top.scala` | the system (`SimTop`) and the model emitter (`divLatency`, `tickDivisor`, `mutant`) |
 | `IssCsr.scala` | the golden model's rules of Zicsr, traps and counters (given) |
 | `ClintModel.scala` | the golden model's CLINT (given) |
@@ -128,22 +128,21 @@ model.
 
 ## CA26: Exercises
 
-Eleven exercises, each marked `[CA26: Exercise 3.<n>]` in the source.
+Ten exercises, each marked `[CA26: Exercise 3.<n>]` in the source.
 
 <!-- table: exercises 3 -->
 | ID | Title | File | Blanks |
 |----|-------|------|--------|
-| 3.1 | Which CSR instructions write, and which are illegal | `CsrFile.scala` | 1 |
-| 3.2 | The value a CSR instruction writes | `CsrFile.scala` | 1 |
-| 3.3 | Trap entry and return | `CsrFile.scala` | 2 |
-| 3.4 | The interrupt request | `CsrFile.scala` | 1 |
-| 3.5 | Where a trap goes | `CsrFile.scala` | 1 |
-| 3.6 | Counting, inhibiting and writing the counters | `CsrFile.scala` | 1 |
-| 3.7 | The timer registers and the timer interrupt | `Clint.scala` | 1 |
-| 3.8 | Traps and commit: what an instruction that traps leaves undone | `CPU.scala` | 1 |
-| 3.9 | Which exception an instruction raises | `CPU.scala` | 1 |
-| 3.10 | Taking an interrupt at an instruction boundary | `CPU.scala` | 1 |
-| 3.11 | WFI: waiting for an interrupt | `CPU.scala` | 1 |
+| 3.1 | CSR instructions: what they write, whether they write, and which are illegal | `CsrFile.scala` | 2 |
+| 3.2 | Trap entry and return | `CsrFile.scala` | 2 |
+| 3.3 | The interrupt request | `CsrFile.scala` | 1 |
+| 3.4 | Where a trap goes | `CsrFile.scala` | 1 |
+| 3.5 | Counting, inhibiting and writing the counters | `CsrFile.scala` | 1 |
+| 3.6 | The timer registers and the timer interrupt | `Clint.scala` | 1 |
+| 3.7 | Traps and commit: what an instruction that traps leaves undone | `CPU.scala` | 1 |
+| 3.8 | Which exception an instruction raises | `CPU.scala` | 1 |
+| 3.9 | Taking an interrupt at an instruction boundary | `CPU.scala` | 1 |
+| 3.10 | WFI: waiting for an interrupt | `CPU.scala` | 1 |
 <!-- end table -->
 
 ### Workflow
@@ -152,11 +151,11 @@ A blank does not compile, and sbt compiles a task as a whole, so no spec of this
 a blank of it, or of a task before it, is left. Fill them all; then run the specs in this order,
 which follows the dependencies, so that the first failure points at its exercise:
 
-1. 3.1 to 3.7: `sbt "csrTrap/testOnly mycpu.csrtrap.CsrSpec
+1. 3.1 to 3.6: `sbt "csrTrap/testOnly mycpu.csrtrap.CsrSpec
    mycpu.csrtrap.TrapSpec mycpu.csrtrap.InterruptSpec mycpu.csrtrap.CounterSpec
    mycpu.csrtrap.ClintSpec mycpu.csrtrap.IssTrapSpec mycpu.csrtrap.IssEquivalenceSpec"`. The last
    one runs the CSR file and the CLINT in lockstep with the golden model.
-2. 3.8 to 3.11: `sbt "csrTrap/testOnly mycpu.csrtrap.T3TrapSpec mycpu.csrtrap.T3InterruptSpec
+2. 3.7 to 3.10: `sbt "csrTrap/testOnly mycpu.csrtrap.T3TrapSpec mycpu.csrtrap.T3InterruptSpec
    mycpu.csrtrap.WfiSpec mycpu.csrtrap.T3CounterSpec mycpu.csrtrap.PreciseTrapSpec"`.
 3. `make test`, the programs, then `make act4`.
 
@@ -444,7 +443,7 @@ One HackMD note for this task, in the format of the course handout's submission 
    the repository.
 5. **Two exercises explained**, at least, with **your own** waveform screenshots or `+retire-log`
    excerpts, walked through cycle by cycle. For example: the cycles around a timer interrupt that
-   lands on a division (3.10), or a WFI's wait and wake-up (3.11).
+   lands on a division (3.9), or a WFI's wait and wake-up (3.10).
 6. **Answers to the three questions below.** Each needs a run with a parameter **you** choose:
    state the parameter, the command lines and the numbers you measured.
 
@@ -458,8 +457,9 @@ no others: the instructors repeat your runs with them. `<n>` below is your value
 **Predict first, and push the prediction.** Write the prediction of each question, with its
 derivation, in `notes/t3-q<m>.md` of your fork (`notes/t3-q1.md` for Q1), commit it and push it
 **before** the run, and put the measurement and the comparison in later commits without editing the
-prediction. A run with a value of yours that is a make variable (`T3.Q2.TICK_DIVISOR`) does not
-start until its question's prediction is committed and pushed: `make` names the file it waits for,
+prediction. Q2 owns `TICK_DIVISOR`: a run that gives it any value other than 1, yours or a
+neighbor of it, in any task and with or without an ID, does not start until `notes/t3-q2.md` is
+committed and pushed. `make` names the file it waits for,
 and the stamp of the run (`pred=` in a trace header or a bundle) names the commit of the
 prediction. GitHub records when it received that commit; a prediction that reached it after the
 measurement does not count.
@@ -499,11 +499,11 @@ counter does with that instruction.
 ├── sail-m-only.json                  the Sail override that makes Sail this hart
 └── src/
     ├── main/scala/mycpu/csrtrap/
-    │   ├── CsrFile.scala             Exercises 3.1 to 3.6
-    │   ├── Clint.scala               Exercise 3.7
+    │   ├── CsrFile.scala             Exercises 3.1 to 3.5
+    │   ├── Clint.scala               Exercise 3.6
     │   ├── HpmEvents.scala           the events and the classifier
     │   ├── InstructionDecode.scala   T2's table with Zicsr, mret and wfi
-    │   ├── CPU.scala                 Exercises 3.8 to 3.11
+    │   ├── CPU.scala                 Exercises 3.7 to 3.10
     │   ├── Probes.scala              the probes of the observation interface (docs/observation.md)
     │   ├── Top.scala                 the system (SimTop) and the model emitter
     │   ├── IssCsr.scala              the golden model's rules (given)

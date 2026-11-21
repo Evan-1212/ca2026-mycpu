@@ -45,18 +45,19 @@ class Axi4LiteChecker(maxOutstanding: Int = 1) extends Module {
     val axi = Input(new Axi4LiteIO)
   })
 
+  // [CA26: Exercise 5.5] Find the bug: the protocol checker
+  // Contract: the checker fires in exactly the cycles that break a rule of this class's
+  // description, on any interface it watches: a checker that is wrong blames a correct design, or
+  // lets a wrong one pass (AMBA AXI4-Lite spec §A3.2.1, "Handshake process", and §A3.3.1;
+  // bootcamp 2.4 for `RegNext`; handout §T5.2). The code of this class compiles, but one line of
+  // it is wrong: find it with the specs and a waveform, fix it, and explain the fix in your report
+  // (which run showed it, in which cycle and signal, and why the fix is right).
+
   /** Rules 1 and 2 on one channel. */
   private def handshake[T <: Data](name: String, channel: DecoupledIO[T]): Unit = {
     val waiting = RegNext(channel.valid && !channel.ready, false.B)
     assert(!waiting || channel.valid, s"AXI4-Lite: ${name}VALID fell before ${name}READY")
-    // [CA26: Exercise 5.6] Find the bug: the checker's rule for a stable payload
-    // Contract: `stable` is false exactly in a cycle that breaks rule 2 of this class's
-    // description on `channel`, whose payload is `channel.bits`, a bundle (AMBA AXI4-Lite spec
-    // §A3.2.1, "Handshake process"; bootcamp 2.4 for `RegNext`; handout §T5.2). The rule below
-    // compiles, but it is wrong: a checker that is wrong blames a correct design, or lets a wrong
-    // one pass. Find what it gets wrong with the specs and a waveform, fix it, and explain the fix
-    // in your report.
-    val stable = !channel.valid || channel.bits.asUInt === RegNext(channel.bits.asUInt)
+    val stable = !waiting || channel.bits.asUInt === RegNext(channel.bits.asUInt)
     assert(stable, s"AXI4-Lite: the $name payload changed while ${name}VALID waited for ${name}READY")
   }
   handshake("AW", io.axi.aw)
@@ -83,7 +84,7 @@ class Axi4LiteChecker(maxOutstanding: Int = 1) extends Module {
   val b_fire         = io.axi.b.fire
   val reads_next     = reads + io.axi.ar.fire - r_counted
   val addresses_next = addresses + io.axi.aw.fire - (b_fire && addresses =/= 0.U)
-  val datas_next     = datas + io.axi.w.fire - (b_fire && datas =/= 0.U)
+  val datas_next = datas + io.axi.w.fire - (io.axi.b.valid && datas =/= 0.U)
   reads     := reads_next
   addresses := addresses_next
   datas     := datas_next

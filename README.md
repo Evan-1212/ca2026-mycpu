@@ -103,7 +103,7 @@ replace it. `EXERCISES.md` lists the file and line of every blank, and `make che
 those that remain. A task compiles once all of its blanks, and those of the tasks before it, are
 filled.
 
-Four exercises (1.3, 1.7, 2.6 and 5.6) have no blank: their code is given, compiles, and breaks
+Four exercises (1.3, 1.7, 2.6 and 5.5) have no blank: their code is given, compiles, and breaks
 the rule that their header states in one place. Find the bug with the specs, a retire log or a
 waveform, fix it, and explain in your report which run showed it, in which cycle and signal, and
 why the fix is right. `EXERCISES.md` lists them under "Find the bug". The golden models of T2 and
@@ -121,10 +121,10 @@ is the header next to each `routines.S`, and `scripts/quiz-grade.py` says how th
 | Task | Directory | What you build | ISA | Exercises |
 |------|-----------|----------------|-----|-----------|
 | T1 | [`1-single-cycle/`](1-single-cycle/) | A single-cycle core out of your bootcamp modules, with a byte-strobed data bus, memory-mapped UART and SimCtrl, and a retire port for co-simulation | RV32I_Zifencei | 10 exercises: 14 blanks, and 2 bugs to find |
-| T2 | [`2-rv32im/`](2-rv32im/) | A multiplier, an iterative divider with a handshake, and the stall that makes the core wait for it | RV32IM_Zifencei | 7 exercises: 14 blanks, and 1 bug to find |
-| T3 | [`3-csr-trap/`](3-csr-trap/) | Machine-mode CSRs, traps through `mtvec`, `mret` and `wfi`, interrupts from the CLINT and SimCtrl, and performance counters whose events explain every cycle | RV32IM_Zicsr_Zicntr_Zihpm_Zifencei | 11 exercises, 12 blanks |
+| T2 | [`2-rv32im/`](2-rv32im/) | A multiplier, an iterative divider with a handshake, and the stall that makes the core wait for it | RV32IM_Zifencei | 6 exercises: 14 blanks, and 1 bug to find |
+| T3 | [`3-csr-trap/`](3-csr-trap/) | Machine-mode CSRs, traps through `mtvec`, `mret` and `wfi`, interrupts from the CLINT and SimCtrl, and performance counters whose events explain every cycle | RV32IM_Zicsr_Zicntr_Zihpm_Zifencei | 10 exercises, 12 blanks |
 | T4 | [`4-pipeline/`](4-pipeline/) | A five-stage pipeline of the T3 core in three variants of hazard handling (stall, forwarding, early branches), with memories that may answer late | as T3 | 8 exercises, 10 blanks |
-| T5 | [`5-soc/`](5-soc/) | An AXI4-Lite system-on-chip around your T4 pipeline: two masters, a crossbar, a protocol checker on every interface, a boot ROM, the RAM, CLINT, UART and VGA, and a UART shell | as T3 | 9 exercises: 11 blanks, and 1 bug to find |
+| T5 | [`5-soc/`](5-soc/) | An AXI4-Lite system-on-chip around your T4 pipeline: two masters, a crossbar, a protocol checker on every interface, a boot ROM, the RAM, CLINT, UART and VGA, and a UART shell | as T3 | 8 exercises: 11 blanks, and 1 bug to find |
 
 What each finished task is checked with:
 

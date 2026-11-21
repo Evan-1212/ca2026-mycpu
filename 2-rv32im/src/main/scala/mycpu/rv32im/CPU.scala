@@ -90,15 +90,11 @@ class CPU(
   // T1's condition: the instruction was fetched, and its data access, if any, was answered
   val served = has_inst && memory.io.done
 
-  // [CA26: Exercise 2.6] Find the bug: the stall of an instruction that takes more than one cycle
-  // Contract: `completes` is high in the one cycle in which the instruction at the PC is over:
-  // nothing that can make it wait has anything left to wait for. Until then the PC, the
-  // register file and the retire port stay as they are (bootcamp 5.4; handout §T2.5). The code
-  // of this stall, here and in `Execute` (the divider's handshake), compiles, but one line of it
-  // breaks this rule: find it with the specs, a retire log or a waveform, fix it, and explain the
-  // fix in your report.
-  val completes = execute.io.done
-  val commit = completes && !halts
+  // the instruction at the PC is over in this cycle: nothing that can make it wait has anything
+  // left to wait for (exercise 2.6 for the execute stage's part). Until then the PC, the register
+  // file and the retire port stay as they are.
+  val completes = served && execute.io.done
+  val commit    = completes && !halts
   when(completes && halts) {
     halted := true.B
   }

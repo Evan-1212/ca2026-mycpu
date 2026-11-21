@@ -103,7 +103,7 @@ class Axi4LiteMaster(holdsRequest: Boolean = false, mutant: Option[String] = Non
   io.axi.w.bits.data  := request.wdata
   io.axi.w.bits.strb  := request.wstrb
 
-  // [CA26: Exercise 5.1] The request channels: each VALID until its own READY
+  // [CA26: Exercise 5.1] The master: each VALID until its own READY, and the response to the core
   // Contract: `start_read` (`start_write`) is high in the one cycle a read (a write) starts. From
   // that cycle on, `ARVALID` (each of `AWVALID` and `WVALID`) is high in every cycle until the one
   // in which its own `READY` is high, and low otherwise; no `VALID` depends on any `READY` in the
@@ -116,7 +116,7 @@ class Axi4LiteMaster(holdsRequest: Boolean = false, mutant: Option[String] = Non
   io.axi.r.ready := true.B
   io.axi.b.ready := true.B
 
-  // [CA26: Exercise 5.2] The response to the core
+  // [CA26: Exercise 5.1] The master: each VALID until its own READY, and the response to the core
   // Contract: the core gets its response in the cycle the outstanding transaction's own response
   // channel is valid (`answered`). `error` tells the core that the access failed, for every
   // response code that means failure, on the channel that belongs to the transaction (AMBA

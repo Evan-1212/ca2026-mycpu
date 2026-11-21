@@ -18,15 +18,15 @@ Architecture*; its chapters are cited by name, as in the exercise comments. "Han
 
 | Notebook | Title | Used by |
 |----------|-------|---------|
-| 2.3 | Control Flow | 3.2, 5.4, 5.9 |
-| 2.4 | Sequential Logic | 2.2, 2.3, 2.4, 3.5, 3.6, 3.7, 5.5, 5.6, 5.7, 5.8 |
+| 2.3 | Control Flow | 3.1, 5.3, 5.8 |
+| 2.4 | Sequential Logic | 2.2, 2.3, 2.4, 3.4, 3.5, 3.6, 5.4, 5.5, 5.6, 5.7 |
 | 2.6 | Testing with ChiselSim | 2.5, 2.6, 4.8 |
 | 2.7 | Enums, Decoders and Bundles | 2.2, 2.3, 2.4, 2.5 |
 | 2.8 | Memories | 1.5 |
-| 3.2_interlude | Chisel Standard Library | 5.1, 5.3 |
+| 3.2_interlude | Chisel Standard Library | 5.1, 5.2 |
 | 5.1 | The RV32I Instruction Set | 1.3, 2.1 |
 | 5.2 | The ALU, the Immediates and the Registers | 1.8, and the modules T1 instantiates (`Alu`, `ImmGen`, `RegFile`) |
-| 5.3 | The Decoder | 1.2, 2.1, 2.7 |
+| 5.3 | The Decoder | 1.2, 2.1 |
 | 5.4 | A Single-Cycle RV32I Processor | 1.1, 1.3, 1.4, 1.6, 1.8, 1.9, 1.10, 2.6 |
 | 5.5 | The Official RISC-V Tests | the riscv-tests that `make test-riscv-tests` runs |
 | 5.6 | A Five-Stage Pipeline | 4.1, and `PipelineFlush`, which T4 instantiates |
@@ -54,13 +54,12 @@ The bootcamp's `riscv/DESIGN.md` (halt causes, the retire port) is cited by 1.9 
 
 | Exercise | Title | File | Bootcamp notebook: section | Also cited |
 |----------|-------|------|----------------------------|------------|
-| 2.1 | The rows of the decode table | `Decode.scala` | 5.1: The six instruction formats. 5.3: The control signals; The table; Exercise: complete the table | Unprivileged spec, "M" extension and the instruction listings; handout §T2.1 |
+| 2.1 | The rows of the decode table, and the result of the execute stage | `Decode.scala`, `Execute.scala` | 5.1: The six instruction formats. 5.3: The control signals; The table; Exercise: complete the table | Unprivileged spec, "M" extension and the instruction listings; handout §T2.1, §T2.5 |
 | 2.2 | One signed multiplier for four instructions | `Multiplier.scala` | 2.4 and 2.7 (widths and signed arithmetic) | Unprivileged spec, "M" extension, multiplication operations; handout §T2.2 |
 | 2.3 | The iteration step | `Divider.scala` | 2.4 (widths). 2.7: ChiselEnum; switch and is (a datapath under a state machine) | handout §T2.3 |
 | 2.4 | Special cases and signs | `Divider.scala` | 2.4 and 2.7 (two's complement) | Unprivileged spec, "M" extension, division operations and the table of their special cases; handout §T2.3 |
 | 2.5 | Handshake, state transitions and kill | `Divider.scala` | 2.6: Modules with Decoupled Interfaces. 2.7: ChiselEnum; switch and is | handout §T2.4 |
-| 2.6 | Find the bug: the stall of an instruction that takes more than one cycle | `CPU.scala` (and `Execute.scala`) | 2.6: Modules with Decoupled Interfaces. 5.4: The datapath | the header comment of `Divider`; handout §T2.5 |
-| 2.7 | The result of the execute stage | `Execute.scala` | 5.3: The control signals | handout §T2.5 |
+| 2.6 | Find the bug: the stall of a division | `Execute.scala` | 2.6: Modules with Decoupled Interfaces. 5.4: The datapath | the header comment of `Divider`; handout §T2.5 |
 
 ## T3: `3-csr-trap`
 
@@ -69,17 +68,16 @@ The exercises of T3 rest on the Privileged spec more than on the bootcamp, which
 
 | Exercise | Title | File | Bootcamp notebook: section | Also cited |
 |----------|-------|------|----------------------------|------------|
-| 3.1 | Which CSR instructions write, and which are illegal | `CsrFile.scala` | none | Unprivileged spec, "Zicsr"; Privileged spec §2.1; handout §T3.1 |
-| 3.2 | The value a CSR instruction writes | `CsrFile.scala` | 2.3: `MuxLookup` and bitwise operators | Unprivileged spec, "Zicsr" (CSRRW, CSRRS, CSRRC) |
-| 3.3 | Trap entry and return | `CsrFile.scala` | none | Privileged spec §3.1.6.1, §3.1.14 to §3.1.16, §3.3.2; handout §T3.2 |
-| 3.4 | The interrupt request | `CsrFile.scala` | none | Privileged spec §3.1.9, §3.1.6.1, §3.3.3; handout §T3.3 |
-| 3.5 | Where a trap goes | `CsrFile.scala` | 2.4: `Cat` | Privileged spec §3.1.7; handout §T3.2 |
-| 3.6 | Counting, inhibiting and writing the counters | `CsrFile.scala` | 2.4: `Cat` | Privileged spec §3.1.10, §3.1.12; handout §T3.4 |
-| 3.7 | The timer registers and the timer interrupt | `Clint.scala` | 2.4: `Cat` and bit ranges | Privileged spec §3.2.1; handout §T3.5 |
-| 3.8 | Traps and commit: what an instruction that traps leaves undone | `CPU.scala` | none | `CsrFile`'s ports; handout §T3.2 |
-| 3.9 | Which exception an instruction raises | `CPU.scala` | none | `ExceptionCauses`; Privileged spec §3.1.15; handout §T3.2 |
-| 3.10 | Taking an interrupt at an instruction boundary | `CPU.scala` | none | handout §T3.3 |
-| 3.11 | WFI: waiting for an interrupt | `CPU.scala` | none | `InterruptRequest`; Privileged spec §3.3.3; handout §T3.3 |
+| 3.1 | CSR instructions: what they write, whether they write, and which are illegal | `CsrFile.scala` | 2.3: `MuxLookup` and bitwise operators | Unprivileged spec, "Zicsr" (CSRRW, CSRRS, CSRRC, and the table of side effects); Privileged spec §2.1; handout §T3.1 |
+| 3.2 | Trap entry and return | `CsrFile.scala` | none | Privileged spec §3.1.6.1, §3.1.14 to §3.1.16, §3.3.2; handout §T3.2 |
+| 3.3 | The interrupt request | `CsrFile.scala` | none | Privileged spec §3.1.9, §3.1.6.1, §3.3.3; handout §T3.3 |
+| 3.4 | Where a trap goes | `CsrFile.scala` | 2.4: `Cat` | Privileged spec §3.1.7; handout §T3.2 |
+| 3.5 | Counting, inhibiting and writing the counters | `CsrFile.scala` | 2.4: `Cat` | Privileged spec §3.1.10, §3.1.12; handout §T3.4 |
+| 3.6 | The timer registers and the timer interrupt | `Clint.scala` | 2.4: `Cat` and bit ranges | Privileged spec §3.2.1; handout §T3.5 |
+| 3.7 | Traps and commit: what an instruction that traps leaves undone | `CPU.scala` | none | `CsrFile`'s ports; handout §T3.2 |
+| 3.8 | Which exception an instruction raises | `CPU.scala` | none | `ExceptionCauses`; Privileged spec §3.1.15; handout §T3.2 |
+| 3.9 | Taking an interrupt at an instruction boundary | `CPU.scala` | none | handout §T3.3 |
+| 3.10 | WFI: waiting for an interrupt | `CPU.scala` | none | `InterruptRequest`; Privileged spec §3.3.3; handout §T3.3 |
 
 ## T4: `4-pipeline`
 
@@ -100,15 +98,14 @@ The exercises of T3 rest on the Privileged spec more than on the bootcamp, which
 
 | Exercise | Title | File | Bootcamp notebook: section | Also cited |
 |----------|-------|------|----------------------------|------------|
-| 5.1 | The request channels: each VALID until its own READY | `Axi4LiteMaster.scala` | 3.2_interlude: `Decoupled` | AXI4-Lite spec §A3.2.1, §A3.3.1; handout §T5.1 |
-| 5.2 | The response to the core | `Axi4LiteMaster.scala` | none | AXI4-Lite spec §A3.4.4; handout §T5.1 |
-| 5.3 | The grant | `Axi4LiteXbar.scala` | 3.2_interlude: `Decoupled` | AXI4-Lite spec §A3.2.1; handout §T5.3 |
-| 5.4 | The way back, and an address that no slave owns | `Axi4LiteXbar.scala` | 2.3: `Mux1H` | AXI4-Lite spec §A3.3.1, §A3.4.4; handout §T5.3 |
-| 5.5 | The word of a synchronous-read memory on the R channel | `Axi4LiteSlave.scala` | 2.4 | handout §T5.4 |
-| 5.6 | Find the bug: the checker's rule for a stable payload | `Axi4LiteChecker.scala` | 2.4: `RegNext` | AXI4-Lite spec §A3.2.1; handout §T5.2 |
-| 5.7 | Video timing: scan counters, visible area and sync pulses | `Vga.scala` | 2.4: counters and widths | VESA 640 x 480 at 60 Hz; handout §T5.6 |
-| 5.8 | Pixel fetch: framebuffer address, x4 scaling and pipeline alignment | `Vga.scala` | 2.4: registers with an enable | handout §T5.7 |
-| 5.9 | Buffer swap at vblank | `Vga.scala` | 2.3: the last connection wins | handout §T5.8 |
+| 5.1 | The master: each VALID until its own READY, and the response to the core | `Axi4LiteMaster.scala` | 3.2_interlude: `Decoupled` | AXI4-Lite spec §A3.2.1, §A3.3.1, §A3.4.4; handout §T5.1 |
+| 5.2 | The grant | `Axi4LiteXbar.scala` | 3.2_interlude: `Decoupled` | AXI4-Lite spec §A3.2.1; handout §T5.3 |
+| 5.3 | The way back, and an address that no slave owns | `Axi4LiteXbar.scala` | 2.3: `Mux1H` | AXI4-Lite spec §A3.3.1, §A3.4.4; handout §T5.3 |
+| 5.4 | The word of a synchronous-read memory on the R channel | `Axi4LiteSlave.scala` | 2.4 | handout §T5.4 |
+| 5.5 | Find the bug: the protocol checker | `Axi4LiteChecker.scala` | 2.4: `RegNext` | AXI4-Lite spec §A3.2.1, §A3.3.1; handout §T5.2 |
+| 5.6 | Video timing: scan counters, visible area and sync pulses | `Vga.scala` | 2.4: counters and widths | VESA 640 x 480 at 60 Hz; handout §T5.6 |
+| 5.7 | Pixel fetch: framebuffer address, x4 scaling and pipeline alignment | `Vga.scala` | 2.4: registers with an enable | handout §T5.7 |
+| 5.8 | Buffer swap at vblank | `Vga.scala` | 2.3: `when` | handout §T5.8 |
 
 ## Bootcamp exercises that the tasks instantiate
 

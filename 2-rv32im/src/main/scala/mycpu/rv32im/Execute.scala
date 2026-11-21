@@ -63,6 +63,17 @@ class Execute(divLatency: Int = Divider.DIV_LATENCY, mutant: Option[String] = No
     val done              = Output(Bool())
   })
 
+  // [CA26: Exercise 2.6] Find the bug: the stall of a division
+  // Contract: `done` is high in the one cycle in which the instruction has nothing left to wait
+  // for in this stage: at once for every instruction but a division, and for a division in the
+  // cycle in which the divider answers it, never before. A division is given to the divider once;
+  // the header of `Divider` defines the handshake, what each of its signals promises and so what
+  // the requester may and may not do while it waits. A division whose result nobody reads (rd is
+  // x0) is carried out like any other (bootcamp 2.6 for `Decoupled` and `Valid`; bootcamp 5.4;
+  // handout §T2.5). The code of this class compiles, but one line of it breaks this rule: find it
+  // with the specs, a retire log or a waveform, fix it, and explain the fix in your report (which
+  // run showed it, in which cycle and signal, and why the fix is right).
+
   // T1's stage, unchanged: the student's own answer to exercise 1.4 serves here too
   val base = Module(new mycpu.singlecycle.Execute(mutant.filter(mycpu.singlecycle.Execute.mutants)))
   base.io.pc           := io.pc
@@ -87,17 +98,11 @@ class Execute(divLatency: Int = Divider.DIV_LATENCY, mutant: Option[String] = No
   divider.io.req.bits.divisor  := io.rs2_data
   divider.io.kill              := io.kill
 
-  // The stall of a division (exercise 2.6): a division is given to the divider once, and the instruction is `done` in the cycle
-  // in which the divider answers it, not before; every other instruction is done at once. The
-  // header of `Divider` defines the handshake: what `req.ready` and `resp.valid` promise, and so
-  // what the requester may and may not do while it waits. The core holds the instruction and its
-  // operands until then, and a division whose result nobody reads (rd is x0) is carried out like
-  // any other (bootcamp 2.6 for `Decoupled` and `Valid`; handout §T2.5).
-  divider.io.req.valid                             := io.valid && io.m.div
-  io.done                                          := !io.m.div || divider.io.resp.valid
+  divider.io.req.valid := io.valid && io.m.div
+  io.done := !io.m.div || divider.io.req.ready
   if (mutant.contains(Execute.NoDivStall)) io.done := true.B
 
-  // [CA26: Exercise 2.7] The result of the execute stage
+  // [CA26: Exercise 2.1] The rows of the decode table, and the result of the execute stage
   // Contract: `result` is what the instruction computes for `rd` when the decode table names the
   // ALU, the multiplier or the divider as the source (`m.rd_source`, see `ControlSignals` for
   // when the field means something). For the other instructions `result` is not used, and

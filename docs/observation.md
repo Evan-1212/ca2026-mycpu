@@ -324,8 +324,8 @@ that the bundle was packed from.
 `stamp` (1.2, with `--stamp`, which `make obs` always gives) says who made the run: the student's
 ID from `STUDENT_ID` (NONE for an auditor, `unset` or `invalid` without a valid file), the git
 e-mail, the HEAD commit (12 digits, with `+` when tracked files differed from it), a random
-`nonce`, and `pred` in a run with a value that the student's ID assigns to a question
-(`pred=T4.Q1@<commit>`: the commit of the prediction that the run waited for, `scripts/student-id.py`,
+`nonce`, and `pred` in a run that sets a make variable of a question to a value other than its
+default (`pred=T4.Q1@<commit>`: the commit of the prediction that the run waited for, `scripts/student-id.py`,
 "Predictions are binding"); and `sha256`, the SHA-256 of these as `key=value` lines in this order
 followed by the ELF's and the trace's SHA-256, one per line: a stamp copied into another run's
 bundle no longer matches it.

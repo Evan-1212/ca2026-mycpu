@@ -52,9 +52,12 @@ class TierTest(unittest.TestCase):
         t = {("t4-forward", "quiz-arith", "mulu"): (2000, 1000, 1500)}
         self.assertEqual(grade.tiers("t4-forward", "quiz-arith", "mulu", 0, 1500, t)[:2], (False, False))
         self.assertEqual(grade.tiers("t4-forward", "quiz-arith", "mulu", 0, 1499, t)[:2], (True, False))
-        # where the compiler already reaches the reference, the thresholds alone count
-        t = {("t4-forward", "quiz-arith", "mulu"): (2000, 1000, 1000)}
+        # where the compiler already reaches the reference, cycles earn nothing: correctness alone
+        t = {("t4-forward", "quiz-arith", "mulu"): (2000, 1000, 1050)}
         self.assertEqual(grade.tiers("t4-forward", "quiz-arith", "mulu", 0, 1000, t)[:2], (True, True))
+        self.assertTrue(grade.tiers("t4-forward", "quiz-arith", "mulu", 0, 1000, t)[4])
+        t = {("t4-forward", "quiz-arith", "mulu"): (2000, 1000, 1051)}
+        self.assertFalse(grade.tiers("t4-forward", "quiz-arith", "mulu", 0, 1000, t)[4])
 
     def test_an_unlisted_model_is_graded_on_instructions(self):
         t = grade.tiers("t3-div66", "quiz-arith", "mulu", 480, 99999, self.targets)
@@ -74,6 +77,14 @@ class PointsTest(unittest.TestCase):
         self.assertEqual(grade.points(self.routine(True, False, False), 10), 5)
         self.assertEqual(grade.points(self.routine(True, True, False), 10), 7.5)
         self.assertEqual(grade.points(self.routine(True, True, True), 10), 10)
+
+    def test_a_routine_the_compiler_reaches_is_graded_on_correctness_with_half_a_share(self):
+        plain = {"correct": True, "base": False, "best": False, "plain": True}
+        self.assertEqual(grade.points(plain, 4), 4)
+        self.assertEqual(grade.points(dict(plain, correct=False), 4), 0)
+        routines = [plain, self.routine(True, True, True), self.routine(True, True, True)]
+        self.assertEqual(grade.shares(routines, 25), [5, 10, 10])
+        self.assertEqual(grade.shares([self.routine(True, True, True)] * 2, 20), [10, 10])
 
 
 class ScoreToolTest(unittest.TestCase):

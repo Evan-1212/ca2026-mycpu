@@ -255,7 +255,7 @@ class CsrFile(mtvecReset: Long = 0x80000000L) extends Module {
 
   // ---- the CSR instruction: what it writes
   val operand = Mux(cmd.imm, cmd.rs1.pad(32), cmd.rs1_data)
-  // [CA26: Exercise 3.2] The value a CSR instruction writes
+  // [CA26: Exercise 3.1] CSR instructions: what they write, whether they write, and which are illegal
   // Contract: `wdata` is the new value of the CSR as the instruction computes it from the old
   // value `rdata` and from `operand` (the source register, or the zero-extended immediate), for
   // each of the three operations of `CsrOp` (Unprivileged spec, "Zicsr" extension, the
@@ -265,7 +265,7 @@ class CsrFile(mtvecReset: Long = 0x80000000L) extends Module {
 
   val trap_taken = io.trap.exception || io.trap.interrupt
   val writes     = Wire(Bool()) // the instruction writes its CSR, by the rules of Zicsr
-  // [CA26: Exercise 3.1] Which CSR instructions write, and which are illegal
+  // [CA26: Exercise 3.1] CSR instructions: what they write, whether they write, and which are illegal
   // Contract: drive `writes`, `io.csr.illegal` and `io.csr.write` as the comments of `CsrPort`
   // and of this class define them (Unprivileged spec, "Zicsr" extension, the table of read and
   // write side effects, for the instructions that write). `exists` says whether there is a CSR
@@ -319,7 +319,7 @@ class CsrFile(mtvecReset: Long = 0x80000000L) extends Module {
   val counters: Seq[(UInt, Int, Int)] = Seq((mcycle, Address.Mcycle, 0), (minstret, Address.Minstret, 2)) ++
     (0 until programmable).map(i => (hpm_counters(i), Address.mhpmcounter(firstHpm + i), firstHpm + i))
 
-  // [CA26: Exercise 3.6] Counting, inhibiting and writing the counters
+  // [CA26: Exercise 3.5] Counting, inhibiting and writing the counters
   // Contract: at the end of every cycle, each counter of `counters` (`mcycle`, `minstret`, then
   // `mhpmcounter3..10`, selected by `hpm_events(0..7)`) takes a CSR write to one of its halves,
   // or counts, or stands still, as the "Counters" paragraph of the class comment defines.
@@ -330,7 +330,7 @@ class CsrFile(mtvecReset: Long = 0x80000000L) extends Module {
 
   // ---- interrupts (T3-03)
   val irq_cause = Wire(UInt(4.W))
-  // [CA26: Exercise 3.4] The interrupt request
+  // [CA26: Exercise 3.3] The interrupt request
   // Contract: drive `irq_cause`, `io.irq.valid` and `io.irq.wake` as `InterruptRequest` defines
   // them, from `mip`, `mie` and `mstatus_mie`. When several interrupts could be taken, the cause
   // is the one the specification ranks highest; when none can, the cause is not looked at
@@ -342,14 +342,14 @@ class CsrFile(mtvecReset: Long = 0x80000000L) extends Module {
   // ---- trap return and trap entry (T3-02)
   val mret_taken = io.mret.valid && !trap_taken
   io.mret.pc := mepc
-  // [CA26: Exercise 3.3] Trap entry and return
+  // [CA26: Exercise 3.2] Trap entry and return
   // Contract: an `mret` that commits (`mret_taken`) restores the interrupt enable that trap entry
   // saved and leaves the saved copy in the state the specification gives it. `MPP` is hardwired
   // in an M-mode-only hart and needs nothing (Privileged spec §3.1.6.1, "Privilege and Global
   // Interrupt-Enable Stack in mstatus register", and §3.3.2, "Trap-Return Instructions").
   ?
 
-  // [CA26: Exercise 3.5] Where a trap goes
+  // [CA26: Exercise 3.4] Where a trap goes
   // Contract: `io.trap.handler_pc` is the address of the handler by `mtvec` (`mtvec_base` is
   // BASE, `mtvec_mode` is MODE), for an interrupt with cause `irq_cause` if `io.trap.interrupt`
   // is high and for an exception otherwise, modulo 2^32. `io.trap.interrupt` comes late in the
@@ -366,7 +366,7 @@ class CsrFile(mtvecReset: Long = 0x80000000L) extends Module {
     "trap.cause is not an exception code of this hart"
   )
 
-  // [CA26: Exercise 3.3] Trap entry and return
+  // [CA26: Exercise 3.2] Trap entry and return
   // Contract: in a cycle with a trap (`trap_taken`), update `mepc`, `mcause` (its two registers:
   // `mcause_interrupt`, `mcause_code`), `mtval` and the two `mstatus` bits as the specification
   // prescribes for a trap taken into M-mode, from the trap port for an exception and with cause

@@ -39,9 +39,9 @@ the student expects, not against the reference.
 | The multi-cycle divider | T2 | after exercises 2.3 to 2.6 | a T2 bundle with a division (the `t2-muldiv` example) |
 | What each check proves: retire log, waveform, test result | T1, T2 | the first session that uses `make obs`; it explains why a retire log alone does not show a stall | a bundle with test results |
 | The UART: from a store to the terminal | T1 to T5 | after notebook 5.8 and exercise 1.7 | a bundle of the `uart` program from cycle 0 |
-| Exceptions and interrupts | T3, T4, T5 | after exercises 3.3 to 3.5 (trap entry, the handler address) and 3.10 (taking an interrupt) | a bundle with a trap, irqtrap for an interrupt (`make obs PROG=irqtrap OBS_CYCLES=10000`) |
+| Exceptions and interrupts | T3, T4, T5 | after exercises 3.2 to 3.4 (trap entry, the handler address) and 3.9 (taking an interrupt) | a bundle with a trap, irqtrap for an interrupt (`make obs PROG=irqtrap OBS_CYCLES=10000`) |
 | Pipeline hazards: forwarding, stall and flush | T4, T5 | after exercises 4.2 to 4.3, once per variant (`VARIANT=Stall`, `Forward`, `EarlyBranch`): the same program gives other numbers | a bundle of the `hazards` program |
-| The VGA: from the framebuffer to the screen | T5 | after exercises 5.7 to 5.9 (the VGA) and `make check-vga` | a nyancat bundle with a frame and the stores (`OBS_VGA=1 OBS_VGA_EXIT=1 OBS_STORES=20000000:20010000`) |
+| The VGA: from the framebuffer to the screen | T5 | after exercises 5.6 to 5.8 (the VGA) and `make check-vga` | a nyancat bundle with a frame and the stores (`OBS_VGA=1 OBS_VGA_EXIT=1 OBS_STORES=20000000:20010000`) |
 
 A session that uses the pipeline view can compare the variants: a student makes three bundles of
 `hazards` and adds two of them under "Variants side by side". The numbers to expect are derived

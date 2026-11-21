@@ -93,7 +93,6 @@ class InstructionDecode extends Module {
   d.ecall  := is_kind(Kind.Ecall)
   d.ebreak := is_kind(Kind.Ebreak)
 
-  // what the instruction does with rd
-  d.rd_write  := is_kind(Kind.Alu) || d.load || d.store || d.jal || d.jalr
-  d.rd_source := Mux(d.load, RdSource.Load, Mux(d.jal || d.jalr, RdSource.Link, RdSource.Alu))
+  d.rd_write  := is_kind(Kind.Alu) || d.load || d.jal || d.jalr
+  d.rd_source := Mux(d.load, RdSource.Load, Mux(d.jal, RdSource.Link, RdSource.Alu))
 }

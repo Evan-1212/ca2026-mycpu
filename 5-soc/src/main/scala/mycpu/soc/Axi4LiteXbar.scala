@@ -77,7 +77,7 @@ class Axi4LiteDecoder(regions: Seq[Region], mutant: Option[String] = None) exten
   }.elsewhen(io.master.r.fire) {
     r_active := false.B
   }
-  // [CA26: Exercise 5.4] The way back, and an address that no slave owns
+  // [CA26: Exercise 5.3] The way back, and an address that no slave owns
   // Contract: the master's AR is taken when there is room (`ar_open`) and the slave it addresses
   // takes it. The master's R channel carries the response of the slave that took the outstanding
   // read (`r_active`, `r_sel`), with that slave's `valid` and payload. A read of an address in
@@ -111,7 +111,7 @@ class Axi4LiteDecoder(regions: Seq[Region], mutant: Option[String] = None) exten
   aw_sent := (aw_sent && !io.master.b.fire) || io.master.aw.fire
   w_sent  := (w_sent && !io.master.b.fire) || io.master.w.fire
   when(io.master.aw.fire)(w_sel := aw_hit)
-  // [CA26: Exercise 5.4] The way back, and an address that no slave owns
+  // [CA26: Exercise 5.3] The way back, and an address that no slave owns
   // Contract: as for reads. AW is taken when there is room (`aw_open`) and its slave takes it; W
   // when there is room (`w_open`), its slave is known (`w_known`, `w_hit`) and that slave takes
   // it. B carries the response of the slave of the current write once both transfers are done
@@ -157,7 +157,7 @@ class Axi4LiteArbiter extends Module {
   io.slave.ar.bits  := Mux(ar_low, io.low.ar.bits, io.high.ar.bits)
   io.high.ar.ready  := ar_open && !ar_low && io.slave.ar.ready
   io.low.ar.ready   := ar_open && ar_low && io.slave.ar.ready
-  // [CA26: Exercise 5.3] The grant
+  // [CA26: Exercise 5.2] The grant
   // Contract: `ar_low` says which master's AR is passed to the slave in this cycle (true: `low`).
   // `high` has priority whenever the choice is open, and `low` gets the channel when `high` does
   // not ask. The choice is not open after a cycle in which the slave saw `ARVALID` and did not
@@ -199,7 +199,7 @@ class Axi4LiteArbiter extends Module {
   io.low.w.ready    := w_low && w_go && io.slave.w.ready
   aw_done           := (aw_done && !w_free) || io.slave.aw.fire
   w_done            := (w_done && !w_free) || io.slave.w.fire
-  // [CA26: Exercise 5.3] The grant
+  // [CA26: Exercise 5.2] The grant
   // Contract: `w_low` says which master's AW and W are passed to the slave in this cycle (true:
   // `low`). A write holds the slave from the cycle its `AWVALID` shows there (`aw_valid`) until
   // its B transfer; `w_free` is high in a cycle in which no write holds it or that B transfer

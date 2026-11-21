@@ -67,7 +67,7 @@ in WB has committed.
 - **Exceptions** are noted where they are found (a failed fetch in IF; an illegal word, `ecall`,
   `ebreak` in ID; a misaligned branch or jump target in EX, or in ID for `EarlyBranch`) and taken
   in MEM, together with MEM's own (a CSR access that is not allowed, a misaligned or faulting
-  access), by T3's priority (exercise 3.9, called as `mycpu.csrtrap.CPU.exception`). MEM holds
+  access), by T3's priority (exercise 3.8, called as `mycpu.csrtrap.CPU.exception`). MEM holds
   the oldest instruction, so exceptions are taken in program order; a trap flushes EX, ID and the
   fetch unit, and kills a division in EX.
 - **Interrupts** are taken on the oldest instruction that has not committed: MEM's; if MEM holds a
@@ -427,9 +427,10 @@ no others: the instructors repeat your runs with them. `<n>` below is your value
 **Predict first, and push the prediction.** Write the prediction of each question, with its
 derivation, in `notes/t4-q<m>.md` of your fork (`notes/t4-q1.md` for Q1), commit it and push it
 **before** the run, and put the measurement and the comparison in later commits without editing the
-prediction. A run with a value of yours that is a make variable (`T4.Q1.I_WAIT` with
-`T4.Q1.D_WAIT`) does not start until its question's prediction is committed and pushed: `make`
-names the file it waits for, and the stamp of the run (`pred=` in a trace header or a bundle) names
+prediction. Q1 owns `I_WAIT` and `D_WAIT`: a run that gives them any values other than the
+default and the worked examples of this README (`I_WAIT=2` with `D_WAIT=2` or `rand3:7`), yours or
+a neighbor of them, does not start until `notes/t4-q1.md` is committed and pushed. `make` names
+the file it waits for, and the stamp of the run (`pred=` in a trace header or a bundle) names
 the commit of the prediction. GitHub records when it received that commit; a prediction that
 reached it after the measurement does not count.
 

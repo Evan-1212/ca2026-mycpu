@@ -16,14 +16,14 @@ After this task you can:
 
 - explain the AXI4-Lite handshake: each `VALID` raised without waiting for `READY` and held,
   with a stable payload, until its own `READY`; AW and W independent; R after AR and B after both
-  AW and W (exercises 5.1, 5.2);
+  AW and W (exercise 5.1);
 - build a crossbar: decode an address to a slave, answer an address that no slave owns with
   `DECERR`, and arbitrate two masters on one slave without changing what a waiting slave sees
-  (5.3, 5.4);
-- read a synchronous memory (a block RAM) at one word per cycle (5.5), and check a bus with
-  assertions (5.6);
+  (5.2, 5.3);
+- read a synchronous memory (a block RAM) at one word per cycle (5.4), and check a bus with
+  assertions (5.5);
 - generate VGA timing, fetch pixels with the right pipeline alignment, and swap frame buffers at
-  vertical blanking (5.7 to 5.9);
+  vertical blanking (5.6 to 5.8);
 - follow the system from the reset vector in ROM to your program, and explain, event by event,
   why the same core runs the same program in more cycles behind a bus than in T4.
 
@@ -90,7 +90,7 @@ pc=0000100c inst=f1402573  csrr a0, mhartid
   It has one transaction outstanding, and its `req.ready` is high again in the cycle the response
   arrives, so a read can follow a read without an idle cycle.
 - **Crossbar.** Each master has a decoder; a slave that both masters reach has an arbiter, which
-  keeps its grant while a slave waits with `VALID` high (5.3). The RAM has a port per master, so
+  keeps its grant while a slave waits with `VALID` high (5.2). The RAM has a port per master, so
   fetches and data accesses never wait for each other.
 - **Slaves.** Every slave answers from registers (no combinational path from a request to its
   response). The RAM answers one cycle after the AR transfer, the next AR in that cycle: a word per
@@ -141,32 +141,32 @@ cycles). A device access goes through a `MemPortSlave` instead of the RAM (quest
 | File | What it is |
 |------|------------|
 | `Axi4Lite.scala` | the bundles and response codes |
-| `Axi4LiteMaster.scala` | a core memory port as an AXI4-Lite master (5.1, 5.2) |
-| `Axi4LiteXbar.scala` | the decoder (5.4), the arbiter (5.3), the crossbar |
-| `Axi4LiteSlave.scala` | the read channel (5.5) and write channel of a memory slave, wait states |
+| `Axi4LiteMaster.scala` | a core memory port as an AXI4-Lite master (5.1) |
+| `Axi4LiteXbar.scala` | the decoder (5.3), the arbiter (5.2), the crossbar |
+| `Axi4LiteSlave.scala` | the read channel (5.4) and write channel of a memory slave, wait states |
 | `Axi4LiteRam.scala`, `Axi4LiteRom.scala` | the RAM and the boot ROM |
 | `MemPortSlave.scala` | a `MemPort` device on the bus |
-| `Axi4LiteChecker.scala` | the protocol checker (5.6) |
-| `Vga.scala` | the VGA: timing (5.7), pixel fetch (5.8), buffer swap (5.9) |
+| `Axi4LiteChecker.scala` | the protocol checker (5.5, find the bug) |
+| `Vga.scala` | the VGA: timing (5.6), pixel fetch (5.7), buffer swap (5.8) |
 | `Soc.scala` | the SoC (`SimTop`) and the model emitter (`Emit`) |
 | `boot/boot.S`, `boot/boot.ld` | the boot ROM |
 
 ## CA26: Exercises
 
-Nine exercises, each marked `[CA26: Exercise 5.<n>]` in the source.
+Eight exercises, each marked `[CA26: Exercise 5.<n>]` in the source: seven with blanks, and one
+(5.5) to find a bug in.
 
 <!-- table: exercises 5 -->
 | ID | Title | File | Blanks |
 |----|-------|------|--------|
-| 5.1 | The request channels: each VALID until its own READY | `Axi4LiteMaster.scala` | 1 |
-| 5.2 | The response to the core | `Axi4LiteMaster.scala` | 2 |
-| 5.3 | The grant | `Axi4LiteXbar.scala` | 2 |
-| 5.4 | The way back, and an address that no slave owns | `Axi4LiteXbar.scala` | 2 |
-| 5.5 | The word of a synchronous-read memory on the R channel | `Axi4LiteSlave.scala` | 1 |
-| 5.6 | Find the bug: the checker's rule for a stable payload | `Axi4LiteChecker.scala` | none: a bug to find |
-| 5.7 | Video timing: scan counters, visible area and sync pulses | `Vga.scala` | 1 |
-| 5.8 | Pixel fetch: framebuffer address, x4 scaling and pipeline alignment | `Vga.scala` | 1 |
-| 5.9 | Buffer swap at vblank | `Vga.scala` | 1 |
+| 5.1 | The master: each VALID until its own READY, and the response to the core | `Axi4LiteMaster.scala` | 3 |
+| 5.2 | The grant | `Axi4LiteXbar.scala` | 2 |
+| 5.3 | The way back, and an address that no slave owns | `Axi4LiteXbar.scala` | 2 |
+| 5.4 | The word of a synchronous-read memory on the R channel | `Axi4LiteSlave.scala` | 1 |
+| 5.5 | Find the bug: the protocol checker | `Axi4LiteChecker.scala` | none: a bug to find |
+| 5.6 | Video timing: scan counters, visible area and sync pulses | `Vga.scala` | 1 |
+| 5.7 | Pixel fetch: framebuffer address, x4 scaling and pipeline alignment | `Vga.scala` | 1 |
+| 5.8 | Buffer swap at vblank | `Vga.scala` | 1 |
 <!-- end table -->
 
 ### Workflow
@@ -175,11 +175,11 @@ A blank does not compile, and sbt compiles a task as a whole, so no spec of this
 a blank of it, or of a task before it, is left. Fill them all; then run the specs in this order,
 which follows the dependencies, so that the first failure points at its exercise:
 
-1. 5.6 (the checker watches everything after it): `sbt "soc/testOnly mycpu.soc.AxiCheckerSpec"`.
-2. 5.1, 5.2: `sbt "soc/testOnly mycpu.soc.Axi4LiteMasterSpec"`; 5.3, 5.4: `InterconnectSpec`; 5.5:
+1. 5.5 (the checker watches everything after it): `sbt "soc/testOnly mycpu.soc.AxiCheckerSpec"`.
+2. 5.1: `sbt "soc/testOnly mycpu.soc.Axi4LiteMasterSpec"`; 5.2, 5.3: `InterconnectSpec`; 5.4:
    `Axi4LiteRamSpec`, `Axi4LiteRomSpec`; then `SocBusSpec`, the bus without a core.
 3. The SoC: `make verilator`, `make test-programs`, then `make test`.
-4. 5.7 to 5.9: `make check-vga check-qr` (the golden frames say nothing of your code: compare a
+4. 5.6 to 5.8: `make check-vga check-qr` (the golden frames say nothing of your code: compare a
    dumped frame with the golden one when they differ).
 5. `make check-shell`, `make act4`, and `make demo` (with `SDL=1` to watch it).
 
@@ -256,10 +256,10 @@ printf 'peek 0x20000000\nqr\nexit\n' | ../build/t5-forward/Vsim +elf=../build/sw
 
 | Spec | What it checks |
 |------|----------------|
-| `AxiCheckerSpec` | each rule of the checker fires on a violation and on nothing else (5.6) |
-| `Axi4LiteMasterSpec` | the master against slaves of every timing; the `drop-awvalid` mutant (5.1, 5.2) |
-| `InterconnectSpec` | the crossbar: routing, `DECERR`, arbitration, the lock (5.3, 5.4); the `no-decerr` mutant |
-| `Axi4LiteRamSpec`, `Axi4LiteRomSpec` | both read modes, a word per cycle, wait states, strobes, refused writes (5.5) |
+| `AxiCheckerSpec` | each rule of the checker fires on a violation and on nothing else (5.5) |
+| `Axi4LiteMasterSpec` | the master against slaves of every timing; the `drop-awvalid` mutant (5.1) |
+| `InterconnectSpec` | the crossbar: routing, `DECERR`, arbitration, the lock (5.2, 5.3); the `no-decerr` mutant |
+| `Axi4LiteRamSpec`, `Axi4LiteRomSpec` | both read modes, a word per cycle, wait states, strobes, refused writes (5.4) |
 | `MemPortSlaveSpec` | one request per transaction, back pressure, order, errors |
 | `SocBusSpec` | the bus of the SoC without a core, under random traffic of two masters |
 | `SocLintSpec` | each bus unit under `verilator --lint-only -Wall` |
@@ -268,7 +268,7 @@ printf 'peek 0x20000000\nqr\nexit\n' | ../build/t5-forward/Vsim +elf=../build/sw
 | `RiscvTestsSpec` | per variant: 40 `rv32ui`, 8 `rv32um`, 9 `t3mi` and 4 `t5bus` tests |
 | `BusProbeSpec` | the `bus` probes of the observation interface equal the data master's interface (where its checker sits) in every cycle, with and without RAM wait states; the AW, W and B of two stores and the AR and R of two loads (OKAY, DECERR) |
 
-One more spec, `VgaSpec`, is held back: it restates exercises 5.7 and 5.8, so it is not in your
+One more spec, `VgaSpec`, is held back: it restates exercises 5.6 and 5.7, so it is not in your
 tree, and the TAs run it on your submission. You check the VGA with `make check-vga` and its golden
 frames.
 
@@ -383,7 +383,7 @@ One HackMD note for this task, in the format of the course handout's submission 
    the repository.
 5. **Two exercises explained**, at least, with **your own** waveform screenshots or `+retire-log`
    excerpts, walked through cycle by cycle. For example: a write whose AW and W are taken in
-   different cycles (5.1), or the cycle in which the VGA swaps its buffers (5.9).
+   different cycles (5.1), or the cycle in which the VGA swaps its buffers (5.8).
 6. **Answers to the three questions below.** Each needs a run with a parameter **you** choose:
    state the parameter, the command lines and the numbers you measured.
    **Predict first**, as the Questions section says: the note shows the commit of each prediction
@@ -400,8 +400,9 @@ no others: the instructors repeat your runs with them. `<n>` below is your value
 **Predict first, and push the prediction.** Write the prediction of each question, with its
 derivation, in `notes/t5-q<m>.md` of your fork (`notes/t5-q1.md` for Q1), commit it and push it
 **before** the run, and put the measurement and the comparison in later commits without editing the
-prediction. A run with a value of yours that is a make variable (`T5.Q2.RAM_WAIT`) does not start
-until its question's prediction is committed and pushed: `make` names the file it waits for, and
+prediction. Q2 owns `RAM_WAIT`: a run that gives it any value other than 0, yours or a neighbor
+of it, with or without an ID, does not start until `notes/t5-q2.md` is committed and pushed. `make`
+names the file it waits for, and
 the stamp of the run (`pred=` in a trace header or a bundle) names the commit of the prediction.
 GitHub records when it received that commit; a prediction that reached it after the measurement
 does not count.

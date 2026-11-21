@@ -369,7 +369,6 @@ class CPU(
   val wake      = csr.io.irq.wake
   val completes = Wire(Bool()) // MEM's instruction is over in this cycle
   val commit    = Wire(Bool()) // it commits
-  completes := mem.valid && memory.io.done && !(mm.sys.wfi && !wake)
 
   // the oldest instruction that has not committed, for an interrupt
   val oldest_pc =
@@ -387,12 +386,13 @@ class CPU(
   ?
 
   // [CA26: Exercise 4.5] The commit stage: trap or commit
-  // Contract: drive `trap`, `commit` and `mem_free` (see their comments where they are declared)
-  // for the instruction in MEM, whose exception, if it raises one, is `exception`. An interrupt
-  // wins over everything MEM's instruction would do; an exception is taken when the instruction
-  // would leave MEM, never earlier; an instruction that traps neither commits nor goes on to WB.
-  // MEM can take the next instruction when it is empty or its instruction leaves in this cycle,
-  // also by a trap (handout §T4.4).
+  // Contract: drive `completes`, `trap`, `commit` and `mem_free` (see their comments where they
+  // are declared) for the instruction in MEM, whose exception, if it raises one, is `exception`.
+  // MEM's instruction is over by T3's rule, WFI included (`wake` is T3's). An interrupt wins over
+  // everything MEM's instruction would do; an exception is taken when the instruction would leave
+  // MEM, never earlier; an instruction that traps neither commits nor goes on to WB. MEM can take
+  // the next instruction when it is empty or its instruction leaves in this cycle, also by a trap
+  // (handout §T4.4).
   ?
   mret_commit := commit && mm.sys.mret
 
