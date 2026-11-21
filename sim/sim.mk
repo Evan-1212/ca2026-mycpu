@@ -105,8 +105,12 @@ endif
 # recipe makes both, runs it once, and runs it when either is missing. $(1).deps
 # records the command and the set of prerequisites; it is rewritten, and so
 # newer than the outputs, only when they change.
+# SIM_GATE: a command that runs first in the recipes of an elaboration and of a model, and stops
+# the build when it fails (sim/task.mk: the binding predictions). Empty by default. It is part of
+# these recipes, not a target of its own, so `make -o <target>` does not skip it.
 define sim_topgen
 $(1)/SimTop%sv $(1)/sim_config%h: $(3) $(SIM_SCALA_DEPS) $(1)/topgen.deps
+	$$(SIM_GATE)
 	@echo "  TOPGEN   $(2)"
 	@log=$$$$(mktemp $(1)/topgen.log.XXXXXX) || exit 1; \
 	(cd $(SIM_ROOT) && BOOTCAMP_DIR=$(SIM_BOOTCAMP) $(SBT) -batch "$(2)") > $$$$log 2>&1 && mv $$$$log $(1)/topgen.log || \
@@ -140,6 +144,7 @@ $(1)/vflags: SIM_FORCE
 	{ cmp -s $$$$tmp $$@ && rm $$$$tmp || { mv $$$$tmp $$@ && rm -rf $(1)/obj; }; }
 
 $(1)/Vsim: $(2)/SimTop.sv $(2)/sim_config.h $(SIM_SRCS) $(SIM_HDRS) $(SIM_DIR)/sim.mk $(1)/vflags
+	$$(SIM_GATE)
 	@mkdir -p $(1)
 	@echo "  VERILATE $$@"
 	@OBJCACHE= $(VERILATOR) $(SIM_VFLAGS) -j $(SIM_JOBS) -CFLAGS -I$(abspath $(2)) -CFLAGS -I$(SIM_DIR) \

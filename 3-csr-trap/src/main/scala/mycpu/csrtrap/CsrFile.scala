@@ -353,7 +353,7 @@ class CsrFile(mtvecReset: Long = 0x80000000L) extends Module {
   // Contract: `io.trap.handler_pc` is the address of the handler by `mtvec` (`mtvec_base` is
   // BASE, `mtvec_mode` is MODE), for an interrupt with cause `irq_cause` if `io.trap.interrupt`
   // is high and for an exception otherwise, modulo 2^32. `io.trap.interrupt` comes late in the
-  // cycle: it selects between addresses that do not depend on it (Privileged spec §3.1.7,
+  // cycle, so no arithmetic may wait for it (`HandlerPathSpec` checks it; Privileged spec §3.1.7,
   // "Machine Trap-Vector Base-Address Register"; handout §T3.2; bootcamp 2.4 for `Cat`).
   io.trap.handler_pc := ?
 

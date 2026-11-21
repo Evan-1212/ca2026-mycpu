@@ -161,10 +161,14 @@ $(eval $(call sim_model,$(OUT),$(GEN)))
 
 # Binding predictions (scripts/student-id.py, "Predictions are binding"): a run that sets a make
 # variable of a report question to a value other than its default waits until that question's
-# prediction is committed and pushed, and its stamp names the prediction. Every target that runs
-# the model goes through `verilator`, so the check is an order-only prerequisite of it.
-STUDENT_RUN := task=$(TASK_NUM) uart_divider=$(UART_DIVIDER) ram_bytes=$(RAM_BYTES) tick_divisor=$(TICK_DIVISOR) \
-               i_wait=$(I_WAIT) d_wait=$(D_WAIT) ram_wait=$(RAM_WAIT)
+# prediction is committed and pushed, and its stamp names the prediction. The check runs first in
+# the recipes that elaborate and build a model (SIM_GATE, sim/sim.mk), so a model with such a value
+# is not built without it, and as an order-only prerequisite of `verilator`, so a model built
+# earlier does not run without it either. Both are `override`, so a variable on the command line
+# does not turn them off: only an edit of the tracked Makefiles does, and the stamp of a run from
+# an edited tree says so (head=<commit>+).
+override STUDENT_RUN := task=$(TASK_NUM) uart_divider=$(UART_DIVIDER) ram_bytes=$(RAM_BYTES) \
+                        tick_divisor=$(TICK_DIVISOR) i_wait=$(I_WAIT) d_wait=$(D_WAIT) ram_wait=$(RAM_WAIT)
 SIM_STAMP   := $(shell python3 $(ROOT)/scripts/student-id.py stamp $(STUDENT_RUN) 2> /dev/null)
 
 .PHONY: verilator sim lint predicted
@@ -172,6 +176,8 @@ verilator: $(OUT)/Vsim $(OUT)/cxx.ok | predicted
 
 predicted:
 	@python3 $(ROOT)/scripts/student-id.py predicted $(STUDENT_RUN)
+
+override SIM_GATE = @python3 $(ROOT)/scripts/student-id.py predicted $(STUDENT_RUN)
 
 sim: verilator
 	@test -f "$(ELF)" || { echo "sim: $(ELF) not found (make software-$(ARCH) builds the programs into $(BUILD))" >&2; exit 1; }

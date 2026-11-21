@@ -49,9 +49,9 @@ class Axi4LiteChecker(maxOutstanding: Int = 1) extends Module {
   // Contract: the checker fires in exactly the cycles that break a rule of this class's
   // description, on any interface it watches: a checker that is wrong blames a correct design, or
   // lets a wrong one pass (AMBA AXI4-Lite spec §A3.2.1, "Handshake process", and §A3.3.1;
-  // bootcamp 2.4 for `RegNext`; handout §T5.2). The code of this class compiles, but one line of
-  // it is wrong: find it with the specs and a waveform, fix it, and explain the fix in your report
-  // (which run showed it, in which cycle and signal, and why the fix is right).
+  // bootcamp 2.4, sequential logic; handout §T5.2). The code of this class compiles, but one line
+  // of it is wrong: find it with the specs and a waveform, fix it, and explain the fix in your
+  // report (which run showed it, in which cycle and signal, and why the fix is right).
 
   /** Rules 1 and 2 on one channel. */
   private def handshake[T <: Data](name: String, channel: DecoupledIO[T]): Unit = {

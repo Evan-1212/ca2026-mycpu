@@ -11,9 +11,12 @@ Usage: review.py status [REV]            say whether REV (default HEAD) needs a 
 
 Your commits are those that the upstream repository (sysprog21/ca2026-mycpu, main) does not have.
 When they change a graded file (the Scala sources of a task, or the routines.S of a quiz
-program), a push of them needs a review: `make review` picks two lines that you added there,
-quotes each with the exercise around it, and asks a question about it, such as what the line
-decides and in which cycle, or what goes wrong if it changes. Each answer needs your own words:
+program), a push of them needs a review: `make review` picks two lines that you added there
+where a blank was or where you changed given code (the first 12 lines of a hunk that also
+removes a line; any added line when there are not two of these), chosen by your ID and the
+change itself, quotes each with the exercise around it, and asks a question about it, such as
+what the line decides and in which cycle, or what goes wrong if it changes. Each answer needs
+your own words:
 
   - at least 20 words (a CJK character counts as a word), most of them not copied from the code
     or the question, and not the same few words repeated;
@@ -55,7 +58,11 @@ GRADED = (re.compile(r"^[1-5]-[^/]+/src/main/scala/.+\.scala$"),
           re.compile(r"^software/programs/quiz-[^/]+/routines\.S$"))
 QUESTIONS = 2
 MIN_WORDS = 20
-SCHEMA = 1
+# 1: the questions were chosen by the commit; 2: by the change itself (an amend that changes only
+# the commit's date or message asks the same questions), among the lines that replace a line of the
+# code before them (a blank filled in, a line fixed) when the change has any
+SCHEMA = 2
+SCHEMAS = (1, 2)
 
 SCALA_PROMPTS = [
     "What does this line decide, and in which clock cycle does its value matter? Name a signal "
@@ -147,18 +154,28 @@ def change_hash(base, head, files):
     return hashlib.sha256(git("diff", "--no-color", "--no-ext-diff", base, head, "--", *files).encode()).hexdigest()
 
 
-def added_lines(base, head, files):
-    """(file, new line number, text) of the lines that base..head adds to the files."""
-    out, path, line = [], None, 0
+# the longest answer of a blank is a body of 11 statements: lines of a hunk after this many are
+# not where a blank was
+HUNK_LINES = 12
+
+
+def added_lines(base, head, files, replacing=False):
+    """(file, new line number, text) of the lines that base..head adds to the files; with
+    replacing, only the first HUNK_LINES of a hunk that also removes a line (a blank filled in, a
+    line changed), not those that the change only inserts or appends after them."""
+    out, path, line, removes, n = [], None, 0, False, 0
     for text in git("diff", "--no-color", "--no-ext-diff", "-U0", base, head, "--", *files).split("\n"):
         if text.startswith("+++ "):
             path = text[6:] if text.startswith("+++ b/") else None
         elif text.startswith("@@"):
-            m = re.match(r"@@ -\S+ \+(\d+)", text)
-            line = int(m.group(1)) if m else 0
+            m = re.match(r"@@ -\d+(?:,(\d+))? \+(\d+)", text)
+            line = int(m.group(2)) if m else 0
+            removes, n = bool(m) and m.group(1) != "0", 0
         elif text.startswith("+") and path:
-            out.append((path, line, text[1:]))
+            if not replacing or (removes and n < HUNK_LINES):
+                out.append((path, line, text[1:]))
             line += 1
+            n += 1
     return out
 
 
@@ -180,11 +197,12 @@ def context(head, path, line, around=6):
     return lines[lo:hi], exercise
 
 
-def choose(student, head, candidates):
-    """QUESTIONS lines, different files first: a function of the ID, the commit and the change
-    alone, so that CI chooses the same ones again and a note cannot pick its own."""
+def choose(student, seed, candidates):
+    """QUESTIONS lines, different files first: a function of the ID, the seed (the change, or the
+    commit in schema 1) and the candidates alone, so that CI chooses the same ones again and a note
+    cannot pick its own."""
     def key(c):
-        return hashlib.sha256(f"{student}\n{head}\n{c[0]}:{c[1]}:{c[2].strip()}".encode()).hexdigest()
+        return hashlib.sha256(f"{student}\n{seed}\n{c[0]}:{c[1]}:{c[2].strip()}".encode()).hexdigest()
     chosen, files = [], set()
     for c in sorted(candidates, key=key):
         if c[0] not in files or len({x[0] for x in candidates}) <= len(files):
@@ -195,15 +213,21 @@ def choose(student, head, candidates):
     return chosen
 
 
-def prompt_for(head, path, line):
+def prompt_for(seed, path, line):
     prompts = ASM_PROMPTS if path.endswith(".S") else SCALA_PROMPTS
-    return prompts[int(hashlib.sha256(f"{head}\n{path}\n{line}".encode()).hexdigest(), 16) % len(prompts)]
+    return prompts[int(hashlib.sha256(f"{seed}\n{path}\n{line}".encode()).hexdigest(), 16) % len(prompts)]
 
 
-def questions_for(student, head, base, files):
-    """[(file, line, quote, prompt)] that the review of head asks."""
-    candidates = [c for c in added_lines(base, head, files) if worth_asking(c[0], c[2])]
-    return [(f, line, text, prompt_for(head, f, line)) for f, line, text in choose(student, head, candidates)]
+def questions_for(student, head, base, files, schema=SCHEMA):
+    """[(file, line, quote, prompt)] that the review of head asks, by the rules of schema."""
+    if schema == 1:
+        seed, candidates = head, [c for c in added_lines(base, head, files) if worth_asking(c[0], c[2])]
+    else:
+        seed = change_hash(base, head, files)
+        candidates = [c for c in added_lines(base, head, files, replacing=True) if worth_asking(c[0], c[2])]
+        if len(candidates) < QUESTIONS:
+            candidates = [c for c in added_lines(base, head, files) if worth_asking(c[0], c[2])]
+    return [(f, line, text, prompt_for(seed, f, line)) for f, line, text in choose(student, seed, candidates)]
 
 
 def words(text):
@@ -317,7 +341,7 @@ def scope(commit, up):
 
 def valid(record, commit, up):
     """None if a recorded review stands for commit, otherwise why not."""
-    if not isinstance(record, dict) or record.get("schema") != SCHEMA or record.get("head") != commit:
+    if not isinstance(record, dict) or record.get("schema") not in SCHEMAS or record.get("head") != commit:
         return "the note is not a review of this commit"
     qs = record.get("questions") or []
     if len(qs) < QUESTIONS:
@@ -331,7 +355,7 @@ def valid(record, commit, up):
     except ReviewError as e:
         return str(e)
     try:
-        want = questions_for(student_id(commit), commit, record["base"], record["files"])
+        want = questions_for(student_id(commit), commit, record["base"], record["files"], record["schema"])
     except (ReviewError, KeyError, TypeError) as e:
         return f"the questions cannot be chosen again: {e}"
     got = [(q.get("file"), q.get("line"), q.get("quote"), q.get("prompt")) for q in qs]

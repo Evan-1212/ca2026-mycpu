@@ -61,9 +61,9 @@ class Axi4LiteReadChannel(syncData: Boolean) extends Module {
     // Contract: `io.data` holds the word of a read for one cycle only, the cycle after the read
     // was accepted (`fresh`); in any other cycle it is undefined. `RDATA` must be that word in
     // every cycle from the first with `RVALID` to the R transfer, which wait states or a low
-    // `RREADY` can put any number of cycles later. `kept` is a register for you to use. With no
-    // wait states, the memory delivers one word per cycle to a master that keeps `RREADY` high
-    // (`Axi4LiteRamSpec` counts the cycles; handout §T5.4; bootcamp 2.4).
+    // `RREADY` can put any number of cycles later. With no wait states, the memory delivers one
+    // word per cycle to a master that keeps `RREADY` high (`Axi4LiteRamSpec` counts the cycles;
+    // handout §T5.4; bootcamp 2.4).
     ?
   } else {
     io.r.bits.data := RegEnable(io.data, io.ar.fire)

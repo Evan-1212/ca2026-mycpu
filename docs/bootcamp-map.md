@@ -102,7 +102,7 @@ The exercises of T3 rest on the Privileged spec more than on the bootcamp, which
 | 5.2 | The grant | `Axi4LiteXbar.scala` | 3.2_interlude: `Decoupled` | AXI4-Lite spec §A3.2.1; handout §T5.3 |
 | 5.3 | The way back, and an address that no slave owns | `Axi4LiteXbar.scala` | 2.3: `Mux1H` | AXI4-Lite spec §A3.3.1, §A3.4.4; handout §T5.3 |
 | 5.4 | The word of a synchronous-read memory on the R channel | `Axi4LiteSlave.scala` | 2.4 | handout §T5.4 |
-| 5.5 | Find the bug: the protocol checker | `Axi4LiteChecker.scala` | 2.4: `RegNext` | AXI4-Lite spec §A3.2.1, §A3.3.1; handout §T5.2 |
+| 5.5 | Find the bug: the protocol checker | `Axi4LiteChecker.scala` | 2.4: registers and counters | AXI4-Lite spec §A3.2.1, §A3.3.1; handout §T5.2 |
 | 5.6 | Video timing: scan counters, visible area and sync pulses | `Vga.scala` | 2.4: counters and widths | VESA 640 x 480 at 60 Hz; handout §T5.6 |
 | 5.7 | Pixel fetch: framebuffer address, x4 scaling and pipeline alignment | `Vga.scala` | 2.4: registers with an enable | handout §T5.7 |
 | 5.8 | Buffer swap at vblank | `Vga.scala` | 2.3: `when` | handout §T5.8 |

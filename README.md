@@ -247,12 +247,16 @@ format. `make sim` and `make obs` also stamp your ID, git e-mail and commit into
 
 A push of commits that change a graded file (a task's Scala sources, or a quiz `routines.S`)
 needs a review first, and `git push` triggers it: the `pre-push` hook starts the review in your
-terminal when it is missing (`make review` starts it by hand). It quotes two lines that you added, with the exercise around
-them, and asks a question about each, which you answer in your own words in the terminal. The
+terminal when it is missing (`make review` starts it by hand). It quotes two lines that you added
+where a blank was, or where you changed given code (other lines only when there are not two of
+these), with the exercise around them, and asks a question about each, which you answer in your
+own words in the terminal. The lines follow from your ID and your change, not from the commit:
+an amend that changes only the message or the date asks the same questions. The
 answers are recorded as a git note on your commit, which the `pre-push` hook pushes with the
 branch; the hook refuses a push without one, and the CI of your fork checks it with the upstream
 copy of `scripts/review.py`. The instructors read your answers before the live defense, where you
-explain them again. A rebase or an amend makes new commits: review again.
+explain them again. A rebase or an amend makes new commits: review again (with the same questions
+when the change is the same).
 
 ## The Live Defense
 
@@ -268,8 +272,12 @@ repository:
   for every student. Find the bug with your own programs and a waveform: the cycle, the signal,
   the rule of the task that it breaks, and the exercise of yours that implements that rule.
 
-Each item is marked from 0 (no answer) to 3 (predicted and confirmed with a run). You work in your
-own checkout, without notes or an assistant.
+Each item is marked from 0 (no answer) to 3 (predicted and confirmed with a run). What only you can
+do in the room counts most: an explanation counts once, a change predicted and then run twice, the
+bug of the bug model three times. You work in the room, in your own checkout, offline, without
+notes or an assistant, and you predict every change before you run it. The work you did online is
+a gate, not a part of this mark: your history and your push reviews must verify, or the defense
+counts 0 until they do, and a prediction counts only when GitHub saw it before its measurement.
 
 ## Commit History
 

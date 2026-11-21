@@ -239,6 +239,8 @@ def stamp(path, run=None):
 def predicted(path, run):
     """0 when the run may go on; 1, with the reason, when a prediction is missing."""
     del path  # the questions follow from the run alone: a run without an ID waits as well
+    if os.path.exists(os.path.join(ROOT, "scripts", "mkexercise.py")):
+        return 0  # the instructors' tree (it has the generator of the public one) builds any value
     missing = []
     for question in run_questions(run):
         commit, why = prediction(question)

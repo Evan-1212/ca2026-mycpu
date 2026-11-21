@@ -155,16 +155,14 @@ class Divider(val latency: Int = Divider.DIV_LATENCY, mutant: Option[String] = N
   // `quotient` are what is left of the dividend, the low `count` bits of `quotient` are the
   // quotient bits found so far, and `remainder` is less than `divisor` (which is not 0 here).
   // After 32 iterations `quotient` and `remainder` are the unsigned results. With `twoCycle`,
-  // an iteration takes two cycles: the first registers the trial subtraction in `trial_fits`
-  // and `trial_difference` and sets `commit_phase`; the second commits or restores from those
-  // registers alone, without subtracting again.
+  // an iteration takes two cycles, and its second cycle subtracts nothing: it works from what
+  // the first one left in the registers of the two-cycle option.
   val last_step = WireDefault(false.B)
   // [CA26: Exercise 2.3] The iteration step
-  // Contract: while `state` is `Iterate`, one iteration brings the next dividend bit down into
-  // the partial remainder, tries to subtract the divisor, keeps the difference only if it is
-  // not negative (restoring division), and records that as the next quotient bit, keeping the
-  // invariant above. `last_step` is high in the cycle that completes the 32nd iteration
-  // (bootcamp 2.4 for widths, 2.7 for a datapath under a state machine; handout §T2.3).
+  // Contract: while `state` is `Iterate`, each iteration is one step of restoring division: it
+  // finds the next quotient bit and keeps the invariant above. `last_step` is high in the cycle
+  // that completes the 32nd iteration (bootcamp 2.4 for widths, 2.7 for a datapath under a state
+  // machine; handout §T2.3).
   ?
 
   val unsigned_result = Mux(wants_remainder, remainder, quotient)

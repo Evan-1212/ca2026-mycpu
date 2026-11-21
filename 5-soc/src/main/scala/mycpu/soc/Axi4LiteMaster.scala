@@ -107,9 +107,9 @@ class Axi4LiteMaster(holdsRequest: Boolean = false, mutant: Option[String] = Non
   // Contract: `start_read` (`start_write`) is high in the one cycle a read (a write) starts. From
   // that cycle on, `ARVALID` (each of `AWVALID` and `WVALID`) is high in every cycle until the one
   // in which its own `READY` is high, and low otherwise; no `VALID` depends on any `READY` in the
-  // same cycle. The slave may take AW before W, W before AW, or both together. `ar_wait`,
-  // `aw_wait` and `w_wait` are yours to use; all `VALID`s are low while `live` is low (AMBA
-  // AXI4-Lite spec §A3.2.1 and §A3.3.1; bootcamp 3.2_interlude (Decoupled); handout §T5.1).
+  // same cycle. The slave may take AW before W, W before AW, or both together. All `VALID`s are
+  // low while `live` is low (AMBA AXI4-Lite spec §A3.2.1 and §A3.3.1; bootcamp 3.2_interlude
+  // (Decoupled); handout §T5.1).
   ?
   if (mutant.contains("drop-awvalid")) when(!start_write)(io.axi.aw.valid := false.B)
 

@@ -505,10 +505,10 @@ class CPU(
   // [CA26: Exercise 4.3] Flushes and redirects, FENCE.I included
   // Contract: connect the bootcamp's `PipelineFlush` (5.6) and drive `flush_id_ex`, `flush_ex_mem`
   // (EX, MEM get a bubble in place of the instruction before), `id_redirect` and the fetch unit's
-  // redirect, which also drops what the fetch unit holds and has requested: a trap or mret in MEM
-  // cancels every younger instruction; a taken branch or jump in EX the two younger ones; one
-  // resolved in ID, and a fence.i, only what the fetch unit has, which then fetches from
-  // `id_target`. An older stage's redirect wins (handout §T4.4).
+  // redirect, which also drops what the fetch unit holds and has requested. A trap or mret in
+  // MEM, a taken branch or jump in EX, one resolved in ID and a fence.i each cancel exactly the
+  // instructions younger than themselves, wherever those are, and the fetch goes on from the new
+  // address (`id_target` for ID's). An older stage's redirect wins (handout §T4.4).
   ?
 
   // ======== the counters' view of the cycle (T3-04)

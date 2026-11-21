@@ -52,13 +52,13 @@ Find the bug:
 | 2.1 | `2-rv32im/src/main/scala/mycpu/rv32im/Execute.scala` | 110 | The rows of the decode table, and the result of the execute stage |
 | 2.2 | `2-rv32im/src/main/scala/mycpu/rv32im/Multiplier.scala` | 41 | One signed multiplier for four instructions |
 | 2.2 | `2-rv32im/src/main/scala/mycpu/rv32im/Multiplier.scala` | 44 | One signed multiplier for four instructions |
-| 2.3 | `2-rv32im/src/main/scala/mycpu/rv32im/Divider.scala` | 168 | The iteration step |
+| 2.3 | `2-rv32im/src/main/scala/mycpu/rv32im/Divider.scala` | 166 | The iteration step |
 | 2.4 | `2-rv32im/src/main/scala/mycpu/rv32im/Divider.scala` | 134 | Special cases and signs |
 | 2.4 | `2-rv32im/src/main/scala/mycpu/rv32im/Divider.scala` | 136 | Special cases and signs |
 | 2.4 | `2-rv32im/src/main/scala/mycpu/rv32im/Divider.scala` | 137 | Special cases and signs |
 | 2.4 | `2-rv32im/src/main/scala/mycpu/rv32im/Divider.scala` | 152 | Special cases and signs |
-| 2.4 | `2-rv32im/src/main/scala/mycpu/rv32im/Divider.scala` | 174 | Special cases and signs |
-| 2.5 | `2-rv32im/src/main/scala/mycpu/rv32im/Divider.scala` | 185 | Handshake, state transitions and kill |
+| 2.4 | `2-rv32im/src/main/scala/mycpu/rv32im/Divider.scala` | 172 | Special cases and signs |
+| 2.5 | `2-rv32im/src/main/scala/mycpu/rv32im/Divider.scala` | 183 | Handshake, state transitions and kill |
 
 Find the bug:
 
