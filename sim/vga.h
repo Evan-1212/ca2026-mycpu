@@ -13,6 +13,8 @@
 #include <string>
 #include <vector>
 
+class PhoneInput;
+
 // VESA 640x480@60 Hz: visible, front porch, sync pulse and back porch, in
 // pixels per line and in lines per frame. Both sync pulses are negative.
 constexpr unsigned kVgaWidth = 640, kVgaHFront = 16, kVgaHSync = 96;
@@ -118,13 +120,24 @@ public:
     // harness was built without SDL2.
     bool open(std::string *error);
 
+    // Sends the mouse and the keyboard of the window to `input` (+phone-input)
+    // instead of closing on Escape or q: Escape is the phone's Back key, and
+    // Ctrl+Q closes the window. Without it, the window ignores both devices.
+    void set_phone_input(PhoneInput *input) { phone_ = input; }
+
     // Shows a frame and handles the window's events.
     //
     // Returns false once the user has closed the window, or pressed Escape or q
-    // in it.
+    // in it (Ctrl+Q with a phone input).
     bool show(const std::vector<uint8_t> &pixels);
+
+    // Handles the window's events without showing a frame.
+    //
+    // Returns false once the user has closed the window.
+    bool poll();
 
 private:
     struct Impl;
     Impl *impl_ = nullptr;
+    PhoneInput *phone_ = nullptr;
 };

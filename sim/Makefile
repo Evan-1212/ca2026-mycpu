@@ -59,10 +59,10 @@ $(eval $(call sim_topgen,$(VGA)/gen,$(SOC_TOPGEN).VgaTestTop $(VGA)/gen,$(VGA_TO
 $(eval $(call sim_model,$(VGA),$(VGA)/gen))
 
 # The unit tests run on the host, without a model.
-$(OUT)/unit: tests/unit.cpp uart.cpp elf.cpp vga.cpp uart.h elf.h vga.h
+$(OUT)/unit: tests/unit.cpp uart.cpp elf.cpp vga.cpp phone.cpp uart.h elf.h vga.h phone.h
 	@mkdir -p $(OUT)
 	@echo "  CXX      $@"
-	@$(SIM_CXX) $(SIM_CXXFLAGS) -I. -o $@ tests/unit.cpp uart.cpp elf.cpp vga.cpp $(SIM_SDL_LIBS)
+	@$(SIM_CXX) $(SIM_CXXFLAGS) -I. -o $@ tests/unit.cpp uart.cpp elf.cpp vga.cpp phone.cpp $(SIM_SDL_LIBS)
 
 # The ELF files that both loaders must treat alike, and what each must get.
 $(CASES)/cases.txt: tests/elf-cases.py

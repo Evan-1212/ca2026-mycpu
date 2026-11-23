@@ -4,6 +4,8 @@
 
 #include "vga.h"
 
+#include "phone.h"
+
 #include <cerrno>
 #include <cstdio>
 #include <cstring>
@@ -187,13 +189,75 @@ bool VgaWindow::show(const std::vector<uint8_t> &pixels)
     SDL_RenderClear(impl_->renderer);
     SDL_RenderCopy(impl_->renderer, impl_->texture, nullptr, nullptr);
     SDL_RenderPresent(impl_->renderer);
+    return poll();
+}
+
+namespace
+{
+
+// The application's key code for a key that has no ASCII character, else 0.
+unsigned phone_key(SDL_Keycode key)
+{
+    switch (key) {
+    case SDLK_ESCAPE:
+        return kPhoneBack;
+    case SDLK_HOME:
+        return kPhoneHome;
+    case SDLK_TAB:
+        return kPhoneTab;
+    case SDLK_LEFT:
+        return kPhoneLeft;
+    case SDLK_RIGHT:
+        return kPhoneRight;
+    case SDLK_UP:
+        return kPhoneUpKey;
+    case SDLK_DOWN:
+        return kPhoneDownKey;
+    case SDLK_RETURN:
+        return kPhoneEnter;
+    case SDLK_BACKSPACE:
+        return 8;
+    default:
+        return 0;
+    }
+}
+
+}  // namespace
+
+bool VgaWindow::poll()
+{
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
         if (event.type == SDL_QUIT)
             return false;
-        if (event.type == SDL_KEYDOWN && (event.key.keysym.sym == SDLK_ESCAPE ||
-                                          event.key.keysym.sym == SDLK_q))
-            return false;
+        if (!phone_) {
+            if (event.type == SDL_KEYDOWN &&
+                (event.key.keysym.sym == SDLK_ESCAPE ||
+                 event.key.keysym.sym == SDLK_q))
+                return false;
+            continue;
+        }
+        // SDL_RenderSetLogicalSize gives the events the coordinates of the
+        // 640 x 480 picture.
+        if (event.type == SDL_KEYDOWN) {
+            if (event.key.keysym.sym == SDLK_q &&
+                (event.key.keysym.mod & KMOD_CTRL))
+                return false;
+            if (const unsigned code = phone_key(event.key.keysym.sym))
+                phone_->key(code);
+        } else if (event.type == SDL_TEXTINPUT) {
+            for (const unsigned char c : std::string(event.text.text))
+                if (c >= 32 && c < 127)
+                    phone_->key(c);
+        } else if (event.type == SDL_MOUSEMOTION) {
+            phone_->pointer_move(event.motion.x, event.motion.y);
+        } else if (event.type == SDL_MOUSEBUTTONDOWN &&
+                   event.button.button == SDL_BUTTON_LEFT) {
+            phone_->pointer_down(event.button.x, event.button.y);
+        } else if (event.type == SDL_MOUSEBUTTONUP &&
+                   event.button.button == SDL_BUTTON_LEFT) {
+            phone_->pointer_up(event.button.x, event.button.y);
+        }
     }
     return true;
 }
@@ -215,6 +279,11 @@ bool VgaWindow::open(std::string *error)
 }
 
 bool VgaWindow::show(const std::vector<uint8_t> &)
+{
+    return false;
+}
+
+bool VgaWindow::poll()
 {
     return false;
 }

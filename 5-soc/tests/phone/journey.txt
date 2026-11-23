@@ -1,0 +1,185 @@
+# SPDX-License-Identifier: MIT
+# The journey of the phone (software/programs/phone), for the host oracle
+# (tests/phone/host) and for the harness (+phone-script). Portrait 240x320.
+#
+# Each line is a command; blank lines and lines starting with # are ignored.
+# The commands are turned into events, one at a time, exactly so:
+#
+#   tap X Y        two events: DOWN (type 1) at X Y, then UP (type 3) at X Y
+#   pointer T X Y  one event of type T (1 down, 2 move, 3 up) at X Y
+#   key N          one KEY event (type 4), value N: ASCII, or 256 back, 257 home,
+#                  258 tab, 259 left, 260 right, 261 up, 262 down, 263 enter
+#   text STRING    one KEY event for each byte of STRING (after one space)
+#   tick MS        one TICK event (type 5), value MS, 0 to 65535
+#   expect F V     the host oracle checks the application's state: field F is
+#                  V; the harness ignores the line (F: screen, value, error,
+#                  position, score, theme, selected)
+#   capture NAME   the picture after the events so far is saved as NAME.ppm
+#
+# The event word is type << 28 | X << 16 | Y for the pointer (X, Y in 0..511) and
+# type << 28 | N for key and tick; the program splits it back into cp_event's
+# arguments (type, word >> 16 & 511, word & 511, word & 65535). After every
+# event the program renders once and presents once.
+# A screen change is revealed in ten strips, one for each tick; "tick 0" moves
+# the strips on without moving any clock.
+expect screen 0
+capture 00_lock
+# A tap on the track never unlocks; a drag from the knob far enough does
+tap 220 270
+expect screen 0
+pointer 1 30 270
+pointer 2 120 270
+pointer 2 220 270
+pointer 3 220 270
+expect screen 1
+tick 0
+tick 0
+tick 0
+tick 0
+tick 0
+tick 0
+tick 0
+tick 0
+tick 0
+capture 01_home
+# Paged launcher: swipe to the widget page
+pointer 1 200 150
+pointer 2 120 150
+pointer 3 60 150
+expect selected 1
+tick 0
+tick 0
+tick 0
+tick 0
+tick 0
+tick 0
+tick 0
+tick 0
+tick 0
+capture 02_home_widgets
+key 259
+expect selected 0
+# Dialer, call, end call returns to the dialer
+tap 40 51
+expect screen 2
+text 5550101
+capture 03_phone
+tap 66 274
+expect screen 17
+tick 1000
+tick 1000
+capture 04_call
+tap 120 250
+expect screen 2
+key 257
+# Messages: a thread, a typed message, sent
+tap 200 51
+expect screen 4
+tick 0
+tick 0
+tick 0
+tick 0
+tick 0
+tick 0
+tick 0
+tick 0
+tick 0
+tap 120 64
+expect screen 15
+tick 0
+tick 0
+tick 0
+tick 0
+tick 0
+tick 0
+tick 0
+tick 0
+tick 0
+text On my way!
+capture 07_chat
+tap 179 287
+key 257
+# Calculator: chained operators, decimals, divide by zero
+tap 40 116
+expect screen 5
+text 2+3+4=
+expect value 9
+text C1.5*3=
+expect value 4
+text C8/0=
+expect error 1
+capture 11_calculator
+text 5+5=
+expect error 0
+expect value 10
+key 257
+# Contacts: drag the list
+tap 120 51
+expect screen 3
+pointer 1 120 200
+pointer 2 120 170
+pointer 2 120 120
+pointer 2 120 60
+pointer 3 120 60
+capture 05_contacts_dragged
+key 257
+# Music: play, progress
+tap 120 116
+expect screen 6
+key 32
+tick 33
+tick 1000
+expect position 1
+capture 13_music
+key 32
+key 257
+# Settings: display page, dark theme
+tap 120 181
+expect screen 9
+tap 120 63
+expect screen 19
+tap 170 158
+expect theme 1
+capture 18_dark_display
+key 257
+tick 0
+tick 0
+tick 0
+tick 0
+tick 0
+tick 0
+tick 0
+tick 0
+tick 0
+capture 19_dark_home
+# Games
+tap 40 246
+expect screen 11
+tick 100
+tick 100
+key 262
+key 259
+tick 100
+capture 21_snake
+key 32
+key 257
+tap 200 246
+expect screen 13
+key 259
+key 261
+key 262
+tick 300
+tick 300
+capture 23_tetris
+key 257
+# New contact form: typed name, number and e-mail
+tap 120 51
+expect screen 3
+tap 214 32
+expect screen 20
+text Zoe Parker
+key 263
+text +1-555-0199
+key 263
+text zoe@example.com
+capture 25_new_contact_form

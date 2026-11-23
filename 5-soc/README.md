@@ -33,10 +33,11 @@ After this task you can:
   `0x0000_1000`.
 - Bus: two `Axi4LiteMaster`s (instruction and data, one transaction outstanding each), the
   `Axi4LiteXbar` (no added latency, different slaves in parallel, the data master first on a
-  shared slave), an `Axi4LiteChecker` on all 9 interfaces.
+  shared slave), an `Axi4LiteChecker` on all 10 interfaces.
 - Slaves: the boot ROM (`Axi4LiteRom`, the image of `boot/boot.S` built in at elaboration), the
   RAM (`Axi4LiteRam`, one port per master, synchronous read by default, optional wait states),
-  and through `MemPortSlave` shells T3's CLINT, common's UART and SimCtrl, and the VGA (`Vga`).
+  and through `MemPortSlave` shells T3's CLINT, common's UART and SimCtrl, the VGA (`Vga`) and the
+  phone (`Phone`, an extra without exercises: [The Phone](#the-phone-an-extra)).
 - Interrupts: MSIP and MTIP from the CLINT; MEIP from SimCtrl `MEIP` or the UART's receive
   interrupt (`CTRL[0] && rx_valid`).
 - Software: every program of T1 to T4 unchanged (they start at `0x8000_0000`, where the boot ROM
@@ -63,6 +64,7 @@ of the repository; `make check-diagrams` fails when the two differ.
 | `0x1000_0000` | 4 KiB | UART | `TXDATA`, `RXDATA`, `STATUS`, `CTRL` (`1-single-cycle/README.md`); RX interrupt |
 | `0x1000_1000` | 4 KiB | SimCtrl | simulation only: `EXIT`, `PUTC`, counters, `MARK`, `MEIP` |
 | `0x2000_0000` | 64 KiB | VGA | `ID`, `STATUS`, `CTRL`, `FRAME`, `SWAPS`, palette, two buffers (`mycpu.soc.Vga`) |
+| `0x2010_0000` | 256 KiB | phone | a 240 x 320 RGB565 display with a fill engine, and an input queue (`mycpu.soc.Phone`) |
 | `0x8000_0000` | 4 MiB | RAM | programs and data |
 
 Any other address is answered `DECERR` by the crossbar, and the core takes an access fault: an
@@ -148,6 +150,7 @@ cycles). A device access goes through a `MemPortSlave` instead of the RAM (quest
 | `MemPortSlave.scala` | a `MemPort` device on the bus |
 | `Axi4LiteChecker.scala` | the protocol checker (5.5, find the bug) |
 | `Vga.scala` | the VGA: timing (5.6), pixel fetch (5.7), buffer swap (5.8) |
+| `Phone.scala` | the phone: a RGB565 display with a fill engine, and an input queue (no exercise) |
 | `Soc.scala` | the SoC (`SimTop`) and the model emitter (`Emit`) |
 | `boot/boot.S`, `boot/boot.ld` | the boot ROM |
 
@@ -201,6 +204,8 @@ make bench                         # every variant, both builds -> ../build/benc
 make act4                          # ACT4 on your SoC
 make check-vga check-qr            # golden frames, QR decode, and their mutants
 make check-shell                   # the shell session over +uart-stdin
+make check-phone                   # the phone's journey on your SoC against a host model of it, frame by frame
+make phone [SDL=1]                 # the phone in the window: mouse and keyboard (SDL=0: a boot check)
 make demo                          # SDL=0: frames into ../build/t5-demo/ and checked; SDL=1: the window
 make lint
 ```
@@ -250,9 +255,50 @@ for `perf`), `vga` runs nyancat, and `qr` draws the six styles of `qrcode-vga`. 
 printf 'peek 0x20000000\nqr\nexit\n' | ../build/t5-forward/Vsim +elf=../build/sw/mycpu/rv32im_zicsr/shell.elf +uart-stdin
 ```
 
+## The Phone (an extra)
+
+The VGA above is a 4-bit palette display, enough for nyancat and a QR code. The **phone** is a
+second display beside it, with no exercises: `mycpu.soc.Phone` is a 240 x 320 RGB565 framebuffer
+(150 KiB, two pixels to a word, readable and writable by bytes), a queue of **fill commands** that
+draws rectangles into it while the core does something else, and a queue of **input events**, at
+`0x2010_0000` (`MemMap.Phone`; `software/runtime/include/phone.h` is the C side, and `PhoneSpec`
+checks that the two agree). It uses no bus master: the framebuffer is inside the device, as the
+VGA's buffers are, and the core reaches it as a slave like any other.
+
+- **Video.** While `CTRL.scanout` is set, the phone replaces the color of the VGA's 640 x 480
+  signal with its own picture, centered (x 200 to 439, y 80 to 399), a `BORDER` color around it and
+  black outside the active area. It borrows the VGA's timing, so there is no second sync generator
+  and the harness's monitor checks both. RGB565 is widened to 24 bits by repeating the high bits.
+- **Fills.** `FILL_XY`, `FILL_WH` and a write of the color to `FILL` queue a rectangle (8 deep;
+  clipped to the display; a full queue sets `OVERFLOW`). The engine draws one word a cycle, a
+  single pixel at an odd edge, in the cycles in which the core writes no framebuffer word. The
+  fills and the core's stores are not ordered against each other: wait for `STATUS.busy` first.
+- **Input.** `PhoneInput` is a 16-event queue, filled by the harness (the mouse and keyboard of its
+  window, or a script) or by the core. An event is `type << 28` and then a pointer position or a
+  value (`phone.h`); a read of `DATA` pops one, and gives 0 when there is none. Both queues can
+  raise `MEIP`.
+- **Present.** `PRESENT` counts the writes that say a picture is complete. The top adds the count
+  to `vga.swaps`, which is how the harness numbers frames for `+vga-dump`: the picture after the
+  *n*th present is the first whole frame scanned out after it, however slow the core was.
+
+`software/programs/phone` is a compact cellphone for it (a lock screen, a launcher, a dialer,
+messages with a keyboard, a calculator, music, photos, settings, and three games), drawn with fills
+and stores, in about 67 KiB. Two builds
+share the source: the one that `make phone` runs keeps its own time from the display's frame count,
+and the scripted one (`PHONE_SCRIPTED=1`) takes one event, handles it and presents, so that a
+script and the firmware stay in step.
+
+`make check-phone` plays `tests/phone/journey.txt` (14 captures: the lock slider, the launcher,
+a call, a chat with the keyboard, the calculator, a drag, music, the dark theme, two games, a form)
+on your SoC through `+phone-script`, one event at a time, and renders the same journey with the
+host model of the application (`tests/phone/host-oracle.sh`). Every capture must equal the host's
+picture byte for byte: your core, your bus and the display then run the same program to the same
+pixels. `make phone SDL=1` opens the window (the model needs SDL2): the left button is the finger,
+the keyboard types, Escape is Back, Home is Home, Ctrl+Q closes it.
+
 ## Test Suite
 
-`make test` runs 12 specs:
+`make test` runs 13 specs:
 
 | Spec | What it checks |
 |------|----------------|
@@ -264,8 +310,9 @@ printf 'peek 0x20000000\nqr\nexit\n' | ../build/t5-forward/Vsim +elf=../build/sw
 | `SocBusSpec` | the bus of the SoC without a core, under random traffic of two masters |
 | `SocLintSpec` | each bus unit under `verilator --lint-only -Wall` |
 | `BootSpec` | the ROM is the assembled `boot.S`; the boot records; exit 63 on an early trap; ROM loads and refused stores |
-| `SocSpec` | per variant and per RAM (both read modes, fixed and random wait states): the short C programs and random programs from the boot ROM against the golden model; 128 straight-line instructions in 128 cycles; 9 checkers in the model; `DECERR` and its mutant |
+| `SocSpec` | per variant and per RAM (both read modes, fixed and random wait states): the short C programs and random programs from the boot ROM against the golden model; 128 straight-line instructions in 128 cycles; 10 checkers in the model; `DECERR` and its mutant |
 | `RiscvTestsSpec` | per variant: 40 `rv32ui`, 8 `rv32um`, 9 `t3mi` and 4 `t5bus` tests |
+| `PhoneSpec` | the phone alone: its registers and `phone.h`, the framebuffer by byte strobes, the fill engine against a model of rectangles (odd edges, clipping, a full queue), a CPU store during a fill, the scan-out and its border, the frame count, the input queue |
 | `BusProbeSpec` | the `bus` probes of the observation interface equal the data master's interface (where its checker sits) in every cycle, with and without RAM wait states; the AW, W and B of two stores and the AR and R of two loads (OKAY, DECERR) |
 
 One more spec, `VgaSpec`, is held back: it restates exercises 5.6 and 5.7, so it is not in your
@@ -358,6 +405,11 @@ byte for byte (the same frames as on the T1 test top: frames are numbered by buf
 the speed of the core does not matter), and every style decodes to exactly
 `https://github.com/sysprog21/ca2026-mycpu`. The `VGA_SHIFT=1` model differs from every golden
 frame, and the `QR_MUTANT=1` build decodes in no style.
+
+### Phone (`make check-phone`)
+
+14 of 14 captures equal the host model's, after about 27 million cycles and 9.2 million
+instructions (the SoC takes one frame of 840,000 cycles to scan out each capture).
 
 ### Shell and demo (`make check-shell`, `make demo`)
 

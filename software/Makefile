@@ -45,7 +45,9 @@ QR_STRINGS ?=
 # QR_MUTANT=1 for the negative check of T5-10 (a symbol whose format
 # information names the wrong mask). nyancat: the number of frames to show
 # before it exits (0 or empty: forever) and the display frames each one
-# stays. vgatest: the display frames to wait before it exits.
+# stays. vgatest: the display frames to wait before it exits. phone:
+# PHONE_SCRIPTED=1 makes it take one input event for each picture and keep no time
+# of its own (the harness's +phone-script; programs/phone/backend.c).
 QR_STYLES      := $(shell sed -n 's/^QR_DEF_STYLE.\([a-z]*\),.*/\1/p' programs/qrcode-vga/styles.def)
 QR_STYLE       ?= all
 QR_HOLD        ?=
@@ -53,6 +55,7 @@ QR_MUTANT      ?=
 NYAN_FRAMES    ?=
 NYAN_HOLD      ?=
 VGATEST_FRAMES ?=
+PHONE_SCRIPTED ?=
 PYTHON         ?= python3
 
 # The student's configuration (EX-08): register maps and event IDs as -D flags (both platforms,
@@ -127,6 +130,7 @@ CFLAGS_qrcode-vga := $(QR_ENCODER_CFLAGS) -Iprograms/qrcode \
                      $(if $(filter 1,$(QR_MUTANT)),-DQR_MUTANT)
 CFLAGS_nyancat    := $(if $(NYAN_FRAMES),-DNYAN_FRAMES=$(NYAN_FRAMES)) $(if $(NYAN_HOLD),-DNYAN_HOLD=$(NYAN_HOLD))
 CFLAGS_vgatest    := $(if $(VGATEST_FRAMES),-DVGATEST_FRAMES=$(VGATEST_FRAMES))
+CFLAGS_phone      := $(if $(filter-out 0,$(PHONE_SCRIPTED)),-DPHONE_SCRIPTED)
 
 # Sources that a program takes from another program's directory: they are
 # compiled again, with this program's flags, into this program's objects,

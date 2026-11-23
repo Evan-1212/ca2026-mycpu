@@ -11,24 +11,27 @@
 <rect class="box" x="60" y="230" width="980" height="90" rx="3"/><text class="title" x="550" y="255">Axi4LiteXbar</text><text class="line" x="550" y="271">Axi4LiteDecoder per master: an unmapped address gets DECERR</text><text class="line" x="550" y="287">Axi4LiteArbiter per shared slave (the D master first)</text><text class="line" x="550" y="303">a [checker] on every slave port</text>
 <polyline class="wire" points="265,170 265,230" marker-end="url(#head)"/><text class="wlabel" x="269" y="204">AW W B AR R</text>
 <polyline class="wire" points="835,170 835,230" marker-end="url(#head)"/><text class="wlabel" x="839" y="204">AW W B AR R</text>
-<rect class="box" x="60" y="400" width="140" height="66" rx="3"/><text class="title" x="130" y="421">Axi4LiteRom</text><text class="line" x="130" y="437">0x0000_1000</text><text class="line" x="130" y="453">boot.S</text>
-<rect class="box" x="220" y="400" width="150" height="66" rx="3"/><text class="title" x="295" y="421">MemPortSlave</text><text class="line" x="295" y="437">CLINT</text><text class="line" x="295" y="453">0x0200_0000</text>
-<rect class="box" x="390" y="400" width="150" height="66" rx="3"/><text class="title" x="465" y="421">MemPortSlave</text><text class="line" x="465" y="437">UART</text><text class="line" x="465" y="453">0x1000_0000</text>
-<rect class="box" x="560" y="400" width="150" height="66" rx="3"/><text class="title" x="635" y="421">MemPortSlave</text><text class="line" x="635" y="437">SimCtrl</text><text class="line" x="635" y="453">0x1000_1000</text>
-<rect class="box" x="730" y="400" width="150" height="66" rx="3"/><text class="title" x="805" y="421">MemPortSlave</text><text class="line" x="805" y="437">VGA</text><text class="line" x="805" y="453">0x2000_0000</text>
-<rect class="box" x="900" y="400" width="140" height="66" rx="3"/><text class="title" x="970" y="421">Axi4LiteRam</text><text class="line" x="970" y="437">(I and D)</text><text class="line" x="970" y="453">0x8000_0000</text>
-<polyline class="wire" points="130,320 130,400" marker-end="url(#head)"/>
-<polyline class="wire" points="295,320 295,400" marker-end="url(#head)"/>
-<polyline class="wire" points="465,320 465,400" marker-end="url(#head)"/>
-<polyline class="wire" points="635,320 635,400" marker-end="url(#head)"/>
-<polyline class="wire" points="805,320 805,400" marker-end="url(#head)"/>
-<polyline class="wire" points="950,320 950,400" marker-end="url(#head)"/>
-<polyline class="wire" points="990,320 990,400" marker-end="url(#head)"/>
+<rect class="box" x="60" y="400" width="127" height="66" rx="3"/><text class="title" x="123.5" y="421">Axi4LiteRom</text><text class="line" x="123.5" y="437">0x0000_1000</text><text class="line" x="123.5" y="453">boot.S</text>
+<rect class="box" x="202" y="400" width="127" height="66" rx="3"/><text class="title" x="265.5" y="421">MemPortSlave</text><text class="line" x="265.5" y="437">CLINT</text><text class="line" x="265.5" y="453">0x0200_0000</text>
+<rect class="box" x="344" y="400" width="127" height="66" rx="3"/><text class="title" x="407.5" y="421">MemPortSlave</text><text class="line" x="407.5" y="437">UART</text><text class="line" x="407.5" y="453">0x1000_0000</text>
+<rect class="box" x="486" y="400" width="127" height="66" rx="3"/><text class="title" x="549.5" y="421">MemPortSlave</text><text class="line" x="549.5" y="437">SimCtrl</text><text class="line" x="549.5" y="453">0x1000_1000</text>
+<rect class="box" x="628" y="400" width="127" height="66" rx="3"/><text class="title" x="691.5" y="421">MemPortSlave</text><text class="line" x="691.5" y="437">VGA</text><text class="line" x="691.5" y="453">0x2000_0000</text>
+<rect class="box" x="770" y="400" width="127" height="66" rx="3"/><text class="title" x="833.5" y="421">MemPortSlave</text><text class="line" x="833.5" y="437">phone</text><text class="line" x="833.5" y="453">0x2010_0000</text>
+<rect class="box" x="912" y="400" width="128" height="66" rx="3"/><text class="title" x="976" y="421">Axi4LiteRam</text><text class="line" x="976" y="437">(I and D)</text><text class="line" x="976" y="453">0x8000_0000</text>
+<polyline class="wire" points="123,320 124,320 124,400" marker-end="url(#head)"/>
+<polyline class="wire" points="265,320 266,320 266,400" marker-end="url(#head)"/>
+<polyline class="wire" points="407,320 408,320 408,400" marker-end="url(#head)"/>
+<polyline class="wire" points="549,320 550,320 550,400" marker-end="url(#head)"/>
+<polyline class="wire" points="691,320 692,320 692,400" marker-end="url(#head)"/>
+<polyline class="wire" points="833,320 834,320 834,400" marker-end="url(#head)"/>
+<polyline class="wire" points="945,320 945,400" marker-end="url(#head)"/>
+<polyline class="wire" points="1005,320 1005,400" marker-end="url(#head)"/>
 <rect class="box" x="220" y="520" width="490" height="40" rx="3"/><text class="title" x="465" y="544">CPU interrupts: msip, mtip, meip</text>
-<polyline class="wire" points="295,466 295,520" marker-end="url(#head)"/><text class="wlabel" x="299" y="497">msip, mtip</text>
-<polyline class="wire" points="465,466 465,520" marker-end="url(#head)"/><text class="wlabel" x="469" y="497">irq: meip</text>
-<polyline class="wire" points="635,466 635,520" marker-end="url(#head)"/><text class="wlabel" x="639" y="497">meip</text>
-<polyline class="wire" points="805,466 805,520" marker-end="url(#head)"/><text class="wlabel" x="809" y="497">video: VGA pins (harness, SDL)</text>
+<polyline class="wire" points="266,466 266,520 265,520" marker-end="url(#head)"/><text class="wlabel" x="270" y="497">msip, mtip</text>
+<polyline class="wire" points="408,466 408,520 407,520" marker-end="url(#head)"/><text class="wlabel" x="412" y="497">irq: meip</text>
+<polyline class="wire" points="550,466 550,520 549,520" marker-end="url(#head)"/><text class="wlabel" x="554" y="497">meip</text>
+<polyline class="wire" points="692,466 692,520 691,520" marker-end="url(#head)"/><text class="wlabel" x="696" y="497">video pins</text>
+<polyline class="wire" points="834,466 834,520 833,520" marker-end="url(#head)"/><text class="wlabel" x="838" y="497">meip, events (harness)</text>
 <polyline class="wire" points="1100,560 1100,433 1040,433" marker-end="url(#head)"/>
 <text class="free" x="1090" y="550" text-anchor="end">harness (sim/main.cpp): load port</text>
 <text class="free" x="1090" y="567" text-anchor="end">writes the program during reset</text>

@@ -58,6 +58,7 @@ object TopGen {
           |#define SIM_RAM_BASE 0x${t.ramBase.toHexString}u
           |#define SIM_RAM_BYTES ${t.ramBytes}u
           |#define SIM_UART_DIVIDER ${t.uartDivider}u
+          |#define SIM_HAS_PHONE ${if (t.hasPhone) 1 else 0}
           |#define SIM_SIMCTRL_EXIT 0x${(MemMap.simCtrlBase + MemMap.SimCtrl.Exit).toHexString}u
           |#define SIM_EXIT_LEAD ${CoSimRules().exitLead}u
           |#define SIM_GIT_COMMIT "$commit"

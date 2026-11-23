@@ -19,7 +19,7 @@
 # for <gen>/SimTop.sv and <gen>/sim_config.h does not call it.
 #
 # sim_model defines:
-#   <out>/Vsim       the harness (main.cpp, elf.cpp, obs.cpp, uart.cpp, vga.cpp
+#   <out>/Vsim       the harness (main.cpp, elf.cpp, obs.cpp, uart.cpp, vga.cpp, phone.cpp
 #                    and the model)
 #   <out>/vflags     Verilator's flags for it; rewritten, and so newer than
 #                    Vsim, only when they change (SDL=1; not SIM_JOBS, which
@@ -60,8 +60,8 @@ SBT       ?= sbt
 BOOTCAMP_DIR ?= externals/chisel-bootcamp
 SIM_BOOTCAMP := $(if $(filter /%,$(BOOTCAMP_DIR)),$(BOOTCAMP_DIR),$(SIM_ROOT)/$(BOOTCAMP_DIR))
 
-SIM_SRCS := $(SIM_DIR)/main.cpp $(SIM_DIR)/elf.cpp $(SIM_DIR)/obs.cpp $(SIM_DIR)/uart.cpp $(SIM_DIR)/vga.cpp
-SIM_HDRS := $(SIM_DIR)/elf.h $(SIM_DIR)/obs.h $(SIM_DIR)/uart.h $(SIM_DIR)/vga.h
+SIM_SRCS := $(SIM_DIR)/main.cpp $(SIM_DIR)/elf.cpp $(SIM_DIR)/obs.cpp $(SIM_DIR)/uart.cpp $(SIM_DIR)/vga.cpp $(SIM_DIR)/phone.cpp
+SIM_HDRS := $(SIM_DIR)/elf.h $(SIM_DIR)/obs.h $(SIM_DIR)/uart.h $(SIM_DIR)/vga.h $(SIM_DIR)/phone.h
 
 # What every elaboration reads besides the task's own sources.
 SIM_SCALA_DEPS := $(SIM_ROOT)/build.sbt \

@@ -11,6 +11,7 @@
 //             [+uart-stdin]
 //             [+uart-rx-gap=BITS] [+uart-no-flow-control] [+ram-fill=WORD]
 //             [+vga-dump=N:<file.ppm>]... [+vga-exit-after-dump] [+vga-window]
+//             [+phone-script=<file> [+phone-frames=<dir>]] [+phone-input]
 //             [+obs-trace=<file> +obs-task=T<n> +obs-variant=<name>
 //              [+obs-start=N] [+obs-cycles=N]]
 //             [+verilator+...]
@@ -24,12 +25,12 @@
 //   128 + s  signal s (SIGINT, SIGTERM) ended the run; the trace is complete
 //   2        bad arguments, a rejected ELF, or an output file that cannot be
 //            written (a log that could not be written to its end too, and a
-//            +vga-dump frame that the run never showed: this then replaces
-//            the code of the run)
+//            +vga-dump frame that the run never showed or a +phone-script
+//            that was not done: this then replaces the code of the run)
 //   3        the model failed an assertion ($fatal, $stop or $error) or
 //            called $finish, or its video signals broke the VGA timing
 //   0        also: +vga-exit-after-dump ended the run after its last frame,
-//            or the +vga-window was closed
+//            the +phone-script was done, or the +vga-window was closed
 //
 // Timing: reset is held for kResetCycles cycles, then one more cycle per word
 // written through io_load, and released after that. Cycle 0 is the first cycle
@@ -70,7 +71,8 @@
 //       "halt=<cause decimal>" for a halt (0: no record gave a cause), or
 //       "stop=<reason>" for a run that did not end by itself, with <reason>
 //       one word: timeout, signal, assert, finish, vga-dump (ended by
-//       +vga-exit-after-dump) or vga-window (the window was closed).
+//       +vga-exit-after-dump), phone-script (the script was done) or
+//       vga-window (the window was closed).
 //
 // Every cycle after reset, up to the one in which the run ended, is in the log
 // exactly once, as a record or as one of the cycles of an `idle` line, so the
@@ -148,6 +150,31 @@
 // +vga-window shows every frame in an SDL2 window, if the harness was built
 // with SDL=1 (see sim.mk); a harness built without it refuses the option.
 // Closing the window, or Escape or q in it, ends the run with exit code 0.
+//
+// The phone (T5, mycpu.soc.Phone). Its input events go in through io_phoneEvent
+// (one 32-bit word, valid held until io_phoneReady), and the firmware's
+// presents are counted in io_vga_swaps, so the frames of +vga-dump are numbered
+// by them as they are by buffer swaps: frame N is the first whole picture after
+// the N-th present. The phone is shown in the middle of the 640 x 480 picture,
+// at x 200 to 439 and y 80 to 399 (phone.h).
+//
+// +phone-script=<file> plays a script of input events (phone.h gives its
+// commands: tap, pointer, key, text, tick, capture) and writes the pictures
+// that it captures to <dir>/<name>.ppm (binary PPM, 240 x 320),
+// +phone-frames=<dir>, which is created when the run starts, every capture file
+// empty, as the +vga-dump files are. The events go one at a time, each after
+// the firmware has presented the picture that answers the one before it (it
+// presents once when it starts, and once for each event), and none while a
+// capture's frame is being scanned out. The run ends with exit code 0 when the
+// last step is done. One that ends first (EXIT, a timeout, a closed window) did
+// not play the script: a closed window or an unfinished script exits with 2, as
+// a missing +vga-dump frame does.
+//
+// +phone-input (it needs +vga-window and excludes +phone-script) sends the
+// mouse of the window (left button: pointer down, move and up, 240 x 320 pixels
+// at the phone's place) and its keyboard (printable characters, and Escape,
+// Home, Tab, the arrows, Return and Backspace) to the phone as events. Escape
+// is then the phone's Back key and no longer closes the window: Ctrl+Q does.
 
 #include <poll.h>
 #include <unistd.h>
@@ -160,6 +187,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <filesystem>
+#include <fstream>
 #include <memory>
 #include <optional>
 #include <string>
@@ -169,6 +198,7 @@
 #include "Vsim.h"
 #include "elf.h"
 #include "obs.h"
+#include "phone.h"
 #include "sim_config.h"
 #include "uart.h"
 #include "verilated.h"
@@ -222,6 +252,10 @@ struct Options {
     std::vector<std::pair<uint32_t, std::string>> vga_dumps;
     bool vga_exit_after_dump = false;
     bool vga_window = false;
+    std::string phone_script;            // +phone-script: the file
+    std::string phone_frames;            // +phone-frames: where its captures go
+    std::vector<PhoneStep> phone_steps;  // the script, read
+    bool phone_input = false;
     std::string obs_trace;
     ObsRun obs;  // +obs-task, +obs-variant, +obs-start, +obs-cycles
     bool obs_option = false;  // one of those four was given
@@ -313,6 +347,14 @@ bool parse_options(int argc, char **argv, Options *opt)
             opt->vga_exit_after_dump = true;
         } else if (std::strcmp(arg, "+vga-window") == 0) {
             opt->vga_window = true;
+        } else if ((v = value_of(arg, "+phone-script")) != nullptr &&
+                   *v != '\0') {
+            opt->phone_script = v;
+        } else if ((v = value_of(arg, "+phone-frames")) != nullptr &&
+                   *v != '\0') {
+            opt->phone_frames = v;
+        } else if (std::strcmp(arg, "+phone-input") == 0) {
+            opt->phone_input = true;
         } else if ((v = value_of(arg, "+obs-trace")) != nullptr && *v != '\0') {
             opt->obs_trace = v;
         } else if ((v = value_of(arg, "+obs-task")) != nullptr && *v != '\0') {
@@ -343,6 +385,49 @@ bool parse_options(int argc, char **argv, Options *opt)
         std::fprintf(stderr, "sim: +vga-exit-after-dump needs a +vga-dump\n");
         return false;
     }
+    if (!opt->phone_script.empty()) {
+        std::ifstream in(opt->phone_script);
+        std::string why;
+        if (!in) {
+            std::fprintf(stderr, "sim: cannot read %s\n",
+                         opt->phone_script.c_str());
+            return false;
+        }
+        if (!phone_parse_script(in, &opt->phone_steps, &why)) {
+            std::fprintf(stderr, "sim: +phone-script %s: %s\n",
+                         opt->phone_script.c_str(), why.c_str());
+            return false;
+        }
+        if (in.bad()) {  // a directory opens, and then fails to read
+            std::fprintf(stderr, "sim: cannot read %s\n",
+                         opt->phone_script.c_str());
+            return false;
+        }
+        const bool captures =
+            std::any_of(opt->phone_steps.begin(), opt->phone_steps.end(),
+                        [](const PhoneStep &step) { return step.capture; });
+        if (captures && opt->phone_frames.empty()) {
+            std::fprintf(stderr,
+                         "sim: +phone-script has captures: it needs "
+                         "+phone-frames=<dir>\n");
+            return false;
+        }
+    } else if (!opt->phone_frames.empty()) {
+        std::fprintf(stderr, "sim: +phone-frames needs +phone-script\n");
+        return false;
+    }
+    if (opt->phone_input && (!opt->vga_window || !opt->phone_script.empty())) {
+        std::fprintf(stderr,
+                     "sim: +phone-input needs +vga-window and excludes "
+                     "+phone-script\n");
+        return false;
+    }
+#if !SIM_HAS_PHONE
+    if (!opt->phone_script.empty() || opt->phone_input) {
+        std::fprintf(stderr, "sim: this model has no phone\n");
+        return false;
+    }
+#endif
     if (opt->obs_trace.empty()
             ? opt->obs_option
             : opt->obs.task.empty() || opt->obs.variant.empty()) {
@@ -385,6 +470,10 @@ public:
                                  kUartRxGapCycles)),
           dumps_left_(opt.vga_dumps.size())
     {
+        if (!opt.phone_script.empty())
+            script_.reset(new PhoneScript(opt.phone_steps, opt.phone_frames));
+        if (opt.phone_input)
+            window_.set_phone_input(&input_);
     }
 
     ~Harness()
@@ -458,6 +547,7 @@ private:
     void log_end(const std::string &how);
     void put_uart(int byte);
     void feed_uart();
+    void feed_phone();
     void drain();
     int finish(bool halted, int code);
     enum class Video { kGoOn, kBroken, kDumped, kWriteFailed, kClosed };
@@ -484,6 +574,12 @@ private:
     ObsTrace obs_;
     VgaMonitor monitor_;
     VgaWindow window_;
+    // +phone-script, and the events that +phone-input collects: the word that
+    // is offered, valid, until the model takes it
+    std::unique_ptr<PhoneScript> script_;
+    PhoneInput input_;
+    bool phone_valid_ = false;
+    uint32_t phone_word_ = 0;
     size_t dumps_left_;  // +vga-dump frames not written yet
     // the +vga-dump frames written, as (frame number, file)
     std::vector<std::pair<uint32_t, std::string>> dumped_;
@@ -522,6 +618,24 @@ bool Harness::open_outputs()
         if (!probe)
             return false;
         std::fclose(probe);
+    }
+    if (script_ && !opt_.phone_frames.empty()) {
+        std::error_code why;
+        std::filesystem::create_directories(opt_.phone_frames, why);
+        if (why) {
+            std::fprintf(stderr, "sim: cannot create %s: %s\n",
+                         opt_.phone_frames.c_str(), why.message().c_str());
+            return false;
+        }
+        for (const auto &step : opt_.phone_steps) {
+            if (!step.capture)
+                continue;
+            FILE *probe =
+                open_output(opt_.phone_frames + "/" + step.name + ".ppm");
+            if (!probe)
+                return false;
+            std::fclose(probe);
+        }
     }
     std::string error;
     if (!opt_.obs_trace.empty() &&
@@ -579,6 +693,18 @@ bool Harness::close_outputs()
         written = false;
     }
     dumps_left_ = 0;
+    if (script_ && !script_->done() && !dump_failed_) {
+        if (!script_->error().empty())
+            std::fprintf(stderr, "sim: +phone-script: %s\n",
+                         script_->error().c_str());
+        else
+            std::fprintf(stderr,
+                         "sim: +phone-script: the run ended before the "
+                         "script was done (%zu steps left, the next at line "
+                         "%u)\n",
+                         script_->remaining(), script_->waiting_line());
+        written = false;
+    }
     // The trace last: its trailer has the hash of each output closed above.
     std::vector<ObsOutput> hashed;
     if (!opt_.retire_log.empty())
@@ -764,6 +890,21 @@ void Harness::feed_uart()
     top_->io_uartRxd = encoder_.line();
 }
 
+// The event that io_phoneEvent shows in this cycle: the script's next one, or
+// the oldest of the window's, held until the model has taken it.
+void Harness::feed_phone()
+{
+    if (script_) {
+        phone_valid_ = script_->offer(top_->io_vga_swaps, &phone_word_);
+    } else if (!phone_valid_ && opt_.phone_input) {
+        phone_valid_ = input_.pop(&phone_word_);
+    }
+#if SIM_HAS_PHONE
+    top_->io_phoneEvent_valid = phone_valid_;
+    top_->io_phoneEvent_bits = phone_valid_ ? phone_word_ : 0;
+#endif
+}
+
 void Harness::drain()
 {
     // Between two frames from the TX FIFO the line is high for the rest of the
@@ -845,6 +986,16 @@ Harness::Video Harness::video()
     }
     if (!frame)
         return Video::kGoOn;
+    if (script_) {
+        script_->frame(monitor_.index(), monitor_.fresh(), monitor_.pixels());
+        if (!script_->error().empty()) {
+            std::fflush(stdout);
+            std::fprintf(stderr, "sim: +phone-script: %s\n",
+                         script_->error().c_str());
+            dump_failed_ = true;
+            return Video::kWriteFailed;
+        }
+    }
     if (monitor_.fresh()) {
         for (const auto &dump : opt_.vga_dumps) {
             if (dump.first != monitor_.index())
@@ -910,7 +1061,42 @@ int Harness::run()
             return kExitTimeout;
         }
         feed_uart();
+        feed_phone();
+        if (script_ && script_->done()) {
+            std::fflush(stdout);
+            std::fprintf(stderr,
+                         "sim: the phone script is done: cycles=%" PRIu64
+                         " instret=%" PRIu64 "\n",
+                         cycle_, instret_);
+            log_end("stop=phone-script");
+            return 0;
+        }
+        if (script_ && !script_->error().empty()) {
+            std::fflush(stdout);
+            std::fprintf(stderr, "sim: +phone-script: %s\n",
+                         script_->error().c_str());
+            log_end("stop=phone-script");
+            dump_failed_ = true;
+            return kExitBadArgs;
+        }
+        if (opt_.phone_input && (cycle_ & 0x3fff) == 0 && !window_.poll()) {
+            std::fflush(stdout);
+            std::fprintf(stderr,
+                         "sim: the window was closed: cycles=%" PRIu64
+                         " instret=%" PRIu64 "\n",
+                         cycle_, instret_);
+            log_end("stop=vga-window");
+            return 0;
+        }
         low_phase();
+#if SIM_HAS_PHONE
+        if (phone_valid_ && top_->io_phoneReady) {
+            // valid and ready in this cycle: the edge below takes the event
+            phone_valid_ = false;
+            if (script_)
+                script_->accepted();
+        }
+#endif
         if (model_failed())
             return kExitAssert;
         retire();
@@ -960,6 +1146,10 @@ int Harness::run()
 
         // A program that exits in the cycle that completes a frame, or while
         // its store to EXIT is pending, has exited.
+        if (video_end == Video::kClosed && script_ && !script_->done()) {
+            log_end("stop=vga-window");
+            return kExitBadArgs;  // close_outputs says what was left
+        }
         if (video_end != Video::kGoOn && !exit_pending) {
             log_end(video_end == Video::kClosed ? "stop=vga-window"
                                                 : "stop=vga-dump");

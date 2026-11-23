@@ -26,6 +26,10 @@
 #   make demo [SDL=1]       boots the shell from ROM and runs the demo session: nyancat, the QR code in every
 #                           style and the benchmarks; SDL=1 shows the VGA in a window, SDL=0 (the default)
 #                           dumps the frames to build/t5-demo/ and checks them (T5-09)
+#   make check-phone        the phone (T5-11): tests/phone/journey.txt played on the model as input events
+#                           (+phone-script), every capture compared byte for byte with the host model's
+#   make phone [SDL=1]      the phone: SDL=1 shows it in the window, with the mouse and the keyboard as its input
+#                           (Ctrl+Q closes it); SDL=0 (the default) boots it and checks its first picture
 #   make lint               verilator --lint-only -Wall on the emitted SimTop.sv
 #   make indent             scalafmt on this task's sources
 #   make clean
@@ -209,3 +213,37 @@ DEMO_HOLD ?= $(if $(filter 1,$(SDL)),120,1)
 demo: verilator software-shell-uart
 	@$(SHELL_CHECK_ENV) SDL=$(SDL) DEMO_HOLD=$(DEMO_HOLD) $(SHELL_CHECK) demo $(OUT)/Vsim $(SHELL_UART) \
 	    $(SHELL_TESTS) $(BUILD)/t5-demo
+
+# ---------------------------------------------------------------------------
+# The phone: software/programs/phone on the model, as a scripted build (one input event for each
+# picture, no clock of its own: the harness's +phone-script) and as the live build that keeps its own
+# time (the window's mouse and keyboard, or a first picture to look at).
+
+SW_PHONE      := $(BUILD)/sw-phone
+SW_PHONE_LIVE := $(BUILD)/sw-phone-live
+PHONE_ELF      := $(SW_PHONE)/sw/mycpu/$(ARCH)/phone.elf
+PHONE_LIVE_ELF := $(SW_PHONE_LIVE)/sw/mycpu/$(ARCH)/phone.elf
+PHONE_TESTS    := $(CURDIR)/tests/phone
+PHONE_CHECK    := $(PHONE_TESTS)/check-phone.sh
+.PHONY: software-phone software-phone-live
+software-phone: | $(BUILD)
+	@$(call sw,sw-phone-$(ARCH),phone PLATFORM=mycpu ARCH=$(ARCH) PHONE_SCRIPTED=1 BUILD=$(SW_PHONE))
+software-phone-live: | $(BUILD)
+	@$(call sw,sw-phone-live-$(ARCH),phone PLATFORM=mycpu ARCH=$(ARCH) BUILD=$(SW_PHONE_LIVE))
+
+# The journey on the model and on the host: the same 240 x 320 pictures, every one. A differing
+# picture, a missing one or a script that does not end fails; so does a model with a mutant that
+# the pictures show.
+.PHONY: check-phone
+check-phone: verilator software-phone
+	@MAX_CYCLES=$(MAX_CYCLES) $(PHONE_CHECK) check $(OUT)/Vsim $(PHONE_ELF) $(PHONE_TESTS) $(OUT)/phone
+
+# SDL=1: the window, whose mouse and keyboard are the phone's input; SDL=0: the first picture of
+# the live build, checked not to be blank.
+.PHONY: phone
+phone: verilator software-phone-live
+ifeq ($(SDL),1)
+	@$(PHONE_CHECK) window $(OUT)/Vsim $(PHONE_LIVE_ELF)
+else
+	@MAX_CYCLES=$(MAX_CYCLES) $(PHONE_CHECK) boot $(OUT)/Vsim $(PHONE_LIVE_ELF) $(OUT)/phone
+endif

@@ -12,25 +12,28 @@ box XBAR 60 230 980 90 "Axi4LiteXbar" "Axi4LiteDecoder per master: an unmapped a
 arrow MI.s 265,230 "AW W B AR R"
 arrow MD.s 835,230 "AW W B AR R"
 
-box ROM 60 400 140 66 "Axi4LiteRom" "0x0000_1000" "boot.S"
-box CLINT 220 400 150 66 "MemPortSlave" "CLINT" "0x0200_0000"
-box UART 390 400 150 66 "MemPortSlave" "UART" "0x1000_0000"
-box SIM 560 400 150 66 "MemPortSlave" "SimCtrl" "0x1000_1000"
-box VGA 730 400 150 66 "MemPortSlave" "VGA" "0x2000_0000"
-box RAM 900 400 140 66 "Axi4LiteRam" "(I and D)" "0x8000_0000"
-arrow 130,320 ROM.n
-arrow 295,320 CLINT.n
-arrow 465,320 UART.n
-arrow 635,320 SIM.n
-arrow 805,320 VGA.n
-arrow 950,320 950,400
-arrow 990,320 990,400
+box ROM 60 400 127 66 "Axi4LiteRom" "0x0000_1000" "boot.S"
+box CLINT 202 400 127 66 "MemPortSlave" "CLINT" "0x0200_0000"
+box UART 344 400 127 66 "MemPortSlave" "UART" "0x1000_0000"
+box SIM 486 400 127 66 "MemPortSlave" "SimCtrl" "0x1000_1000"
+box VGA 628 400 127 66 "MemPortSlave" "VGA" "0x2000_0000"
+box PHONE 770 400 127 66 "MemPortSlave" "phone" "0x2010_0000"
+box RAM 912 400 128 66 "Axi4LiteRam" "(I and D)" "0x8000_0000"
+arrow 123,320 ROM.n
+arrow 265,320 CLINT.n
+arrow 407,320 UART.n
+arrow 549,320 SIM.n
+arrow 691,320 VGA.n
+arrow 833,320 PHONE.n
+arrow 945,320 945,400
+arrow 1005,320 1005,400
 
 box IRQ 220 520 490 40 "CPU interrupts: msip, mtip, meip"
-arrow CLINT.s 295,520 "msip, mtip"
-arrow UART.s 465,520 "irq: meip"
-arrow SIM.s 635,520 "meip"
-arrow VGA.s 805,520 "video: VGA pins (harness, SDL)"
+arrow CLINT.s 265,520 "msip, mtip"
+arrow UART.s 407,520 "irq: meip"
+arrow SIM.s 549,520 "meip"
+arrow VGA.s 691,520 "video pins"
+arrow PHONE.s 833,520 "meip, events (harness)"
 arrow 1100,560 1100,433 RAM.e
 text 1090 550 "harness (sim/main.cpp): load port" end
 text 1090 567 "writes the program during reset" end

@@ -260,6 +260,22 @@ run bad-arg 2 '' +elf="$ELF/exit.elf" +max-cycle=10
 expect bad-arg err "bad argument '\+max-cycle=10'"
 run bad-fill 2 '' +elf="$ELF/exit.elf" +ram-fill=0x100000000
 expect bad-fill err "bad argument '\+ram-fill=0x100000000'"
+
+# The phone's options (T5): a script that cannot be played is refused before the run
+printf 'tap 1 2\ncapture one\n' > "$WORK/phone-ok.txt"
+printf 'tap 1\n' > "$WORK/phone-bad.txt"
+run phone-no-script 2 '' +elf="$ELF/exit.elf" +phone-frames="$WORK/frames"
+expect phone-no-script err '\+phone-frames needs \+phone-script'
+run phone-missing 2 '' +elf="$ELF/exit.elf" +phone-script="$WORK/missing.txt"
+expect phone-missing err 'cannot read .*/missing.txt'
+run phone-dir 2 '' +elf="$ELF/exit.elf" +phone-script="$WORK"
+expect phone-dir err 'cannot read '
+run phone-bad-line 2 '' +elf="$ELF/exit.elf" +phone-script="$WORK/phone-bad.txt"
+expect phone-bad-line err 'phone-bad.txt: line 1: tap X Y'
+run phone-no-frames 2 '' +elf="$ELF/exit.elf" +phone-script="$WORK/phone-ok.txt"
+expect phone-no-frames err 'needs \+phone-frames'
+run phone-input-no-window 2 '' +elf="$ELF/exit.elf" +phone-input
+expect phone-input-no-window err '\+phone-input needs \+vga-window'
 # Numbers are decimal, or hexadecimal after 0x: no octal, sign or space
 n=0
 for arg in +max-cycles=010 '+max-cycles= 5' +max-cycles=+5 +max-cycles=0x +ram-fill=0x0x5 +ram-fill=0x-5; do

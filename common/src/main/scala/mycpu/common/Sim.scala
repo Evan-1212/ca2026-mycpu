@@ -21,6 +21,8 @@ object MemMap {
   val simCtrlSize: Long = 0x1000L
   val vgaBase: Long     = 0x20000000L // T5 only
   val vgaSize: Long     = 0x10000L
+  val phoneBase: Long   = 0x20100000L // T5 only: the phone's display and input
+  val phoneSize: Long   = 0x40000L
   val ramBase: Long     = 0x80000000L
   val ramBytes: Int     = 4 << 20     // 4 MiB by default (a parameter of each system)
 
@@ -67,6 +69,17 @@ object MemMap {
     val Palette = 0x0040 // 16 words
     val Buffer0 = 0x4000 // 2,400 words
     val Buffer1 = 0x8000 // 2,400 words
+  }
+
+  /** The phone's window (`mycpu.soc.Phone`, T5): the 240 x 320 RGB565 framebuffer from offset 0,
+    * the display registers and the input FIFO at the offsets below. Register addresses are
+    * `phoneBase + Display + 4 * <word index>`; the word indices are in `Phone.Regs` and
+    * `software/runtime/include/phone.h`.
+    */
+  object Phone {
+    val Framebuffer = 0x00000 // 38,400 words: pixel x of a line is bits [15:0] of its word when x is even
+    val Display     = 0x30000 // the display registers
+    val Input       = 0x30100 // the input event FIFO
   }
 
   def in(addr: UInt, base: Long, size: Long): Bool = addr >= base.U && addr < (base + size).U
@@ -153,11 +166,15 @@ class VgaIO extends Bundle {
   *   - `vga`: the video signals of the VGA ([[VgaIO]]), which the harness samples for `+vga-dump`
   *     and `+vga-window` (T5-07). `SimTop` drives them all low, `tick` included, so the harness
   *     sees no pixel from a top without a VGA; a top with one connects `io.vga := vga.io.video`.
+  *   - `phoneEvent`, `phoneReady`: the phone's input events (`mycpu.soc.Phone`, T5): the harness
+  *     offers one 32-bit event word with `valid` and the top takes it in a cycle in which
+  *     `phoneReady` is high (valid and ready both high). These ports exist only on a top with a
+  *     phone, which connects them to its input FIFO. Its frames are counted into `vga.swaps`.
   *   - `obs`: the probe ports of the observation interface ([[ObsIO]], OBS-02), the groups that
   *     `obsGroups` declares and nothing else; the harness records them with `+obs-trace`. A top
   *     that declares no group has no such port.
   */
-class SimIO(val obsGroups: ObsGroups = ObsGroups.none) extends Bundle {
+class SimIO(val obsGroups: ObsGroups = ObsGroups.none, val hasPhone: Boolean = false) extends Bundle {
   val load        = Input(Valid(new riscv.LoadPort))
   val retire      = Output(Valid(new TrapRetire))
   val halted      = Output(Bool())
@@ -168,6 +185,8 @@ class SimIO(val obsGroups: ObsGroups = ObsGroups.none) extends Bundle {
   val uartRxd     = Input(Bool())
   val uartRxReady = Output(Bool())
   val vga         = Output(new VgaIO)
+  val phoneEvent  = Option.when(hasPhone)(Input(Valid(UInt(32.W))))
+  val phoneReady  = Option.when(hasPhone)(Output(Bool()))
   val obs         = Output(new ObsIO(obsGroups))
 }
 
@@ -182,8 +201,9 @@ abstract class SimTop extends Module {
     * parameter is fine: it is assigned before this constructor runs).
     */
   def obsGroups: ObsGroups = ObsGroups.none
+  def hasPhone: Boolean    = false
 
-  val io = IO(new SimIO(obsGroups))
+  val io = IO(new SimIO(obsGroups, hasPhone))
 
   // The default, for a top that does not drive it: the harness is never held back. A top's own
   // connection comes later in the module body and replaces this one (last connect).

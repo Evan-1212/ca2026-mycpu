@@ -88,6 +88,7 @@ object SocConfig {
   *   0x1000_0000  UART       common's Uart behind a MemPortSlave; its RX interrupt is MEI
   *   0x1000_1000  SimCtrl    common's SimCtrl behind a MemPortSlave (simulation only)
   *   0x2000_0000  VGA        Vga behind a MemPortSlave
+  *   0x2010_0000  phone      Phone behind a MemPortSlave: a 240 x 320 RGB565 display and its input
   *   0x8000_0000  RAM        Axi4LiteRam, one port per master
   * }}}
   *
@@ -106,6 +107,7 @@ object SocConfig {
   * code, which a synthesis build leaves out (`mycpu.common.TopGen`).
   */
 class Soc(val config: SocConfig) extends SimTop {
+  override def hasPhone: Boolean = true
 
   /** The default system with the boot ROM of the build directory (`mycpu.common.TopGen` needs a
     * constructor without arguments).
@@ -157,6 +159,13 @@ class Soc(val config: SocConfig) extends SimTop {
   val vga = Module(new Vga(pixelShift = config.pixelShift, mutant = config.mutantOf(Vga.mutants)))
   device(Soc.Vga, vga.io.port)
 
+  val phone = Module(new Phone)
+  device(Soc.Phone, phone.io.port)
+  phone.io.video       := vga.io.video
+  phone.io.event.valid := io.phoneEvent.get.valid
+  phone.io.event.bits  := io.phoneEvent.get.bits
+  io.phoneReady.get    := phone.io.event.ready
+
   val ram = Module(new Axi4LiteRam(ramWords, config.syncRead, config.ramWait, config.mutantOf(Axi4LiteRam.mutants)))
   ram.io.i <> slave(Soc.Ram, Axi4LiteXbar.I)
   ram.io.d <> slave(Soc.Ram, Axi4LiteXbar.D)
@@ -165,7 +174,7 @@ class Soc(val config: SocConfig) extends SimTop {
 
   cpu.io.irq.msip := clint.io.msip
   cpu.io.irq.mtip := clint.io.mtip
-  cpu.io.irq.meip := simctrl.io.meip || uart.io.irq
+  cpu.io.irq.meip := simctrl.io.meip || uart.io.irq || phone.io.irq
   cpu.io.irq.time := clint.io.time
 
   uart.io.rxd    := io.uartRxd
@@ -178,7 +187,11 @@ class Soc(val config: SocConfig) extends SimTop {
   io.mark            := simctrl.io.mark
   io.retire          := cpu.io.retire
   io.halted          := cpu.io.halted
-  io.vga             := vga.io.video
+  // The phone replaces the VGA's color while it scans out, and its presented pictures are counted
+  // as swaps, with which the harness numbers the frames it dumps.
+  io.vga       := vga.io.video
+  io.vga.swaps := vga.io.video.swaps + phone.io.commits
+  when(phone.io.on) { io.vga.rgb := phone.io.rgb }
 
   if (config.obs) {
     io.obs.pipe.get := PipeProbes.pipe(cpu)
@@ -198,7 +211,8 @@ object Soc {
   val Uart    = 2
   val SimCtrl = 3
   val Vga     = 4
-  val Ram     = 5
+  val Phone   = 5
+  val Ram     = 6
 
   /** The `bus` probe group: the five channels of `axi`, the data master's interface, as they are. */
   def busProbe(axi: Axi4LiteIO): ObsBus = {
@@ -230,6 +244,7 @@ object Soc {
     Region(MemMap.uartBase, MemMap.uartSize),
     Region(MemMap.simCtrlBase, MemMap.simCtrlSize),
     Region(MemMap.vgaBase, MemMap.vgaSize),
+    Region(MemMap.phoneBase, MemMap.phoneSize),
     Region(MemMap.ramBase, ramBytes.toLong, perMaster = true)
   )
 

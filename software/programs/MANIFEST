@@ -37,6 +37,7 @@ perf       privileged T3
 vgatest    vga      T5
 nyancat    vga      T5
 qrcode-vga vga      T5
+phone      vga      T5
 shell      mmio-in  T5
 # The quiz programs: your routines in assembly, checked and costed on every task.
 quiz-arith user     T1

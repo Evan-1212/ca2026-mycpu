@@ -12,11 +12,13 @@
 #include <cstdint>
 #include <cstdio>
 #include <fstream>
+#include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "elf.h"
+#include "phone.h"
 #include "uart.h"
 #include "vga.h"
 
@@ -393,6 +395,112 @@ void test_vga_monitor()
 
 }  // namespace
 
+// The phone script: its commands become the events of the firmware's event
+// layout, and the driver offers them one at a time, after the presents.
+void test_phone_script()
+{
+    std::vector<PhoneStep> steps;
+    std::string error;
+    std::istringstream good(
+        "# comment\n\ntap 40 51\npointer 2 239 270\nkey 263\ntick 1000\n"
+        "text a b\nexpect screen 2\nbudget 5\ncapture one\n");
+    CHECK(phone_parse_script(good, &steps, &error));
+    // tap = 2, pointer, key, tick, text = 3 characters (a, space, b), capture
+    CHECK(steps.size() == 9);
+    CHECK(steps[0].word == (1u << 28 | 40u << 16 | 51u));
+    CHECK(steps[1].word == (3u << 28 | 40u << 16 | 51u));
+    CHECK(steps[2].word == (2u << 28 | 239u << 16 | 270u));
+    CHECK(steps[3].word == (4u << 28 | 263u));
+    CHECK(steps[4].word == (5u << 28 | 1000u));
+    CHECK(steps[5].word == (4u << 28 | 'a'));
+    CHECK(steps[6].word == (4u << 28 | ' '));
+    CHECK(steps[8].capture && steps[8].name == "one");
+
+    for (const char *bad :
+         {"tap 1\n", "tap 512 0\n", "pointer 4 0 0\n", "key 65536\n",
+          "capture a/b\n", "jump\n", "tick x\n", "capture\n"}) {
+        std::vector<PhoneStep> none;
+        std::istringstream in(bad);
+        error.clear();
+        CHECK(!phone_parse_script(in, &none, &error));
+        CHECK(error.rfind("line 1: ", 0) == 0);
+    }
+
+    // The driver: nothing before the first present; one event at a time, each
+    // after the present that answers the one before; a capture waits for its
+    // frame, and no event is offered meanwhile.
+    PhoneStep e1, e2, c1, c2;
+    e1.word = 0x11;
+    e2.word = 0x22;
+    c1.capture = c2.capture = true;
+    c1.name = "phone-test-a";
+    c2.name = "phone-test-b";
+    PhoneScript script({e1, c1, c2, e2}, "/tmp");
+    uint32_t word = 0;
+    std::vector<uint8_t> frame(kVgaFrameBytes, 7);
+    CHECK(!script.offer(0, &word));
+    CHECK(script.offer(1, &word) && word == 0x11);
+    CHECK(script.offer(1, &word) && word == 0x11);  // held until taken
+    script.accepted();
+    CHECK(!script.offer(1, &word));  // not answered yet
+    CHECK(!script.offer(2, &word));  // the capture waits for its frame
+    script.frame(1, true, frame);    // a frame before the answer: no
+    script.frame(2, false, frame);   // not the first one of its index: no
+    CHECK(!script.offer(2, &word) && script.remaining() == 3);
+    script.frame(2, true, frame);
+    CHECK(script.error().empty());
+    CHECK(script.remaining() == 1 || script.remaining() == 2);
+    // the second capture, no event since: the same picture, no new frame
+    CHECK(script.offer(2, &word) && word == 0x22);
+    CHECK(!script.done());
+    script.accepted();
+    CHECK(!script.offer(2, &word));
+    CHECK(!script.offer(3, &word));
+    CHECK(script.done());
+    std::remove("/tmp/phone-test-a.ppm");
+    std::remove("/tmp/phone-test-b.ppm");
+
+    // the mouse and the keyboard of the window
+    PhoneInput input;
+    uint32_t w = 0;
+    input.pointer_move(300, 200);  // no button
+    CHECK(input.empty());
+    input.pointer_down(10, 10);  // outside the phone
+    CHECK(input.empty());
+    input.pointer_down(300, 200);
+    input.pointer_move(310, 210);
+    input.pointer_up(900, 900);
+    input.key('x');
+    CHECK(input.pop(&w) && w == phone_event_word(kPhoneDown, 100, 120, 0));
+    CHECK(input.pop(&w) && w == phone_event_word(kPhoneMove, 110, 130, 0));
+    CHECK(input.pop(&w) && w == phone_event_word(kPhoneUp, 511, 511, 0));
+    CHECK(input.pop(&w) && w == phone_event_word(kPhoneKey, 0, 0, 'x'));
+    CHECK(!input.pop(&w));
+    // a full queue drops a move first, then the new event
+    input.pointer_down(300, 200);
+    input.pointer_move(301, 200);
+    for (unsigned i = 0; i < PhoneInput::kDepth; i++)
+        input.key('a');
+    CHECK(input.pop(&w) && w == phone_event_word(kPhoneDown, 100, 120, 0));
+    CHECK(input.pop(&w) && w == phone_event_word(kPhoneKey, 0, 0, 'a'));
+    while (input.pop(&w)) {
+    }
+    // a full queue never drops a press or a release: a key makes room for them
+    input.pointer_down(300, 200);
+    for (unsigned i = 0; i < PhoneInput::kDepth - 1; i++)
+        input.key('b');
+    input.pointer_up(300, 200);  // full: the oldest key goes
+    CHECK(input.pop(&w) && w == phone_event_word(kPhoneDown, 100, 120, 0));
+    unsigned keys = 0;
+    uint32_t last = 0;
+    while (input.pop(&w)) {
+        keys += w >> 28 == kPhoneKey;
+        last = w;
+    }
+    CHECK(keys == PhoneInput::kDepth - 2);
+    CHECK(last == phone_event_word(kPhoneUp, 100, 120, 0));
+}
+
 // Usage: unit <directory written by tests/elf-cases.py>
 int main(int argc, char **argv)
 {
@@ -410,6 +518,7 @@ int main(int argc, char **argv)
     }
     test_elf_words();
     test_vga_monitor();
+    test_phone_script();
     if (failures != 0) {
         std::printf("sim unit tests: %d failure(s)\n", failures);
         return 1;
