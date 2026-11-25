@@ -122,9 +122,10 @@ class PhoneInput extends Module {
   val read   = req.valid && req.bits.wstrb === 0.U
   val reg    = req.bits.addr(7, 2)
   val full   = count === InputDepth.U
+  val ready  = count =/= 0.U
   val flush  = write && reg === In.Status.U && req.bits.wdata(InFlush)
   val inject = write && reg === In.Data.U
-  val pop    = read && reg === In.Data.U && count =/= 0.U
+  val pop    = read && reg === In.Data.U && ready
 
   io.event.ready := !full && !inject && !flush
   val push      = !flush && Mux(inject, !full, io.event.valid && io.event.ready)
@@ -150,12 +151,12 @@ class PhoneInput extends Module {
   io.port.resp.bits.error := false.B
   io.port.resp.bits.rdata := MuxLookup(reg, 0.U)(
     Seq(
-      In.Data.U   -> Mux(count =/= 0.U, queue(rd), 0.U),
-      In.Status.U -> (count ## 0.U(6.W) ## overflow ## (count =/= 0.U)).pad(32),
+      In.Data.U   -> Mux(ready, queue(rd), 0.U),
+      In.Status.U -> (count ## 0.U(6.W) ## overflow ## ready).pad(32),
       In.IrqEn.U  -> irq_en
     )
   )
-  io.irq := irq_en && count =/= 0.U
+  io.irq := irq_en && ready
 }
 
 /** The phone of the SoC, a second display beside [[Vga]]: a 240 x 320 RGB565 framebuffer that the

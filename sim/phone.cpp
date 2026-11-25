@@ -221,12 +221,19 @@ void PhoneInput::push(uint32_t word)
     queue_.push_back(word);
 }
 
+// The position in the phone's picture of the window position (x, y), and
+// whether it is inside the picture.
+static bool to_phone(int *x, int *y)
+{
+    *x -= static_cast<int>(kPhoneX0);
+    *y -= static_cast<int>(kPhoneY0);
+    return *x >= 0 && *y >= 0 && *x < static_cast<int>(kPhoneWidth) &&
+           *y < static_cast<int>(kPhoneHeight);
+}
+
 void PhoneInput::pointer_down(int x, int y)
 {
-    x -= static_cast<int>(kPhoneX0);
-    y -= static_cast<int>(kPhoneY0);
-    if (x < 0 || y < 0 || x >= static_cast<int>(kPhoneWidth) ||
-        y >= static_cast<int>(kPhoneHeight))
+    if (!to_phone(&x, &y))
         return;
     pressed_ = true;
     push(phone_event_word(kPhoneDown, x, y, 0));
@@ -234,12 +241,8 @@ void PhoneInput::pointer_down(int x, int y)
 
 void PhoneInput::pointer_move(int x, int y)
 {
-    x -= static_cast<int>(kPhoneX0);
-    y -= static_cast<int>(kPhoneY0);
-    if (!pressed_ || x < 0 || y < 0 || x >= static_cast<int>(kPhoneWidth) ||
-        y >= static_cast<int>(kPhoneHeight))
-        return;
-    push(phone_event_word(kPhoneMove, x, y, 0));
+    if (pressed_ && to_phone(&x, &y))
+        push(phone_event_word(kPhoneMove, x, y, 0));
 }
 
 void PhoneInput::pointer_up(int x, int y)
@@ -247,13 +250,9 @@ void PhoneInput::pointer_up(int x, int y)
     if (!pressed_)
         return;
     pressed_ = false;
-    x -= static_cast<int>(kPhoneX0);
-    y -= static_cast<int>(kPhoneY0);
-    const bool inside = x >= 0 && y >= 0 && x < static_cast<int>(kPhoneWidth) &&
-                        y < static_cast<int>(kPhoneHeight);
     // released outside the picture: the application sees it leave
-    push(inside ? phone_event_word(kPhoneUp, x, y, 0)
-                : phone_event_word(kPhoneUp, 511, 511, 0));
+    push(to_phone(&x, &y) ? phone_event_word(kPhoneUp, x, y, 0)
+                          : phone_event_word(kPhoneUp, 511, 511, 0));
 }
 
 void PhoneInput::key(unsigned code)

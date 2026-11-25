@@ -22,6 +22,7 @@ const SLAVES = [
   { id: "uart", name: "UART", base: 0x10000000, size: 0x1000 },
   { id: "simctrl", name: "SimCtrl", base: 0x10001000, size: 0x1000 },
   { id: "vga", name: "VGA", base: 0x20000000, size: 0x10000 },
+  { id: "phone", name: "phone", base: 0x20100000, size: 0x40000 },
   { id: "ram", name: "RAM", base: 0x80000000, size: null },
 ];
 const CHANNELS = [["aw", "AW", "addr"], ["w", "W", "data"], ["b", "B", "resp"], ["ar", "AR", "addr"], ["r", "R", "data"]];
@@ -95,10 +96,10 @@ function diagram(r, active, ramBytes) {
   svg.append(box(10, 40, 150, 90, "CPU (T4 pipeline)", "", "cpu"), box(10, 170, 150, 40, "I master", "concept", "imaster"),
     box(180, 40, 120, 40, "D master", active ? "busy" : "", "dmaster"), box(330, 20, 90, 260, "crossbar", "", "xbar"));
   SLAVES.forEach((sl, i) => {
-    const y = 20 + i * 44;
+    const y = 20 + i * 38;
     const on = active && slaveOf(active.addr ?? -1, ramBytes) === sl;
-    svg.append(box(450, y, 180, 36, `${sl.name} ${hex8(sl.base)}`, on ? "target" : "", sl.id));
-    svg.append(s("line", { x1: 420, y1: y + 18, x2: 450, y2: y + 18, class: on ? "soc-link on" : "soc-link" }));
+    svg.append(box(450, y, 180, 32, `${sl.name} ${hex8(sl.base)}`, on ? "target" : "", sl.id));
+    svg.append(s("line", { x1: 420, y1: y + 16, x2: 450, y2: y + 16, class: on ? "soc-link on" : "soc-link" }));
   });
   // the five channels of the data master, between it and the crossbar
   CHANNELS.forEach(([ch, name], i) => {

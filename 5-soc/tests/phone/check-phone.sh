@@ -81,7 +81,7 @@ check)
     done
     rm -rf "$out"
     mkdir -p "$out/rtl" "$out/host"
-    names=$(sed -n 's/^capture[[:space:]]\{1,\}\([^[:space:]]\{1,\}\).*/\1/p' "$tests/journey.txt")
+    names=$(sed -n 's/^[[:space:]]*capture[[:space:]]\{1,\}\([^[:space:]]\{1,\}\).*/\1/p' "$tests/journey.txt")
     [ -n "$names" ] || { echo "check-phone: $tests/journey.txt has no capture" >&2; exit 1; }
 
     if "$tests/host-oracle.sh" "$out/host" > "$out/host.log" 2>&1; then

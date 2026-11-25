@@ -76,12 +76,6 @@
 #define PHONE_EV_KEY 4u   // value: an ASCII or application key code
 #define PHONE_EV_TICK 5u  // value: milliseconds that have passed
 
-static inline uint16_t phone_pack(unsigned r, unsigned g, unsigned b)
-{
-    return (uint16_t) (((r & 255u) >> 3) << 11 | ((g & 255u) >> 2) << 5 |
-                       ((b & 255u) >> 3));
-}
-
 static inline int phone_present(void)
 {
     return PHONE_REG[PHONE_ID] == PHONE_ID_VALUE;
@@ -120,11 +114,6 @@ static inline void phone_fill(uint16_t x,
 static inline void phone_present_frame(void)
 {
     PHONE_REG[PHONE_PRESENT] = 1;
-}
-
-static inline int phone_input_ready(void)
-{
-    return (PHONE_IN[PHONE_IN_STATUS] & PHONE_IN_READY) != 0;
 }
 
 // The next event, or 0 when there is none.
